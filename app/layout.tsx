@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
+import { Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+});
 
 export const metadata: Metadata = {
   title: "Brody Montag",
@@ -23,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full antialiased dark">
+    <html lang="en" className={`h-full antialiased dark ${geistMono.variable}`}>
       <body className="min-h-full bg-background text-foreground">
         {children}
         <Analytics />

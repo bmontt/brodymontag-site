@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 
 const NAV_LINKS = [
-  { label: "Music", href: "#music" },
-  { label: "Code", href: "#code" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { label: "music", href: "#music" },
+  { label: "code", href: "#code" },
+  { label: "about", href: "#about" },
+  { label: "contact", href: "#contact" },
 ];
 
 const SECTIONS = ["music", "code", "about", "contact"];
@@ -17,7 +16,7 @@ export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -28,9 +27,7 @@ export default function Nav() {
       const el = document.getElementById(id);
       if (!el) return;
       const obs = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) setActive(id);
-        },
+        ([entry]) => { if (entry.isIntersecting) setActive(id); },
         { rootMargin: "-40% 0px -50% 0px" }
       );
       obs.observe(el);
@@ -40,21 +37,17 @@ export default function Nav() {
   }, []);
 
   return (
-    <motion.header
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-      style={{ backdropFilter: scrolled ? "blur(20px) saturate(180%)" : "none" }}
-      animate={{ backgroundColor: scrolled ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0)" }}
-      transition={{ duration: 0.3 }}
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-background/95 border-b border-white/8"
+          : "bg-transparent border-b border-transparent"
+      }`}
     >
-      <div
-        className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5"
-        style={{
-          borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent",
-        }}
-      >
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
         <a
           href="#"
-          className="text-xs uppercase tracking-widest text-white/40 transition-colors hover:text-white/70"
+          className="font-mono text-xs text-foreground/30 transition-colors hover:text-foreground/70 tracking-widest"
         >
           BM
         </a>
@@ -66,10 +59,8 @@ export default function Nav() {
               <a
                 key={href}
                 href={href}
-                className={`text-xs uppercase tracking-widest transition-colors duration-200 ${
-                  isActive
-                    ? "text-yellow-400/80"
-                    : "text-white/40 hover:text-white/70"
+                className={`font-mono text-xs tracking-widest transition-colors duration-200 ${
+                  isActive ? "text-accent/80" : "text-foreground/30 hover:text-foreground/70"
                 }`}
               >
                 {label}
@@ -78,6 +69,6 @@ export default function Nav() {
           })}
         </nav>
       </div>
-    </motion.header>
+    </header>
   );
 }
