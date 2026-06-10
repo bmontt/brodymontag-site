@@ -136,7 +136,19 @@ export default function Home() {
 
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="relative z-10 flex min-h-screen flex-col justify-center px-6 md:px-12">
-        <motion.div style={{ y: heroY }} className="mx-auto w-full max-w-5xl">
+        <motion.div style={{ y: heroY }} className="relative mx-auto w-full max-w-5xl">
+
+          {/* soft scrim — dims the animation behind the hero content for legibility */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute"
+            style={{
+              inset: "-2.5rem -3rem",
+              zIndex: -1,
+              background:
+                "radial-gradient(ellipse 70% 86% at 30% 50%, rgba(19,22,27,0.72), rgba(19,22,27,0.45) 45%, transparent 78%)",
+            }}
+          />
 
           <h1
             className="font-sans font-light text-foreground"
@@ -210,7 +222,7 @@ export default function Home() {
                 onMouseEnter={() => setHoveredHeroLink(id)}
                 onMouseLeave={() => setHoveredHeroLink(null)}
                 style={{
-                  color: hoveredHeroLink === id ? `rgb(${glowRgb})` : "rgba(255,255,255,0.18)",
+                  color: hoveredHeroLink === id ? `rgb(${glowRgb})` : "rgba(255,255,255,0.28)",
                   transition: "color 0.25s ease",
                 }}
               >
