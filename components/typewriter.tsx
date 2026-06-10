@@ -6,10 +6,12 @@ export default function Typewriter({
   text,
   charDelay = 55,
   startDelay = 0,
+  onComplete,
 }: {
   text: string;
   charDelay?: number;
   startDelay?: number;
+  onComplete?: () => void;
 }) {
   const [displayed, setDisplayed] = useState("");
 
@@ -22,6 +24,7 @@ export default function Typewriter({
           setDisplayed(text.slice(0, ++i));
         } else {
           clearInterval(intervalId);
+          onComplete?.();
         }
       }, charDelay);
     }, startDelay);
@@ -30,7 +33,7 @@ export default function Typewriter({
       clearTimeout(timeoutId);
       clearInterval(intervalId);
     };
-  }, [text, charDelay, startDelay]);
+  }, [text, charDelay, startDelay, onComplete]);
 
   return <span>{displayed}</span>;
 }
