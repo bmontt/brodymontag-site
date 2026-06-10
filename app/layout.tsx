@@ -29,7 +29,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`h-full antialiased dark ${geistMono.variable}`}>
+    <html
+      lang="en"
+      className={`h-full antialiased dark ${geistMono.variable}`}
+      style={{ backgroundColor: "oklch(0.14 0.006 235)" }}
+    >
       <body className="min-h-full bg-background text-foreground">
         {children}
         <Analytics />

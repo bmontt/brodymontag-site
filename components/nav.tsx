@@ -44,13 +44,7 @@ export default function Nav() {
           : "bg-transparent border-b border-transparent"
       }`}
     >
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-        <a
-          href="#"
-          className="font-mono text-xs text-foreground/30 transition-colors hover:text-foreground/70 tracking-widest"
-        >
-          BM
-        </a>
+      <div className="mx-auto flex max-w-5xl items-center justify-end px-6 py-5">
         <nav className="flex items-center gap-8">
           {NAV_LINKS.map(({ label, href }) => {
             const id = href.replace("#", "");
