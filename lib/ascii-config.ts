@@ -31,11 +31,14 @@ export const asciiConfig = {
   // Directional "stochastic light" shine -----------------------------------
   shimmerMin:     2,      // min amplitude level that catches light (1–5)
   lightSharpness: 3.4,    // specular exponent — tightness of the shine
-  lightStrength:  0.22,   // max highlight alpha
+  lightStrength:  0.26,   // max highlight alpha
   lightJitter:    0.07,   // stochastic per-frame wander of the light angle
   lightDrift:     0.015,  // steady rotation of the light angle
   lightSat:       0.58,   // tint saturation (0 = pure white light)
   lightHueDrift:  1.2,    // how fast the faint tint hue travels
+  // Brightness-gated glow — soft halo on the brightest lit cells only -------
+  glowThresholdFrac: 0.55, // fraction of lightStrength a cell's spec must exceed to glow
+  glowStrength:      0.55, // halo alpha multiplier above the threshold
   // Readability — calm the field behind content past the hero ---------------
   contentDim:     0.42,   // overall animation intensity once scrolled past hero
   columnCalm:     0.55,   // extra dimming inside the centred reading column

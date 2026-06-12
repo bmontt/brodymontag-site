@@ -23,6 +23,33 @@ const STYLES: readonly string[] = [
   "rgba(210,212,218,0.110)",
 ];
 
+/* ─── bake cache ─────────────────────────────────────────────────────────────── */
+interface CacheEntry {
+  key: string;
+  buf: FrameBuf;
+  normX: Float32Array<ArrayBuffer>;
+  normY: Float32Array<ArrayBuffer>;
+}
+
+const BAKE_CACHE_MAX = 4;
+const bakeCache: CacheEntry[] = [];
+
+function getBakeCacheKey(logW: number, logH: number, dpr: number, gridW: number, gridH: number): string {
+  return `${logW}x${logH}@${dpr}@${gridW}x${gridH}`;
+}
+
+function lookupBakeCache(key: string): CacheEntry | undefined {
+  return bakeCache.find(e => e.key === key);
+}
+
+function storeBakeCache(entry: CacheEntry): void {
+  // evict oldest if at cap
+  if (bakeCache.length >= BAKE_CACHE_MAX) {
+    bakeCache.shift();
+  }
+  bakeCache.push(entry);
+}
+
 /* ─── light-tint palette (faint, near-white) ────────────────────────────────── */
 function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   const c = (1 - Math.abs(2 * l - 1)) * s;
@@ -44,9 +71,9 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
 }
 
 // Near-white tints whose faint hue drifts; alpha is applied live via globalAlpha
-function buildLight(sat: number): string[] {
+function buildLight(sat: number, lightness = 0.86): string[] {
   return Array.from({ length: STEPS }, (_, i) => {
-    const [r, g, b] = hslToRgb((i / STEPS) * 360, sat, 0.86);
+    const [r, g, b] = hslToRgb((i / STEPS) * 360, sat, lightness);
     return `rgb(${r},${g},${b})`;
   });
 }
@@ -129,7 +156,7 @@ function precompute(logW: number, logH: number, cellW: number, cellH: number): F
 }
 
 // Per-cell outward normal from screen center → drives the directional light.
-function computeNormals(cols: number, rows: number, cellW: number, cellH: number, logW: number, logH: number) {
+function computeNormals(cols: number, rows: number, cellW: number, cellH: number, logW: number, logH: number): { normX: Float32Array<ArrayBuffer>; normY: Float32Array<ArrayBuffer> } {
   const normX = new Float32Array(cols * rows);
   const normY = new Float32Array(cols * rows);
   const ctrX = logW / 2, ctrY = logH / 2;
@@ -161,15 +188,18 @@ export default function AsciiBg({ subpage = false }: { subpage?: boolean }) {
     const cv  = rawCanvas;
     const gfx = rawCtx;
 
-    let animId: number;
+    let animId = 0;
     let lastTime = 0;
     let frameIndex = 0;
     let buf: FrameBuf | null = null;
     let normX = new Float32Array(0);
     let normY = new Float32Array(0);
     let logW = 0, logH = 0;
+    let dpr = 1;
     let gridW = asciiConfig.cellW, gridH = asciiConfig.cellH;
     let lightPalette = buildLight(asciiConfig.lightSat);
+    // brighter, slightly more saturated band for the glow halo on peak cells
+    const glowPalette = buildLight(Math.min(asciiConfig.lightSat * 1.15, 1), 0.93);
     let lightAngle = Math.random() * Math.PI * 2;
     let lightHuePhase = 0;
     let scrollY = 0;                       // drives the past-hero readability calm
@@ -177,10 +207,23 @@ export default function AsciiBg({ subpage = false }: { subpage?: boolean }) {
 
     const trail: TrailPt[] = [];
 
+    // prefers-reduced-motion check
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     function recomputeField() {
-      buf = precompute(logW, logH, gridW, gridH);
-      const n = computeNormals(buf.cols, buf.rows, gridW, gridH, logW, logH);
-      normX = n.normX; normY = n.normY;
+      const key = getBakeCacheKey(logW, logH, dpr, gridW, gridH);
+      const cached = lookupBakeCache(key);
+      if (cached) {
+        buf = cached.buf;
+        normX = cached.normX;
+        normY = cached.normY;
+      } else {
+        buf = precompute(logW, logH, gridW, gridH);
+        const n = computeNormals(buf.cols, buf.rows, gridW, gridH, logW, logH);
+        normX = n.normX;
+        normY = n.normY;
+        storeBakeCache({ key, buf, normX, normY });
+      }
       frameIndex = 0;
     }
 
@@ -189,7 +232,7 @@ export default function AsciiBg({ subpage = false }: { subpage?: boolean }) {
       logH = window.innerHeight;
       gridW = asciiConfig.cellW;
       gridH = asciiConfig.cellH;
-      const dpr = window.devicePixelRatio || 1;
+      dpr = window.devicePixelRatio || 1;
       cv.width  = logW * dpr;
       cv.height = logH * dpr;
       cv.style.width  = `${logW}px`;
@@ -225,20 +268,26 @@ export default function AsciiBg({ subpage = false }: { subpage?: boolean }) {
       return supp > 1 ? 1 : supp;
     }
 
-    function draw(now: number) {
-      animId = requestAnimationFrame(draw);
+    function drawFrame(now: number, isStatic: boolean) {
       const cfg = asciiConfig;
-      const msPerFrame = 1000 / cfg.fpsCap;
-      if (now - lastTime < msPerFrame) return;
-      lastTime = now;
+      if (!isStatic) {
+        const msPerFrame = 1000 / cfg.fpsCap;
+        if (now - lastTime < msPerFrame) return;
+        lastTime = now;
+      }
       if (!buf) return;
 
       // stochastic directional light — angle random-walks + steady drift
-      lightAngle += cfg.lightDrift + (Math.random() - 0.5) * cfg.lightJitter;
-      lightHuePhase += cfg.lightHueDrift;
+      if (!isStatic) {
+        lightAngle += cfg.lightDrift + (Math.random() - 0.5) * cfg.lightJitter;
+        lightHuePhase += cfg.lightHueDrift;
+      }
       const lx = Math.cos(lightAngle), ly = Math.sin(lightAngle);
       const sharp = cfg.lightSharpness, strength = cfg.lightStrength;
       const shimmerMin = cfg.shimmerMin;
+      // dynamic glow gate: scales with lightStrength rather than a fixed magic number
+      const glowThr = strength * cfg.glowThresholdFrac;
+      const glowRange = Math.max(strength - glowThr, 0.001);
 
       while (trail.length && now - trail[0].t > cfg.trailMs) trail.shift();
 
@@ -313,11 +362,26 @@ export default function AsciiBg({ subpage = false }: { subpage?: boolean }) {
             if (facing > 0) {
               const spec = Math.pow(facing, sharp) * strength * baseAlpha;
               if (spec > 0.012) {
-                gfx.globalAlpha = spec; curAlpha = spec;
                 let hi = ((lightHuePhase + col * 0.7 + row * 0.5) | 0) % STEPS;
                 if (hi < 0) hi += STEPS;
+                gfx.globalAlpha = spec; curAlpha = spec;
                 gfx.fillStyle = lightPalette[hi];
                 gfx.fillText(CHARS[level], xPx, yPx);
+
+                // brightness-gated glow: only peak-band cells get a soft halo —
+                // a 4-offset fake bloom + brighter core (no shadowBlur in the hot path)
+                if (spec > glowThr) {
+                  const g = ((spec - glowThr) / glowRange) * cfg.glowStrength;
+                  const ch = CHARS[level];
+                  gfx.fillStyle = glowPalette[hi];
+                  gfx.globalAlpha = g * 0.16;
+                  gfx.fillText(ch, xPx - 1, yPx);
+                  gfx.fillText(ch, xPx + 1, yPx);
+                  gfx.fillText(ch, xPx, yPx - 1);
+                  gfx.fillText(ch, xPx, yPx + 1);
+                  gfx.globalAlpha = g * spec; curAlpha = g * spec;
+                  gfx.fillText(ch, xPx, yPx);
+                }
               }
             }
           }
@@ -325,30 +389,66 @@ export default function AsciiBg({ subpage = false }: { subpage?: boolean }) {
       }
 
       if (curAlpha !== 1) gfx.globalAlpha = 1;
-      frameIndex = (frameIndex + 1) % frames;
+      if (!isStatic) {
+        frameIndex = (frameIndex + 1) % frames;
+      }
+    }
+
+    function draw(now: number) {
+      animId = requestAnimationFrame(draw);
+      drawFrame(now, false);
     }
 
     let resizeTimer: ReturnType<typeof setTimeout>;
     const onResize = () => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(setup, 200);
+      resizeTimer = setTimeout(() => {
+        setup();
+        if (reducedMotion) {
+          drawFrame(performance.now(), true);
+        }
+      }, 200);
     };
 
     const onScroll = () => { scrollY = window.scrollY; };
 
+    // visibility change: pause rAF when tab is hidden, resume when visible
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        if (animId !== 0) {
+          cancelAnimationFrame(animId);
+          animId = 0;
+        }
+      } else {
+        if (!reducedMotion && animId === 0) {
+          lastTime = 0; // reset so there is no time jump
+          animId = requestAnimationFrame(draw);
+        }
+      }
+    };
+
     setup();
     scrollY = window.scrollY;
-    animId = requestAnimationFrame(draw);
+
+    if (reducedMotion) {
+      // draw a single static frame and stop — no rAF loop
+      drawFrame(performance.now(), true);
+    } else {
+      animId = requestAnimationFrame(draw);
+    }
+
     window.addEventListener("resize", onResize);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("pointermove", onMove);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
-      cancelAnimationFrame(animId);
+      if (animId !== 0) cancelAnimationFrame(animId);
       clearTimeout(resizeTimer);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("pointermove", onMove);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [subpage]);
 
@@ -357,7 +457,8 @@ export default function AsciiBg({ subpage = false }: { subpage?: boolean }) {
       className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
       style={{
         opacity: ready ? 1 : 0,
-        transition: "opacity 1.5s ease",
+        // delayed start so the hero typing animation leads, then they overlap
+        transition: "opacity 1.6s ease 0.7s",
         maskImage:
           "radial-gradient(ellipse 85% 75% at 50% 40%, black 35%, transparent 88%)",
         WebkitMaskImage:

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { motion, useScroll, useTransform, AnimatePresence, useReducedMotion } from "framer-motion";
 import { FaSoundcloud, FaGithub, FaInstagram, FaSpotify, FaLinkedinIn } from "react-icons/fa";
 import Nav from "@/components/nav";
 import AsciiBg from "@/components/ascii-bg";
@@ -77,8 +78,10 @@ const SOCIALS = [
 
 const ABOUT_META = [
   { label: "role",      value: "full stack developer · fiserv ml/ai team"               },
+  { label: "music",     value: "monty (us) · pb&j sounds cofounder · beatprint resident" },
   { label: "education", value: "bs computer science + ml · university of maryland, 2025" },
-  { label: "",          value: "sigma phi delta · basking ridge, nj"                     },
+  { label: "",          value: "sigma phi delta · ridge high '21"                        },
+  { label: "based",     value: "new jersey → washington, dc"                             },
 ];
 
 const CONTACT_ITEMS = [
@@ -126,8 +129,11 @@ export default function Home() {
   const [musicTab, setMusicTab] = useState<MusicTab>("shows");
   const [codeTab, setCodeTab] = useState<CodeTab>("projects");
 
+  const prefersReducedMotion = useReducedMotion();
+
   const { scrollY } = useScroll();
-  const heroY = useTransform(scrollY, [0, 700], [0, -80]);
+  const heroYParallax = useTransform(scrollY, [0, 700], [0, -80]);
+  const heroY = prefersReducedMotion ? 0 : heroYParallax;
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -141,9 +147,8 @@ export default function Home() {
           {/* soft scrim — dims the animation behind the hero content for legibility */}
           <div
             aria-hidden
-            className="pointer-events-none absolute"
+            className="pointer-events-none absolute -inset-y-10 -inset-x-4 md:-inset-x-12"
             style={{
-              inset: "-2.5rem -3rem",
               zIndex: -1,
               background:
                 "radial-gradient(ellipse 70% 86% at 30% 50%, rgba(19,22,27,0.72), rgba(19,22,27,0.45) 45%, transparent 78%)",
@@ -230,6 +235,18 @@ export default function Home() {
               </a>
             ))}
           </motion.div>
+
+          {/* elevator pitch — persona summary with traveling shimmer */}
+          <motion.p
+            className="mt-12 max-w-xl font-mono text-xs leading-relaxed text-shimmer"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: LINKS_APPEAR + 0.5, duration: 0.8 }}
+          >
+            a software engineer specializing in machine learning and agentic systems — and,
+            performing as monty (us), a producer and dj with credits up to the #1-ranked club
+            in the country. one aim across both: technology in service of sound.
+          </motion.p>
         </motion.div>
       </section>
 
@@ -304,18 +321,25 @@ export default function Home() {
                             )}
                           </div>
                           {firstImage && (
-                            <motion.img
-                              src={firstImage.src}
-                              alt=""
-                              loading="lazy"
-                              className="hidden sm:block shrink-0 h-12 w-16 object-cover border border-white/8"
+                            <motion.div
+                              className="hidden sm:block shrink-0 h-12 w-16 overflow-hidden border border-white/8"
                               style={{ filter: PHOTO_FILTER }}
                               whileHover={{
                                 filter: "grayscale(0) brightness(1) contrast(1)",
                                 borderColor: "rgba(255,255,255,0.2)",
                               }}
                               transition={{ duration: 0.4 }}
-                            />
+                            >
+                              <Image
+                                src={firstImage.src}
+                                alt=""
+                                width={128}
+                                height={96}
+                                loading="lazy"
+                                className="h-full w-full object-cover"
+                                sizes="64px"
+                              />
+                            </motion.div>
                           )}
                         </div>
                       </motion.div>
@@ -540,10 +564,11 @@ export default function Home() {
                   <div key={category.label}>
                     <p className="font-mono text-xs text-foreground/35 mb-3">{category.label}</p>
                     <div className="flex flex-wrap gap-2">
-                      {category.items.map((item) => (
+                      {category.items.map((item, i) => (
                         <span
                           key={item}
-                          className="font-mono text-xs text-foreground/70 border border-white/10 px-3 py-1 transition-colors hover:border-white/25 hover:text-foreground/90"
+                          className="pill-iridescent font-mono text-xs text-foreground/70 border border-white/10 px-3 py-1 hover:text-foreground/90 transition-colors"
+                          style={{ animationDelay: `${-((i * 1.37) % 4.2)}s` }}
                         >
                           {item}
                         </span>
@@ -572,10 +597,11 @@ export default function Home() {
                       {exp.description}
                     </p>
                     <div className="flex flex-wrap gap-2 pl-3">
-                      {exp.tags.map((tag) => (
+                      {exp.tags.map((tag, i) => (
                         <span
                           key={tag}
-                          className="font-mono text-xs text-foreground/30 border border-white/8 px-2 py-0.5"
+                          className="pill-iridescent font-mono text-xs text-foreground/30 border border-white/8 px-2 py-0.5"
+                          style={{ animationDelay: `${-((i * 1.71) % 4.2)}s` }}
                         >
                           {tag}
                         </span>
@@ -605,36 +631,116 @@ export default function Home() {
                 ))}
               </div>
 
-              <motion.p
-                className="font-sans text-base text-foreground/65 leading-relaxed max-w-xl"
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-              >
-                I build tools at the intersection of technology and music — audio ML pipelines,
-                LLM agent systems, and the infrastructure for my own creative work. As Monty&nbsp;(US),
-                I co-founded{" "}
-                <a
-                  href="https://pbandjsounds.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-foreground/85 underline underline-offset-4 decoration-white/20 hover:decoration-accent/50 transition-colors"
+              <div className="flex flex-col gap-5 max-w-xl">
+                <motion.p
+                  className="font-sans text-base text-foreground/65 leading-relaxed"
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.55, delay: 0 }}
                 >
-                  PB&amp;J Sounds
-                </a>
-                , an East Coast house collective and label, and hold a residency with{" "}
-                <a
-                  href="https://www.instagram.com/beatprint__"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-foreground/85 underline underline-offset-4 decoration-white/20 hover:decoration-accent/50 transition-colors"
+                  I grew up in New Jersey splitting time between making things and performing them —
+                  two halves that never felt separate. Before I wrote a line of code I was a
+                  competitive ice hockey player and a classically trained musician: piano, oboe,
+                  viola, drums. What held my attention was always the building, whether the result
+                  was a song, a system, or a set.
+                </motion.p>
+
+                <motion.p
+                  className="font-sans text-base text-foreground/65 leading-relaxed"
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.55, delay: 0.07 }}
                 >
-                  Beatprint
-                </a>{" "}
-                at Transmission DC. The engineering and the music aren&apos;t separate pursuits —
-                the code serves the sets, and the sets inform the code.
-              </motion.p>
+                  I started producing at ten on GarageBand and moved to FL Studio two years later.
+                  Early on I made rap and hip-hop beats for local artists; then dance music
+                  reorganized how I heard everything. Now I produce and DJ as Monty&nbsp;(US) — warm
+                  basslines, crisp percussion, a UK- and minimal-leaning take on house and tech
+                  house — and I&apos;ve opened and closed for artists I grew up listening to across
+                  DC, Baltimore, and New York.
+                </motion.p>
+
+                <motion.p
+                  className="font-sans text-base text-foreground/65 leading-relaxed"
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.55, delay: 0.14 }}
+                >
+                  I studied Computer Science at the University of Maryland, where I gravitated toward
+                  audio engineering, signal processing, and machine learning — including
+                  research-grade work on auditory signals. Today I&apos;m a full-stack developer on
+                  the ML/AI team at Fiserv. The thesis behind nearly everything I build holds steady:
+                  technology in service of music. Most projects I take on solve a problem I have as
+                  an artist — a setlist optimizer, audio-analysis pipelines, the tooling that runs my
+                  own workflow.
+                </motion.p>
+
+                <motion.p
+                  className="font-sans text-base text-foreground/65 leading-relaxed"
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.55, delay: 0.21 }}
+                >
+                  With two close friends I co-founded{" "}
+                  <a
+                    href="https://pbandjsounds.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-foreground/85 underline underline-offset-4 decoration-white/20 hover:decoration-accent/50 transition-colors"
+                  >
+                    PB&amp;J Sounds
+                  </a>
+                  , an East Coast collective and label built around underground house, and I hold a
+                  residency with{" "}
+                  <a
+                    href="https://www.instagram.com/beatprint__"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-foreground/85 underline underline-offset-4 decoration-white/20 hover:decoration-accent/50 transition-colors"
+                  >
+                    Beatprint
+                  </a>{" "}
+                  at Transmission DC. My investment is in the grassroots side of this scene — small
+                  rooms, real crowds, music you have to dig for — and in owning the whole stack that
+                  supports it, from the label&apos;s website to the software that prepares my sets.
+                </motion.p>
+
+                <motion.p
+                  className="font-sans text-base text-foreground/65 leading-relaxed"
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.55, delay: 0.28 }}
+                >
+                  Lately my focus has been agentic AI and local-first systems: running models on my
+                  own hardware, building small fleets of agents, and writing the architecture down
+                  before the code. I work for craft, rigor, and ownership — understanding something
+                  well enough to build it myself, and building it well enough to trust it on stage or
+                  in production.
+                </motion.p>
+
+                <motion.p
+                  className="font-sans text-base text-foreground/65 leading-relaxed"
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.55, delay: 0.35 }}
+                >
+                  Right now, music is the priority. Production is the work that compounds — it drives
+                  the long-term growth and the bookings that follow — so most of my creative energy
+                  lives in the studio and the next room I&apos;m trying to play. The direction I care
+                  most about pulls both halves together: machine learning and signal processing
+                  applied to sound — deep learning, on-device and edge models, the territory companies
+                  like Dolby, Bose, and Sony work in — aimed at live performance and the tools
+                  producers use to make records. I want to build the instruments and systems that
+                  change how DJs play and how records get made. The engineering and the music were
+                  never two separate careers to me. They&apos;re one practice: the code serves the
+                  sets, and the sets inform the code.
+                </motion.p>
+              </div>
 
               <AsciiRule className="my-10" />
 
@@ -666,11 +772,15 @@ export default function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.7, delay: 0.2 }}
             >
-              <img
+              <Image
                 src="/brody.optimized.webp"
                 alt="Brody Montag"
+                width={144}
+                height={176}
+                loading="lazy"
                 className="w-36 h-44 object-cover object-top border border-white/10"
                 style={{ filter: PHOTO_FILTER }}
+                sizes="144px"
               />
               <p className="font-mono text-xs text-foreground/25">monty (us)</p>
             </motion.div>

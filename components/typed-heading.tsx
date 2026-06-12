@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useReducedMotion } from "framer-motion";
 
 export interface Typo {
   at: number;       // index in `text` the mistake happens *before* (use text.length for a trailing typo)
@@ -65,10 +66,18 @@ export default function TypedHeading({
   className?: string;
   onComplete?: () => void;
 }) {
-  const [displayed, setDisplayed] = useState("");
-  const [done, setDone] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const [displayed, setDisplayed] = useState(prefersReducedMotion ? text : "");
+  const [done, setDone] = useState(!!prefersReducedMotion);
 
   useEffect(() => {
+    if (prefersReducedMotion) {
+      setDisplayed(text);
+      setDone(true);
+      onComplete?.();
+      return;
+    }
+
     const frames = buildFrames(text, typos);
     let idx = 0;
     let timer: ReturnType<typeof setTimeout>;
@@ -90,7 +99,7 @@ export default function TypedHeading({
     };
     // typos/onComplete intentionally excluded — the timeline is built once per `text`
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text]);
+  }, [text, prefersReducedMotion]);
 
   return (
     <span className={className}>

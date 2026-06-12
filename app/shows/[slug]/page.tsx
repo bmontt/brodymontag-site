@@ -1,6 +1,7 @@
 "use client";
 
 import { notFound, useParams } from "next/navigation";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import Nav from "@/components/nav";
 import AsciiBg from "@/components/ascii-bg";
@@ -143,19 +144,25 @@ export default function ShowPage() {
                 className={`grid gap-3 ${images.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}
               >
                 {images.map((img, i) => (
-                  <motion.img
+                  <motion.div
                     key={i}
-                    src={img.src}
-                    alt=""
-                    loading="lazy"
-                    className="w-full object-cover border border-white/8"
-                    style={{ filter: PHOTO_FILTER, maxHeight: "360px", objectFit: "cover" }}
+                    className="relative w-full overflow-hidden border border-white/8"
+                    style={{ filter: PHOTO_FILTER, maxHeight: "360px", aspectRatio: "16/9" }}
                     whileHover={{
                       filter: "grayscale(0) brightness(1) contrast(1)",
                       borderColor: "rgba(255,255,255,0.18)",
                     }}
                     transition={{ duration: 0.4 }}
-                  />
+                  >
+                    <Image
+                      src={img.src}
+                      alt=""
+                      fill
+                      loading="lazy"
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, 50vw"
+                    />
+                  </motion.div>
                 ))}
               </div>
             </motion.div>

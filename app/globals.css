@@ -1,13 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@font-face {
-  font-family: "Neue Haas Grotesk Medium";
-  src: url("/fonts/NeueHaasDisplayMedium.ttf") format("truetype");
-  font-weight: 500;
-  font-style: normal;
-}
-
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -30,7 +23,7 @@
 }
 
 @theme inline {
-  --font-sans: "Neue Haas Grotesk Medium", "Helvetica Neue", sans-serif;
+  --font-sans: var(--font-neue), "Helvetica Neue", sans-serif;
   --font-mono: var(--font-geist-mono, "Courier New", monospace);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -83,3 +76,57 @@
 ::-webkit-scrollbar { display: none; }
 * { -ms-overflow-style: none; scrollbar-width: none; }
 html { scroll-behavior: smooth; }
+
+/* No horizontal pan — clip (not hidden) so position: sticky still works */
+html, body { overflow-x: clip; }
+
+/* Traveling pastel shimmer for the hero elevator pitch —
+   a highlight band sweeps through the text, à la CLI loading text */
+.text-shimmer {
+  background: linear-gradient(
+    100deg,
+    oklch(0.52 0 0) 38%,
+    oklch(0.88 0.055 300) 46%,
+    oklch(0.90 0.05 200) 50%,
+    oklch(0.88 0.055 100) 54%,
+    oklch(0.52 0 0) 62%
+  );
+  background-size: 250% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: shimmer-sweep 5.5s ease-in-out infinite;
+}
+@keyframes shimmer-sweep {
+  0%   { background-position: 125% center; }
+  100% { background-position: -125% center; }
+}
+
+/* Iridescent pill — border + soft shadow cycle through the same pastel
+   band as the background's stochastic light, slow ambient circling */
+@property --pill-hue {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.pill-iridescent {
+  border-color: oklch(0.78 0.055 var(--pill-hue) / 0.32) !important;
+  box-shadow:
+    0 0 9px -2px oklch(0.80 0.06 var(--pill-hue) / 0.22),
+    inset 0 0 6px -3px oklch(0.80 0.06 var(--pill-hue) / 0.14);
+  animation: pill-hue-cycle 4.2s linear infinite;
+}
+@keyframes pill-hue-cycle {
+  to { --pill-hue: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-shimmer {
+    animation: none;
+    background: none;
+    color: oklch(0.62 0 0);
+  }
+  .pill-iridescent {
+    animation: none;
+  }
+}

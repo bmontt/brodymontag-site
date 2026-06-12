@@ -16,14 +16,16 @@ export default function PlatformCard({
   details,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const glowRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const rect = cardRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    const el = glowRef.current;
+    if (!rect || !el) return;
+    el.style.setProperty("--mx", (e.clientX - rect.left) + "px");
+    el.style.setProperty("--my", (e.clientY - rect.top) + "px");
   }, []);
 
   return (
@@ -37,11 +39,14 @@ export default function PlatformCard({
     >
       {/* cursor glow */}
       <div
+        ref={glowRef}
         className="pointer-events-none absolute inset-0 z-0"
         style={{
+          ["--mx" as string]: "0px",
+          ["--my" as string]: "0px",
           opacity: hovered ? 1 : 0,
           transition: "opacity 0.35s ease",
-          background: `radial-gradient(circle 220px at ${pos.x}px ${pos.y}px, rgba(${glowRgb}, 0.10), transparent 72%)`,
+          background: `radial-gradient(circle 220px at var(--mx) var(--my), rgba(${glowRgb}, 0.10), transparent 72%)`,
         }}
       />
 
