@@ -120,6 +120,16 @@ html, body { overflow-x: clip; }
   to { --pill-hue: 360deg; }
 }
 
+/* Iridescent text outline — a fine pastel stroke that circles the same hue
+   band as the pills; fill paints on top (paint-order) so only the rim shows.
+   Used on the hero name and section headings to make the theme the through-line. */
+.text-iridescent-stroke {
+  -webkit-text-stroke-width: 1.1px;
+  -webkit-text-stroke-color: oklch(0.83 0.075 var(--pill-hue) / 0.5);
+  paint-order: stroke fill;
+  animation: pill-hue-cycle 4.2s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .text-shimmer {
     animation: none;
@@ -127,6 +137,9 @@ html, body { overflow-x: clip; }
     color: oklch(0.62 0 0);
   }
   .pill-iridescent {
+    animation: none;
+  }
+  .text-iridescent-stroke {
     animation: none;
   }
 }

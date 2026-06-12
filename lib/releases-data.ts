@@ -13,18 +13,8 @@ export interface Release {
   description?: string;
 }
 
-export const releases: Release[] = [
-  {
-    id: "fire",
-    title: "when a fire starts to burn",
-    date: "oct 2025",
-    type: "single",
-    tags: ["tech house", "minimal"],
-    links: [
-      { platform: "spotify",       href: "https://spotify.link/vVmdengZJXb"        },
-      { platform: "soundcloud",    href: "https://soundcloud.com/brodymontag"       },
-      { platform: "all platforms", href: "https://ffm.to/whenafirestartstoburn"     },
-    ],
-    description: "debut single. inspired by the disclosure original — restructured for the modern tech house floor.",
-  },
-];
+import { content } from "./content";
+
+// Copy lives in content.json (music.releases.items); Release stays the typed
+// contract. JSON widens the `type` union, so cast through unknown re-narrows.
+export const releases: Release[] = content.music.releases.items as unknown as Release[];

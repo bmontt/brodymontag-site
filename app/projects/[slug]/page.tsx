@@ -53,7 +53,7 @@ export default function ProjectPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             <h1
-              className="font-sans font-light text-foreground/90"
+              className="text-iridescent-stroke font-sans font-light text-foreground/90"
               style={{ fontSize: "clamp(1.6rem, 4vw, 2.8rem)", letterSpacing: "-0.02em", lineHeight: 1.1 }}
             >
               {project.name}
