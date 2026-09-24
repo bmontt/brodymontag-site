@@ -14,7 +14,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
     "gsap": "^3.15.0",
-    "next": "16.2.9",
+    "next": "16.3.3",
     "postprocessing": "^6.39.5",
     "react": "19.2.4",
     "react-dom": "19.2.4",
