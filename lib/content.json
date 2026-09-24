@@ -1,12 +1,10 @@
 {
   "_README": "Single source of truth for all site copy. Edit text here; the components read from this file. Conventions: (1) inline links in prose use markdown [text](url); (2) `icon` fields are string keys mapped to React icons in code (github | soundcloud | spotify | instagram | linkedin); (3) `href` of value 'mailto:...' opens email; (4) section keys double as DOM ids / nav targets — don't rename without updating nav. Button/tab labels (shows/releases/collective, projects/stack/experience) are intentionally NOT here — they're UI controls, not content.",
-
   "meta": {
     "name": "Brody Montag",
     "domain": "brodymontag.com",
     "copyright": "© 2026 brody montag"
   },
-
   "sections": {
     "presence": "presence",
     "music": "music",
@@ -14,28 +12,71 @@
     "about": "about",
     "contact": "contact"
   },
-
   "hero": {
     "name": "Brody Montag",
     "subtitle": "full stack developer · dj/producer",
     "_subtitleNote": "Length drives the link/pitch reveal timing (currently 38 chars). If you change it, the staggered entrance retimes automatically once wired.",
     "elevatorPitch": "a software engineer specializing in machine learning and agentic systems — and, performing as monty (us), a producer and dj with credits up to the #1-ranked club in the country. one aim across both: technology in service of sound.",
     "links": [
-      { "id": "sc", "icon": "soundcloud", "label": "soundcloud", "href": "https://soundcloud.com/brodymontag",                      "glowRgb": "255, 85, 0" },
-      { "id": "gh", "icon": "github",     "label": "github",     "href": "https://github.com/bmontt",                               "glowRgb": "210, 210, 210" },
-      { "id": "sp", "icon": "spotify",    "label": "spotify",    "href": "https://open.spotify.com/artist/3uIzwP6Ab6TgP61naHtDMO", "glowRgb": "29, 185, 84" },
-      { "id": "ig", "icon": "instagram",  "label": "instagram",  "href": "https://www.instagram.com/brodymontag",                   "glowRgb": "193, 53, 132" },
-      { "id": "li", "icon": "linkedin",   "label": "linkedin",   "href": "https://www.linkedin.com/in/brody-montag",                "glowRgb": "0, 119, 181" }
+      {
+        "id": "sc",
+        "icon": "soundcloud",
+        "label": "soundcloud",
+        "href": "https://soundcloud.com/brodymontag",
+        "glowRgb": "255, 85, 0"
+      },
+      {
+        "id": "gh",
+        "icon": "github",
+        "label": "github",
+        "href": "https://github.com/bmontt",
+        "glowRgb": "210, 210, 210"
+      },
+      {
+        "id": "sp",
+        "icon": "spotify",
+        "label": "spotify",
+        "href": "https://open.spotify.com/artist/3uIzwP6Ab6TgP61naHtDMO",
+        "glowRgb": "29, 185, 84"
+      },
+      {
+        "id": "ig",
+        "icon": "instagram",
+        "label": "instagram",
+        "href": "https://www.instagram.com/brodymontag",
+        "glowRgb": "193, 53, 132"
+      },
+      {
+        "id": "li",
+        "icon": "linkedin",
+        "label": "linkedin",
+        "href": "https://www.linkedin.com/in/brody-montag",
+        "glowRgb": "0, 119, 181"
+      }
     ]
   },
-
   "about": {
     "meta": [
-      { "label": "role",      "value": "full stack developer · fiserv ml/ai team" },
-      { "label": "music",     "value": "monty (us) · pb&j sounds cofounder · beatprint resident" },
-      { "label": "education", "value": "bs computer science + ml · university of maryland, 2025" },
-      { "label": "",          "value": "sigma phi delta · ridge high '21" },
-      { "label": "based",     "value": "new jersey → washington, dc" }
+      {
+        "label": "role",
+        "value": "full stack developer · fiserv ml/ai team"
+      },
+      {
+        "label": "music",
+        "value": "monty (us) · pb&j sounds cofounder · beatprint resident"
+      },
+      {
+        "label": "education",
+        "value": "bs computer science + ml · university of maryland, 2025"
+      },
+      {
+        "label": "",
+        "value": "sigma phi delta · ridge high '21"
+      },
+      {
+        "label": "based",
+        "value": "new jersey → washington, dc"
+      }
     ],
     "paragraphs": [
       "I grew up in New Jersey splitting time between making things and performing them — two halves that never felt separate. Before I wrote a line of code I was a competitive ice hockey player and a classically trained musician: piano, oboe, viola, drums. What held my attention was always the building, whether the result was a song, a system, or a set.",
@@ -47,21 +88,39 @@
     ],
     "photoCaption": "monty (us)",
     "socials": [
-      { "label": "soundcloud ↗", "href": "https://soundcloud.com/brodymontag" },
-      { "label": "spotify ↗",    "href": "https://open.spotify.com/artist/3uIzwP6Ab6TgP61naHtDMO" },
-      { "label": "instagram ↗",  "href": "https://www.instagram.com/brodymontag" },
-      { "label": "github ↗",     "href": "https://github.com/bmontt" }
+      {
+        "label": "soundcloud ↗",
+        "href": "https://soundcloud.com/brodymontag"
+      },
+      {
+        "label": "spotify ↗",
+        "href": "https://open.spotify.com/artist/3uIzwP6Ab6TgP61naHtDMO"
+      },
+      {
+        "label": "instagram ↗",
+        "href": "https://www.instagram.com/brodymontag"
+      },
+      {
+        "label": "github ↗",
+        "href": "https://github.com/bmontt"
+      }
     ]
   },
-
   "contact": {
     "headline": "Let's work together.",
     "items": [
-      { "label": "booking",   "value": "brodymontag123@gmail.com", "href": "mailto:brodymontag123@gmail.com" },
-      { "label": "pb&j mgmt", "value": "pbandjmgmt@gmail.com",     "href": "mailto:pbandjmgmt@gmail.com" }
+      {
+        "label": "booking",
+        "value": "brodymontag123@gmail.com",
+        "href": "mailto:brodymontag123@gmail.com"
+      },
+      {
+        "label": "pb&j mgmt",
+        "value": "pbandjmgmt@gmail.com",
+        "href": "mailto:pbandjmgmt@gmail.com"
+      }
     ]
   },
-
   "presence": {
     "platforms": [
       {
@@ -72,10 +131,25 @@
         "icon": "github",
         "glowRgb": "210, 210, 210",
         "details": [
-          { "label": "superset",             "value": "python · audio ml · dsp",  "href": "https://github.com/bmontt/superset" },
-          { "label": "roblox_bot",           "value": "python · claude api · cv", "href": "https://github.com/bmontt/roblox_bot" },
-          { "label": "Peak_Finding_Toolbox", "value": "python · eeg · hrtf",      "href": "https://github.com/bmontt/Peak_Finding_Toolbox" },
-          { "label": "Anvil",                "value": "typescript · llm agents · wip" }
+          {
+            "label": "superset",
+            "value": "python · audio ml · dsp",
+            "href": "https://github.com/bmontt/superset"
+          },
+          {
+            "label": "roblox_bot",
+            "value": "python · claude api · cv",
+            "href": "https://github.com/bmontt/roblox_bot"
+          },
+          {
+            "label": "Peak_Finding_Toolbox",
+            "value": "python · eeg · hrtf",
+            "href": "https://github.com/bmontt/Peak_Finding_Toolbox"
+          },
+          {
+            "label": "Anvil",
+            "value": "typescript · llm agents · wip"
+          }
         ]
       },
       {
@@ -85,12 +159,28 @@
         "href": "https://soundcloud.com/brodymontag",
         "icon": "soundcloud",
         "glowRgb": "255, 85, 0",
-        "stat": { "label": "tracks", "value": "34" },
+        "stat": {
+          "label": "tracks",
+          "value": "34"
+        },
         "details": [
-          { "label": "tracks",    "value": "34" },
-          { "label": "followers", "value": "134" },
-          { "label": "likes",     "value": "3,292" },
-          { "label": "latest",    "value": "when a fire starts to burn", "href": "https://soundcloud.com/brodymontag" }
+          {
+            "label": "tracks",
+            "value": "34"
+          },
+          {
+            "label": "followers",
+            "value": "134"
+          },
+          {
+            "label": "likes",
+            "value": "3,292"
+          },
+          {
+            "label": "latest",
+            "value": "when a fire starts to burn",
+            "href": "https://soundcloud.com/brodymontag"
+          }
         ]
       },
       {
@@ -101,9 +191,20 @@
         "icon": "spotify",
         "glowRgb": "29, 185, 84",
         "details": [
-          { "label": "artist",  "value": "MONTY US" },
-          { "label": "single",  "value": "when a fire starts to burn (oct 2025)", "href": "https://spotify.link/vVmdengZJXb" },
-          { "label": "release", "value": "ffm.to/whenafirestartstoburn",          "href": "https://ffm.to/whenafirestartstoburn" }
+          {
+            "label": "artist",
+            "value": "MONTY US"
+          },
+          {
+            "label": "single",
+            "value": "when a fire starts to burn (oct 2025)",
+            "href": "https://spotify.link/vVmdengZJXb"
+          },
+          {
+            "label": "release",
+            "value": "ffm.to/whenafirestartstoburn",
+            "href": "https://ffm.to/whenafirestartstoburn"
+          }
         ]
       },
       {
@@ -113,12 +214,29 @@
         "href": "https://www.instagram.com/brodymontag",
         "icon": "instagram",
         "glowRgb": "193, 53, 132",
-        "stat": { "label": "followers", "value": "2.4k" },
+        "stat": {
+          "label": "followers",
+          "value": "2.4k"
+        },
         "details": [
-          { "label": "followers",  "value": "2,442" },
-          { "label": "base",       "value": "ny / dc" },
-          { "label": "residency",  "value": "@beatprint__",  "href": "https://www.instagram.com/beatprint__" },
-          { "label": "collective", "value": "@pbandjsounds", "href": "https://www.instagram.com/pbandjsounds" }
+          {
+            "label": "followers",
+            "value": "2,442"
+          },
+          {
+            "label": "base",
+            "value": "ny / dc"
+          },
+          {
+            "label": "residency",
+            "value": "@beatprint__",
+            "href": "https://www.instagram.com/beatprint__"
+          },
+          {
+            "label": "collective",
+            "value": "@pbandjsounds",
+            "href": "https://www.instagram.com/pbandjsounds"
+          }
         ]
       },
       {
@@ -129,19 +247,89 @@
         "icon": "linkedin",
         "glowRgb": "0, 119, 181",
         "details": [
-          { "label": "role",      "value": "full stack developer" },
-          { "label": "company",   "value": "fiserv · ml/ai team" },
-          { "label": "education", "value": "umd cs + ml, 2025" }
+          {
+            "label": "role",
+            "value": "full stack developer"
+          },
+          {
+            "label": "company",
+            "value": "fiserv · ml/ai team"
+          },
+          {
+            "label": "education",
+            "value": "umd cs + ml, 2025"
+          }
         ]
       }
     ]
   },
-
   "music": {
     "shows": {
       "supportedLabel": "supported",
-      "supportedArtists": "biscits · martin ikin · ownboss · veggi · side quest · jake shore · madds",
+      "supportedArtists": [
+        {
+          "name": "ian asher",
+          "logo": "ian_asher_logo"
+        },
+        {
+          "name": "biscits",
+          "logo": "biscits_logo"
+        },
+        {
+          "name": "martin ikin",
+          "logo": "martin_ikin_logo"
+        },
+        {
+          "name": "ownboss",
+          "logo": "ownboss_logo"
+        },
+        {
+          "name": "veggi",
+          "logo": "veggi"
+        },
+        {
+          "name": "side quest",
+          "logo": "sidequest_logo"
+        },
+        {
+          "name": "jake shore",
+          "logo": "jake_shore"
+        },
+        {
+          "name": "madds",
+          "logo": "madds_logo"
+        }
+      ],
       "events": [
+        {
+          "id": "event_echostage_ianasher",
+          "slug": "echostage-ian-asher-sep-2026",
+          "title": "Echostage (DC)",
+          "date": "September 2026",
+          "description": "Opening + Closing for Ian Asher",
+          "media": [],
+          "venue": "Echostage",
+          "city": "Washington, DC",
+          "format": "open + close",
+          "headliners": [
+            "Ian Asher",
+            "NOTD",
+            "Will Sass"
+          ],
+          "promoter": "Club Glow",
+          "promoterUrl": "https://www.instagram.com/clubglow",
+          "context": "A return to Echostage a year after the first time on its stage — this time holding both ends of the night for Ian Asher's September 19 date, presented by Glow, with NOTD and Will Sass also on the bill. Opening means building the room from the doors; closing means carrying it home after the headliner.",
+          "links": [
+            {
+              "label": "echostage",
+              "href": "https://www.echostage.com"
+            },
+            {
+              "label": "event",
+              "href": "https://echostage.com/events/ian-asher/"
+            }
+          ]
+        },
         {
           "id": "event_afterdark",
           "slug": "after-dark-above-ten-aug-2026",
@@ -155,7 +343,12 @@
           "promoter": "Above Ten",
           "promoterUrl": "https://www.instagram.com/aboveten",
           "context": "After Dark is the Brooklyn party series run by Above Ten. A first headline booking — carrying a full New York night start to finish rather than warming the room for someone else, and the point where the work moves from support slots to leading the bill.",
-          "links": [{ "label": "above ten", "href": "https://www.instagram.com/aboveten" }]
+          "links": [
+            {
+              "label": "above ten",
+              "href": "https://www.instagram.com/aboveten"
+            }
+          ]
         },
         {
           "id": "event_echostage",
@@ -167,13 +360,24 @@
           "venue": "Echostage",
           "city": "Washington, DC",
           "format": "opening set",
-          "headliners": ["TWINSICK", "Sunday Scaries", "MOONLGHT", "Jake Shore"],
+          "headliners": [
+            "TWINSICK",
+            "Sunday Scaries",
+            "MOONLGHT",
+            "Jake Shore"
+          ],
           "promoter": "Club Glow",
           "promoterUrl": "https://www.instagram.com/clubglow",
           "context": "Echostage is a ~3,000-capacity room in Northeast DC — repeatedly ranked the #1 club in the United States in DJ Mag's Top 100 Clubs poll, and owned by Insomniac alongside Club Glow and Soundcheck. This was TWINSICK's Good Company Tour headline date, with PB&J on the official bill alongside MOONLGHT, Sunday Scaries, and Jake Shore. The largest room on the calendar to date.",
           "links": [
-            { "label": "echostage", "href": "https://www.echostage.com" },
-            { "label": "event", "href": "https://echostage.com/events/twinsick-good-company-tour-2025-september-19/" }
+            {
+              "label": "echostage",
+              "href": "https://www.echostage.com"
+            },
+            {
+              "label": "event",
+              "href": "https://echostage.com/events/twinsick-good-company-tour-2025-september-19/"
+            }
           ]
         },
         {
@@ -183,21 +387,38 @@
           "date": "April 2025",
           "description": "Opening + Closing for Martin Ikin",
           "media": [
-            { "type": "image", "src": "/BrodyEvents/ikin_trio.webp" },
-            { "type": "video", "src": "/BrodyEvents/ikin_fiub.mp4" },
-            { "type": "video", "src": "/BrodyEvents/ikin_percocet.mp4" }
+            {
+              "type": "image",
+              "src": "/BrodyEvents/ikin_trio.webp"
+            },
+            {
+              "type": "video",
+              "src": "/BrodyEvents/ikin_fiub.mp4"
+            },
+            {
+              "type": "video",
+              "src": "/BrodyEvents/ikin_percocet.mp4"
+            }
           ],
           "venue": "Zebbie's Garden",
           "city": "Washington, DC",
           "format": "open + close",
-          "headliners": ["Martin Ikin"],
+          "headliners": [
+            "Martin Ikin"
+          ],
           "promoter": "Club Glow",
           "promoterUrl": "https://www.instagram.com/clubglow",
           "context": "Martin Ikin is one of UK house's most established names — a Toolroom Records mainstay, trained jazz pianist, and Beatport's best-selling artist of 2020. Open-to-close alongside him at Zebbie's Garden covered the full arc of the night: early crowd-building through to a late peak-time close.",
           "setlistNote": "The \"Zebs MK2\" mix documents the energy from this booking and is available on pbandjsounds.com.",
           "links": [
-            { "label": "pbandjsounds.com", "href": "https://pbandjsounds.com" },
-            { "label": "martin ikin", "href": "https://www.instagram.com/martinikin" }
+            {
+              "label": "pbandjsounds.com",
+              "href": "https://pbandjsounds.com"
+            },
+            {
+              "label": "martin ikin",
+              "href": "https://www.instagram.com/martinikin"
+            }
           ]
         },
         {
@@ -207,17 +428,31 @@
           "date": "September 2025",
           "description": "Direct support for Veggi",
           "media": [
-            { "type": "image", "src": "/BrodyEvents/veggi_empty.webp" },
-            { "type": "video", "src": "/BrodyEvents/veggi_1.mp4" }
+            {
+              "type": "image",
+              "src": "/BrodyEvents/veggi_empty.webp"
+            },
+            {
+              "type": "video",
+              "src": "/BrodyEvents/veggi_1.mp4"
+            }
           ],
           "venue": "Flash",
           "city": "Washington, DC",
           "format": "direct support",
-          "headliners": ["Veggi"],
+          "headliners": [
+            "Veggi"
+          ],
           "context": "Flash is one of DC's most respected underground clubs — a Funktion-One club room, a ground-floor bar, and the Green Room rooftop with its retractable top. VEGGI is an LA-based producer and DJ who fuses house, hip-hop, and indie into a genreless sound, with roots in viral production videos before the move into club and festival rooms. Direct support — the slot just beneath the headliner. A competing Club Glow show the same night drew the room lighter than a usual Flash booking, but the crowd that came stayed locked in, and the set held.",
           "links": [
-            { "label": "flash dc", "href": "https://www.flashdc.com" },
-            { "label": "veggi", "href": "https://www.instagram.com/veggisounds" }
+            {
+              "label": "flash dc",
+              "href": "https://www.flashdc.com"
+            },
+            {
+              "label": "veggi",
+              "href": "https://www.instagram.com/veggisounds"
+            }
           ]
         },
         {
@@ -227,20 +462,37 @@
           "date": "July 2025",
           "description": "Opening + Closing for Biscits",
           "media": [
-            { "type": "image", "src": "/BrodyEvents/biscits_headshot.webp" },
-            { "type": "video", "src": "/BrodyEvents/biscits_one_pill.mp4" },
-            { "type": "video", "src": "/BrodyEvents/biscits_crazy.mp4" }
+            {
+              "type": "image",
+              "src": "/BrodyEvents/biscits_headshot.webp"
+            },
+            {
+              "type": "video",
+              "src": "/BrodyEvents/biscits_one_pill.mp4"
+            },
+            {
+              "type": "video",
+              "src": "/BrodyEvents/biscits_crazy.mp4"
+            }
           ],
           "venue": "Soundcheck",
           "city": "Washington, DC",
           "format": "open + close",
-          "headliners": ["Biscits"],
+          "headliners": [
+            "Biscits"
+          ],
           "promoter": "Club Glow",
           "promoterUrl": "https://www.instagram.com/clubglow",
           "context": "Biscits (Luke Wright Jones) is a UK DJ and producer working at the center of modern tech house — he broke out with \"Do It Like This\" on Sonny Fodera's SOLOTOKO imprint. Soundcheck draws large crowds for international headliners; this was open-to-close on a sold-out night.",
           "links": [
-            { "label": "biscits", "href": "https://www.instagram.com/biscitsmusic" },
-            { "label": "soundcheck dc", "href": "https://soundcheckdc.com" }
+            {
+              "label": "biscits",
+              "href": "https://www.instagram.com/biscitsmusic"
+            },
+            {
+              "label": "soundcheck dc",
+              "href": "https://soundcheckdc.com"
+            }
           ]
         },
         {
@@ -250,8 +502,14 @@
           "date": "June 2025",
           "description": "",
           "media": [
-            { "type": "video", "src": "/BrodyEvents/art_space_gas_pedal.mp4" },
-            { "type": "video", "src": "/BrodyEvents/art_space_freakuency.mp4" }
+            {
+              "type": "video",
+              "src": "/BrodyEvents/art_space_gas_pedal.mp4"
+            },
+            {
+              "type": "video",
+              "src": "/BrodyEvents/art_space_freakuency.mp4"
+            }
           ],
           "venue": "Public Art Space",
           "city": "New York, NY",
@@ -265,8 +523,14 @@
           "date": "October 2024",
           "description": "Halloween mainstage set",
           "media": [
-            { "type": "video", "src": "/BrodyEvents/powerplant_pump_it.mp4" },
-            { "type": "video", "src": "/BrodyEvents/powerplant_used_to_know.mp4" }
+            {
+              "type": "video",
+              "src": "/BrodyEvents/powerplant_pump_it.mp4"
+            },
+            {
+              "type": "video",
+              "src": "/BrodyEvents/powerplant_used_to_know.mp4"
+            }
           ],
           "venue": "Power Plant Live!",
           "city": "Baltimore, MD",
@@ -282,17 +546,30 @@
           "date": "September 2024",
           "description": "Opening for Öwnboss",
           "media": [
-            { "type": "image", "src": "/BrodyEvents/ownboss_focused.webp" },
-            { "type": "image", "src": "/BrodyEvents/silvertone_duo.webp" }
+            {
+              "type": "image",
+              "src": "/BrodyEvents/ownboss_focused.webp"
+            },
+            {
+              "type": "image",
+              "src": "/BrodyEvents/silvertone_duo.webp"
+            }
           ],
           "venue": "Soundcheck",
           "city": "Washington, DC",
           "format": "opening set",
-          "headliners": ["Öwnboss"],
+          "headliners": [
+            "Öwnboss"
+          ],
           "promoter": "Club Glow",
           "promoterUrl": "https://www.instagram.com/clubglow",
           "context": "Öwnboss (Eduardo Fornasa Zaniolo) is a Brazilian DJ and producer and one of Brazil's most-streamed dance acts — his \"Move Your Body\" with Sevek was among the most-played tracks in the world in 2022, and stays a peak-time staple worldwide. An early Soundcheck booking, and the start of a steady run of slots through the Club Glow pipeline.",
-          "links": [{ "label": "öwnboss", "href": "https://www.instagram.com/ownboss" }]
+          "links": [
+            {
+              "label": "öwnboss",
+              "href": "https://www.instagram.com/ownboss"
+            }
+          ]
         },
         {
           "id": "event99",
@@ -301,9 +578,18 @@
           "date": "July 2024",
           "description": "4th of July rooftop set",
           "media": [
-            { "type": "video", "src": "/BrodyEvents/swnw_kill_bill.mp4" },
-            { "type": "image", "src": "/BrodyEvents/swnw_bottles.webp" },
-            { "type": "video", "src": "/BrodyEvents/swnw_hype.mp4" }
+            {
+              "type": "video",
+              "src": "/BrodyEvents/swnw_kill_bill.mp4"
+            },
+            {
+              "type": "image",
+              "src": "/BrodyEvents/swnw_bottles.webp"
+            },
+            {
+              "type": "video",
+              "src": "/BrodyEvents/swnw_hype.mp4"
+            }
           ],
           "venue": "Somewhere Nowhere",
           "city": "New York, NY",
@@ -316,13 +602,25 @@
           "title": "Looney's Pub (College Park)",
           "date": "September 2023",
           "description": "Opening + Closing for Jake Shore",
-          "media": [{ "type": "video", "src": "/BrodyEvents/jake_shore_2.mp4" }],
+          "media": [
+            {
+              "type": "video",
+              "src": "/BrodyEvents/jake_shore_2.mp4"
+            }
+          ],
           "venue": "Looney's Pub",
           "city": "College Park, MD",
           "format": "open + close",
-          "headliners": ["Jake Shore"],
+          "headliners": [
+            "Jake Shore"
+          ],
           "context": "Looney's Pub is a College Park dive bar and live music venue close to the UMD campus. Opening and closing for Jake Shore was one of the first significant local bookings — a hometown-adjacent show, and an early sign of what the DJ side could become.",
-          "links": [{ "label": "jake shore", "href": "https://www.instagram.com/jakeshoremusic" }]
+          "links": [
+            {
+              "label": "jake shore",
+              "href": "https://www.instagram.com/jakeshoremusic"
+            }
+          ]
         }
       ]
     },
@@ -334,11 +632,23 @@
           "title": "when a fire starts to burn",
           "date": "oct 2025",
           "type": "single",
-          "tags": ["tech house", "minimal"],
+          "tags": [
+            "tech house",
+            "minimal"
+          ],
           "links": [
-            { "platform": "spotify",       "href": "https://spotify.link/vVmdengZJXb" },
-            { "platform": "soundcloud",    "href": "https://soundcloud.com/brodymontag" },
-            { "platform": "all platforms", "href": "https://ffm.to/whenafirestartstoburn" }
+            {
+              "platform": "spotify",
+              "href": "https://spotify.link/vVmdengZJXb"
+            },
+            {
+              "platform": "soundcloud",
+              "href": "https://soundcloud.com/brodymontag"
+            },
+            {
+              "platform": "all platforms",
+              "href": "https://ffm.to/whenafirestartstoburn"
+            }
           ],
           "description": "debut single. inspired by the disclosure original — restructured for the modern tech house floor."
         }
@@ -347,10 +657,24 @@
     "collective": {
       "name": "pb&j sounds",
       "meta": [
-        { "label": "co-founders", "value": "peter gomes · jack humphreys · brody montag" },
-        { "label": "booking",     "value": "pbandjmgmt@gmail.com", "href": "mailto:pbandjmgmt@gmail.com" },
-        { "label": "website",     "value": "pbandjsounds.com",     "href": "https://pbandjsounds.com" },
-        { "label": "genres",      "value": "deep house · minimal · uk house · disco" }
+        {
+          "label": "co-founders",
+          "value": "peter gomes · jack humphreys · brody montag"
+        },
+        {
+          "label": "booking",
+          "value": "pbandjmgmt@gmail.com",
+          "href": "mailto:pbandjmgmt@gmail.com"
+        },
+        {
+          "label": "website",
+          "value": "pbandjsounds.com",
+          "href": "https://pbandjsounds.com"
+        },
+        {
+          "label": "genres",
+          "value": "deep house · minimal · uk house · disco"
+        }
       ],
       "affiliations": [
         {
@@ -368,7 +692,6 @@
       "scene": "dnb in the dmv · no djs left behind · delusionville afters · mirari presents"
     }
   },
-
   "code": {
     "projects": [
       {
@@ -376,9 +699,15 @@
         "slug": "superset",
         "name": "superset",
         "description": "Rekordbox-compatible DJ setlist optimizer. A librosa/Essentia pipeline extracts 40+ spectral, timbral, and rhythmic features per track, then KMeans/DBSCAN clustering generates flow-optimized sets with a CustomTkinter GUI.",
-        "tags": ["Python", "audio ML", "DSP", "CLI + GUI"],
+        "tags": [
+          "Python",
+          "audio ML",
+          "DSP",
+          "CLI + GUI"
+        ],
         "githubUrl": "https://github.com/bmontt/superset",
         "status": "live",
+        "date": "March 2026",
         "longDescription": "Superset automates the part of set preparation that doesn't require taste: curating a coherent set from a library of thousands of tracks. It applies the same audio feature extraction that powers music recommendation systems to DJ curation.\n\nThe pipeline runs locally on Apple Silicon. Rekordbox XML is parsed to extract a track catalog, then librosa and Essentia compute 40+ features per track — BPM, key, spectral centroid, timbral texture, energy envelope, and more. KMeans and DBSCAN cluster the library into vibe and energy groups, and a greedy graph traversal generates a setlist that respects harmonic mixing rules and energy arc.\n\nThe output is a rekordbox-compatible XML playlist — it drops directly into the existing DJ workflow, no intermediate steps. A CustomTkinter GUI allows interactive library exploration and manual override at any point in the process.",
         "highlights": [
           "40+ spectral, timbral, and rhythmic features per track via librosa + Essentia",
@@ -395,9 +724,15 @@
         "slug": "roblox-bot",
         "name": "roblox_bot",
         "description": "3-tier hierarchical async LLM agent for Roblox FPS. YOLO/OpenCV runs at 60fps for frame-level reactions, Claude Haiku handles tactical intent, Claude Sonnet drives strategic goals — each tier operating at its own cadence.",
-        "tags": ["Python", "Claude API", "YOLO", "OpenCV"],
+        "tags": [
+          "Python",
+          "Claude API",
+          "YOLO",
+          "OpenCV"
+        ],
         "githubUrl": "https://github.com/bmontt/roblox_bot",
         "status": "live",
+        "date": "May 2026",
         "longDescription": "Roblox Bot splits a real-time task across agents with very different latency requirements — a study in hierarchical agency.\n\nThe structure: three independent async tiers, each operating at its own cadence. Tier 1 is YOLOv8/OpenCV running at ~60fps — pure reaction, frame-level detection for movement and targeting. Tier 2 is Claude Haiku receiving state summaries every 1-2 seconds, producing tactical intent (engagement choices, positioning). Tier 3 is Claude Sonnet processing high-level game state on a longer loop, setting strategic objectives and adjusting macro-level goals.\n\nThe tiers don't wait for each other. Lower tiers proceed with the last available signal from higher tiers, which keeps cascading latency from becoming a blocking problem. The pattern is general — it applies to any real-time task that benefits from layered reasoning.",
         "highlights": [
           "YOLOv8/OpenCV reactive layer at ~60fps",
@@ -413,9 +748,15 @@
         "slug": "peak-finding-toolbox",
         "name": "Peak_Finding_Toolbox",
         "description": "Research-grade peak detector for auditory signals. Handles ABR clinical wave I–V annotation, HRTF/SOFA-format spatial audio files, and general audio onset detection with configurable thresholding.",
-        "tags": ["Python", "EEG", "HRTF", "signal processing"],
+        "tags": [
+          "Python",
+          "EEG",
+          "HRTF",
+          "signal processing"
+        ],
         "githubUrl": "https://github.com/bmontt/Peak_Finding_Toolbox",
         "status": "live",
+        "date": "April 2025",
         "longDescription": "The Peak Finding Toolbox was developed during auditory signal processing research at the University of Maryland. Auditory Brainstem Response (ABR) measurements — short electrical signals recorded from the scalp in response to sound — require precise peak annotation across five clinical waves (I-V) to be clinically useful. Existing tools were either proprietary, inflexible, or required significant manual annotation.\n\nThe toolbox provides configurable adaptive thresholding algorithms for automated ABR wave detection, with support for the SOFA (Spatially Oriented Format for Acoustics) standard used in HRTF spatial audio research. The design philosophy: accurate enough for clinical research use, accessible enough for researchers who are not Python experts — clear interfaces, documented parameters, and sensible defaults.\n\nThe toolbox is also used for general audio onset detection, where the same thresholding and peak-picking algorithms apply beyond the neurological signal domain.",
         "highlights": [
           "ABR wave I–V annotation with adaptive thresholding algorithms",
@@ -431,9 +772,14 @@
         "slug": "anvil",
         "name": "Anvil",
         "description": "Autonomous self-improvement loop for an LLM agent fleet. Runs daily audits of agent code quality, builds a prioritized work queue, and dispatches specialist subagents to iteratively refine the codebase without human intervention.",
-        "tags": ["TypeScript", "LLM agents", "Claude API"],
+        "tags": [
+          "TypeScript",
+          "LLM agents",
+          "Claude API"
+        ],
         "githubUrl": null,
         "status": "wip",
+        "date": "June 2026",
         "longDescription": "Anvil puts an AI coding agent to work on the system it runs on.\n\nThe design: a daily audit loop that reads the codebase, identifies technical debt and code quality issues, scores them by estimated impact and effort, and dispatches specialist subagents to fix them — without a human in the loop. Not a CI/CD pipeline, but a reasoning agent that makes editorial decisions about what to improve next and how.\n\nPhase 0 is the audit loop: a single agent that reads, evaluates, and produces a prioritized work queue. Subsequent phases add the dispatcher (load-balancing work across parallel workers) and the specialist fleet (debugger, refiner, test-writer, documentation-architect). The aim is a system that gets measurably better at its own job over time, using Claude Code's agent architecture as the runtime.",
         "highlights": [
           "Daily automated codebase audits using reasoning models",
@@ -449,9 +795,15 @@
         "slug": "subagent-dashboard",
         "name": "Subagent Dashboard",
         "description": "Next.js dashboard for live-monitoring parallel Claude Code agent sessions. Streams chain-of-thought and output from concurrent subagents into a unified interface — the control plane for multi-agent dev workflows.",
-        "tags": ["TypeScript", "Next.js", "Claude API", "real-time"],
+        "tags": [
+          "TypeScript",
+          "Next.js",
+          "Claude API",
+          "real-time"
+        ],
         "githubUrl": null,
         "status": "live",
+        "date": "April 2026",
         "longDescription": "Running 5-10 parallel Claude Code agents across clusters of the same codebase means tracking all of them at once. The Subagent Dashboard is the control plane for that.\n\nThe dashboard streams chain-of-thought (CoT) and output from concurrent agent sessions into a unified interface. Each agent gets a panel showing its current task, recent tool calls, and running output in real time. Cross-agent dependencies and conflicts surface immediately, rather than after the fact during a coherence review.\n\nBuilt on Next.js with a real-time streaming architecture — the interface that runs the multi-agent development workflow day to day.",
         "highlights": [
           "Real-time CoT and output streaming from concurrent Claude Code sessions",
@@ -463,11 +815,63 @@
       }
     ],
     "stack": [
-      { "label": "languages",   "items": ["python", "typescript", "java", "c++", "sql", "ruby", "rust", "ocaml"] },
-      { "label": "web",         "items": ["next.js", "react", "tailwind css", "framer motion", "node.js", "supabase"] },
-      { "label": "ai / ml",     "items": ["claude api", "yolov8", "opencv", "pytorch", "scikit-learn", "anthropic sdk"] },
-      { "label": "audio / dsp", "items": ["librosa", "essentia", "mne", "sofa / hrtf", "portaudio", "fl studio"] },
-      { "label": "infra",       "items": ["vercel", "git", "docker", "pytest", "ruff", "resend"] }
+      {
+        "label": "languages",
+        "items": [
+          "python",
+          "typescript",
+          "java",
+          "c++",
+          "sql",
+          "ruby",
+          "rust",
+          "ocaml"
+        ]
+      },
+      {
+        "label": "web",
+        "items": [
+          "next.js",
+          "react",
+          "tailwind css",
+          "framer motion",
+          "node.js",
+          "supabase"
+        ]
+      },
+      {
+        "label": "ai / ml",
+        "items": [
+          "claude api",
+          "yolov8",
+          "opencv",
+          "pytorch",
+          "scikit-learn",
+          "anthropic sdk"
+        ]
+      },
+      {
+        "label": "audio / dsp",
+        "items": [
+          "librosa",
+          "essentia",
+          "mne",
+          "sofa / hrtf",
+          "portaudio",
+          "fl studio"
+        ]
+      },
+      {
+        "label": "infra",
+        "items": [
+          "vercel",
+          "git",
+          "docker",
+          "pytest",
+          "ruff",
+          "resend"
+        ]
+      }
     ],
     "experience": [
       {
@@ -476,7 +880,12 @@
         "org": "fiserv",
         "orgDetail": "ml/ai team",
         "period": "2025 — present",
-        "tags": ["python", "typescript", "next.js", "ml"],
+        "tags": [
+          "python",
+          "typescript",
+          "next.js",
+          "ml"
+        ],
         "description": "Building full-stack internal tooling and developer-facing systems for a fintech ML/AI team. Focus on model integration, observability, and workflow automation."
       },
       {
@@ -485,7 +894,12 @@
         "org": "university of maryland",
         "orgDetail": "college park",
         "period": "2021 — 2025",
-        "tags": ["ai", "signal processing", "data science", "research"],
+        "tags": [
+          "ai",
+          "signal processing",
+          "data science",
+          "research"
+        ],
         "description": "Coursework in AI, data science, and algorithm design. Senior research: auditory signal processing — ABR peak detection and HRTF/SOFA spatial audio (Peak_Finding_Toolbox)."
       },
       {
@@ -494,9 +908,29 @@
         "org": "sigma phi delta",
         "orgDetail": "professional engineering fraternity",
         "period": "2021 — 2025",
-        "tags": ["engineering", "leadership"],
+        "tags": [
+          "engineering",
+          "leadership"
+        ],
         "description": "Active member of the professional engineering fraternity at UMD. Focused on technical community building and cross-discipline collaboration."
       }
     ]
+  },
+  "journey": {
+    "hero": {
+      "heading": "brody montag."
+    },
+    "code": {
+      "heading": "the build — systems, models, tools."
+    },
+    "music": {
+      "heading": "monty — rooms, records, the collective."
+    },
+    "timeline": {
+      "heading": "the timeline — 2021 to now."
+    },
+    "epilogue": {
+      "heading": "technology in service of sound."
+    }
   }
 }

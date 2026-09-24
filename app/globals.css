@@ -75,31 +75,38 @@
 /* Hide scrollbars */
 ::-webkit-scrollbar { display: none; }
 * { -ms-overflow-style: none; scrollbar-width: none; }
-html { scroll-behavior: smooth; }
+/* No CSS smooth-scroll: it fights ScrollTrigger's scroll math; programmatic
+   smooth scrolling uses scrollIntoView({ behavior: "smooth" }) instead */
 
 /* No horizontal pan — clip (not hidden) so position: sticky still works */
 html, body { overflow-x: clip; }
 
-/* Traveling pastel shimmer for the hero elevator pitch —
-   a highlight band sweeps through the text, à la CLI loading text */
-.text-shimmer {
-  background: linear-gradient(
-    100deg,
-    oklch(0.52 0 0) 38%,
-    oklch(0.88 0.055 300) 46%,
-    oklch(0.90 0.05 200) 50%,
-    oklch(0.88 0.055 100) 54%,
-    oklch(0.52 0 0) 62%
-  );
-  background-size: 250% 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  animation: shimmer-sweep 5.5s ease-in-out infinite;
+/* ── Horizontal timeline section ──────────────────────────────────────────────
+   Vertical-stack by default (accessible / reduced-motion / no-JS): the year
+   panels read as a normal top-to-bottom list. The controller adds `is-horizontal`
+   only under prefers-reduced-motion: no-preference, upgrading it to a pinned
+   horizontal track that GSAP scrubs sideways. */
+#timeline { display: flex; flex-direction: column; }
+#timeline .timeline-track {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
 }
-@keyframes shimmer-sweep {
-  0%   { background-position: 125% center; }
-  100% { background-position: -125% center; }
+#timeline .timeline-panel { width: 100%; }
+
+#timeline.is-horizontal { height: 100dvh; overflow: hidden; }
+#timeline.is-horizontal .timeline-track {
+  flex: 1 1 auto;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0;
+  will-change: transform;
+}
+#timeline.is-horizontal .timeline-panel {
+  flex: 0 0 auto;
+  width: min(85vw, 30rem);
+  height: 100%;
 }
 
 /* Iridescent pill — border + soft shadow cycle through the same pastel
@@ -130,16 +137,43 @@ html, body { overflow-x: clip; }
   animation: pill-hue-cycle 4.2s linear infinite;
 }
 
+/* Iridescent text fill — the live effect, as a slow hue drift through the
+   pastel band. Reserved for labels, titles, and sub-info. Much quieter than
+   the retired sweep: small mono text reads it as a faint sheen, not motion.
+   `-dim` is the dimmed variant for low-emphasis labels / sub-info. */
+.text-iridescent {
+  color: oklch(0.80 0.052 var(--pill-hue));
+  animation: pill-hue-cycle 4.2s linear infinite;
+}
+.text-iridescent-dim {
+  color: oklch(0.74 0.045 var(--pill-hue) / 0.6);
+  animation: pill-hue-cycle 4.2s linear infinite;
+}
+
+/* Iridescent line — hue-drifting fill for thin rules (the active-tab underline). */
+.bg-iridescent {
+  background-color: oklch(0.78 0.06 var(--pill-hue) / 0.7);
+  animation: pill-hue-cycle 4.2s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .text-shimmer {
-    animation: none;
-    background: none;
-    color: oklch(0.62 0 0);
-  }
   .pill-iridescent {
     animation: none;
   }
   .text-iridescent-stroke {
     animation: none;
+  }
+  /* Freeze the drift on a fixed pastel rather than the hue-0 initial (pink). */
+  .text-iridescent {
+    animation: none;
+    color: oklch(0.80 0.050 95);
+  }
+  .text-iridescent-dim {
+    animation: none;
+    color: oklch(0.74 0.045 95 / 0.6);
+  }
+  .bg-iridescent {
+    animation: none;
+    background-color: oklch(0.78 0.06 95 / 0.7);
   }
 }

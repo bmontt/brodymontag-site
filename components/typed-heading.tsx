@@ -67,8 +67,12 @@ export default function TypedHeading({
   onComplete?: () => void;
 }) {
   const prefersReducedMotion = useReducedMotion();
-  const [displayed, setDisplayed] = useState(prefersReducedMotion ? text : "");
-  const [done, setDone] = useState(!!prefersReducedMotion);
+  // Initial state must NOT depend on prefersReducedMotion: it is false during
+  // SSR but true on the client under reduced motion, which would desync the
+  // first render and throw a hydration mismatch (#418). Start empty to match
+  // SSR; the effect below fills in the full text immediately when reduced.
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
     if (prefersReducedMotion) {
