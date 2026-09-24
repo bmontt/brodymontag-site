@@ -2,7 +2,8 @@
 
 Plan to turn brodymontag.com from a 2D scroll journey into an interactive **3D camera
 flight** in the spirit of the angular.dev homepage animation, without losing the site's
-ASCII identity. Written 2026-09-24. Status: **proposal — awaiting decisions in §12**.
+ASCII identity. Written 2026-09-24. Status: **approved 2026-09-24 · Phase 0 done · Phase 1 spike
+done (§8.1), awaiting Brody's visual go/no-go**.
 
 ---
 
@@ -325,8 +326,8 @@ components/stage/
   scenes/{prologue,build,monty,worldline,merger}.tsx
   objects/{wave-sheet,binary,monolith,photo-panel,meteor-field,year-gate,remnant}.tsx
   debug-hud.tsx                       ?debug only
-lib/ascii-engine/gl/
-  wave.vert.glsl  ascii.frag.glsl  glyph-atlas.ts  skin-uniforms.ts
+lib/ascii-engine/gl/                  GLSL lives in TS template strings (no Turbopack loader)
+  wave-shader.ts  ascii-effect.ts     (spike, exist)   skin-uniforms.ts (Phase 2)
 lib/director/
   stations.ts  camera-path.ts  master-timeline.ts  route-presets.ts
 ```
@@ -345,7 +346,60 @@ lib/director/
 | **5 · Interaction** | Sheet dent, mouse-look, DOM↔3D linking, hover tilt, click-to-fly + view transitions, keyboard travel, `?debug`. (Stretch: drag-orbit, gyro, audio mode.) | 3–5 d | All P1 rows in §4.6 work with mouse, touch and keyboard. |
 | **6 · Harden & ship** | Fallback matrix (§5), mobile tuning, framer-motion removal, Lenis go/no-go, Lighthouse, docs (LLD `docs/stage-3d.md` + ADR "3D stage over 2D canvas"), vault note. | 3–4 d | Budget table (§6) met; the reduced-motion, 2D-tier and context-loss paths are each verified. |
 
-**Total ≈ 22–32 focused days.** Phases 4 and 5 parallelize well (§9).
+
+### 8.1 Phase 0 + Phase 1 results (2026-09-24)
+
+**Phase 0 — done.** The journey WIP is committed on `feat/journey` in four conventional
+commits and pushed. `section-tabs.tsx` is removed. `tsc` and `next build` are green.
+Revert points are pushed as annotated tags:
+
+| Tag | Commit | What it is |
+|---|---|---|
+| `original-live` | `b22b3d9` | Exactly what brodymontag.com serves today (the tabbed site) |
+| `pre-3d` | `231ca49` | The 2D ASCII journey plus this plan, the last state before any 3D code |
+
+To revert: `git checkout original-live` (or `pre-3d`). On Vercel, the current production
+deployment can also be restored with Instant Rollback.
+
+**Phase 1 — spike on `feat/3d-stage`, route `/lab/3d` (noindex).**
+
+- **Built:** R3F canvas → GPU wave sheet (the `bake.ts` math, per-fragment amplitude,
+  per-vertex relief) → a custom `BrandAsciiEffect`. I skipped the stock `ASCIIEffect`
+  because it only supports square cells and a luminance charset, so it couldn't test the
+  brand look. The camera reads the existing `journey-store`, fed by a ScrollTrigger. Stations:
+  flat → dolly-zoom + tilt → rolled dive → a punch-through with a `┼` lattice flash →
+  underside.
+- **Brand parity (flat station):** glyphs, tones and vignette match the 2D vessel by eye.
+  One real bug was found and fixed. Geist Mono glyphs are 9.6px wide in 8px cells, and in 2D
+  they spill into the right-hand neighbor; that spill is what chains `◆◆◆` and joins the `┼`
+  crossbars. The atlas now uses 16px slots, and each pixel composites its left neighbor's
+  overflow, then its own cell.
+- **Performance:** a real GPU (Apple M4 Pro, ANGLE/Metal, headless) holds a **steady
+  120 fps** (the display cap) at 1440×900 and at 390×844. That's 2–4 draw calls and about
+  206k triangles, with no shader errors. An integrated or mobile GPU has not been measured
+  yet. The obvious win if it's needed: render the scene at **one pixel per cell**
+  (180×41 instead of 1440×900) since the pass only samples cell centers. That's roughly
+  150× fewer fragment evaluations.
+- **Bundle:** the home page is **unchanged** (12 scripts, 306 KB gzip, no three.js). The
+  3D code is one lazy chunk: **248 KB gzip** (945 KB raw), right at the ≤ 250 KB target.
+  If it needs to shrink: drop the `postprocessing` library (the pass is a single
+  full-screen shader, so a render target plus a quad replaces it), then consider plain three
+  without R3F.
+- **Cell size (8×22 / 7×14 / 6×12):** 8×22 keeps glyphs legible as characters and matches
+  the site. Smaller cells render the 3D forms more smoothly but turn the glyphs into
+  halftone. **Recommendation: 8×22 everywhere. Consider 7×14 on phones only** (at 390px,
+  8×22 gives just 48 columns).
+- **Tuning learned:** diving closer than ~350 px-units empties the frame, because the
+  wavelength is ~520px. The edge-on plane crossing has to be brief (double-eased) and masked
+  (the flash). Tilted views need +70% field intensity to hold presence.
+- **Known spike shortcuts (fixed in Phase 2):** hero skin only (no section blending yet);
+  the body markers are placeholder spheres; there's no reduced-motion or tier gate on
+  `/lab`; R3F logs a harmless `THREE.Clock` deprecation warning.
+
+**Gate verdict:** on the measurable criteria (fps, bundle, parity) → **GO**. The
+remaining criterion, *reads on-brand*, is Brody's call after scrolling `/lab/3d`.
+
+**Total ≈ 22–32 focused days** (Phases 0–1 are done). Phases 4 and 5 parallelize well (§9).
 
 **Testing:** promote the throwaway Playwright smoke (June, `/tmp/smoke-test`) to a real
 `e2e/` devDependency. With 3D, visual regressions will be constant. Run a filmstrip per
