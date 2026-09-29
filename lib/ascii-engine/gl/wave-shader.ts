@@ -25,7 +25,8 @@ uniform vec2  uWaveFreq;   // (lo, hi)
 uniform float uKwave;
 uniform float uKosc;
 uniform vec2  uLens;       // (lensR, lensG)
-uniform float uMerge;      // 0 = normal orbit, 1 = merged (reserved for the epilogue)
+uniform float uMerge;      // inspiral 0→1: orbit decays to 0 while the frequency chirps up
+uniform float uRing;       // ringdown 0→1: single-source waves from the merged remnant
 
 const float TWO_PI = 6.283185307179586;
 
@@ -37,15 +38,21 @@ float lensR(float r) {
 // signed two-body interference at y-down point p (px, field-centered)
 float fieldWave(vec2 p) {
   float s      = (1.0 - cos(TWO_PI * uKosc * uTau)) * 0.5;
-  float orbitR = uMinWH * mix(uOrbitFrac.x, uOrbitFrac.y, s) * (1.0 - uMerge);
-  float wf     = mix(uWaveFreq.x, uWaveFreq.y, s);
+  float m      = clamp(uMerge, 0.0, 1.0);
+  float orbitR = uMinWH * mix(uOrbitFrac.x, uOrbitFrac.y, s) * (1.0 - m);
+  float wf     = mix(uWaveFreq.x, uWaveFreq.y, s) * (1.0 + 1.4 * m * m);   // chirp
   float theta  = TWO_PI * uTau;
   float psi    = TWO_PI * uKwave * uTau;
   vec2  b1     = orbitR * vec2(cos(theta), sin(theta));
   vec2  d1     = p - b1;
   vec2  d2     = p + b1;
-  return sin(wf * lensR(length(d1)) - psi + atan(d1.y, d1.x))
-       + sin(wf * lensR(length(d2)) - psi + atan(d2.y, d2.x));
+  float binary = sin(wf * lensR(length(d1)) - psi + atan(d1.y, d1.x))
+               + sin(wf * lensR(length(d2)) - psi + atan(d2.y, d2.x));
+  if (uRing <= 0.0) return binary;
+  // ringdown: concentric waves from the remnant, fading with distance
+  float r    = length(p);
+  float ring = 2.0 * sin(wf * lensR(r) - psi) * exp(-r / (uMinWH * 1.1));
+  return mix(binary, ring, clamp(uRing, 0.0, 1.0));
 }
 `;
 

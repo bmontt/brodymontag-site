@@ -37,6 +37,13 @@ interface JourneyState {
   timelineProgress: number;
   /** set once by the controller's reduced-motion matchMedia branch */
   reducedMotion: boolean;
+  /** 3D stage scene parameters — written by the director, read by the stage loop */
+  stage: {
+    /** inspiral 0→1 (orbit decays, frequency chirps) */
+    merge: number;
+    /** ringdown 0→1 after the merger */
+    ring: number;
+  };
 }
 
 const state: JourneyState = {
@@ -47,6 +54,7 @@ const state: JourneyState = {
   velocity: 0,
   timelineProgress: -1,
   reducedMotion: false,
+  stage: { merge: 0, ring: 0 },
 };
 
 const listeners = new Set<() => void>();
@@ -87,6 +95,12 @@ export const journey = {
 
   setReducedMotion(v: boolean) {
     state.reducedMotion = v;
+  },
+
+  /** Per-frame 3D stage parameters. No notify. */
+  setStage(merge: number, ring: number) {
+    state.stage.merge = merge;
+    state.stage.ring = ring;
   },
 
   // ── useSyncExternalStore contract ──────────────────────────────────

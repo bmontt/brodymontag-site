@@ -1,14 +1,14 @@
 "use client";
 
 // ── stage-canvas ──────────────────────────────────────────────────────────────
-// Phase 1 spike: the ASCII field as a real 3D scene. A GPU wave sheet (the
-// two-body field from bake.ts, in pixel units) + two body markers, rendered
-// through BrandAsciiEffect. The camera reads journey.state every frame (the
-// same single-writer store the 2D vessel uses) — React never re-renders on
-// scroll. Loaded client-only via next/dynamic from lab-3d.tsx.
+// The ASCII field as a real 3D scene: a GPU wave sheet (the two-body field from
+// bake.ts, in pixel units) + the two bodies, rendered through AsciiRenderer
+// (lib/ascii-engine/gl). Everything reads journey.state per frame — the same
+// single-writer store the 2D vessel uses — so React never re-renders on scroll.
+// Loaded client-only via next/dynamic.
 //
-// Camera stations (globalProgress):
-//   A 0.00–0.10  flat top-down — pixel-identical framing to the 2D field
+// Camera stations (globalProgress) — lab choreography until the director lands:
+//   A 0.00–0.10  flat top-down — cell-for-cell identical to the 2D field
 //   B 0.10–0.45  dolly-zoom (fov 4°→48°, framing held) + tilt 90°→32°
 //   C 0.45–0.78  dive toward the binary, 360° roll (angular's shield move)
 //   D 0.78–1.00  punch through the sheet (┼ lattice flash) and swing under it
@@ -17,7 +17,6 @@ import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   DoubleSide,
-  HalfFloatType,
   MathUtils,
   ShaderMaterial,
   Vector2,
@@ -25,17 +24,13 @@ import {
   type Mesh,
   type PerspectiveCamera,
 } from "three";
-import { EffectComposer, EffectPass, RenderPass } from "postprocessing";
 import { asciiConfig } from "@/lib/ascii-config";
-import { SECTION_SKINS, STYLES } from "@/lib/ascii-engine/skins";
+import { STYLES } from "@/lib/ascii-engine/skins";
+import { currentSkinBlend } from "@/lib/ascii-engine/skin-blend";
 import { waveFragment, waveVertex } from "@/lib/ascii-engine/gl/wave-shader";
-import {
-  BrandAsciiEffect,
-  TRAIL_MAX,
-  buildGlyphAtlas,
-  resolveCssColor,
-  slotWidth,
-} from "@/lib/ascii-engine/gl/ascii-effect";
+import { AsciiRenderer, TRAIL_MAX } from "@/lib/ascii-engine/gl/ascii-renderer";
+import { applySkinBlend } from "@/lib/ascii-engine/gl/skin-uniforms";
+import { resolveCssColor, slotOf } from "@/lib/ascii-engine/gl/atlas";
 import { journey } from "@/lib/journey-store";
 
 const TWO_PI = Math.PI * 2;
@@ -46,8 +41,8 @@ const BASE_FPS = asciiConfig.fpsCap; // the 2D loop's "one frame" unit
 const GAIN = 0.004;                  // matches vessel.tsx phase velocity
 const SHEET = 9000;                  // px units — covers the horizon when tilted
 const DEG = Math.PI / 180;
-
-const skin = SECTION_SKINS.hero;
+const LATTICE_SLOT = slotOf("┼");
+const MERGER_SLOT = slotOf("◆");
 
 export interface StageStats { fps: number; calls: number; tris: number; }
 export interface Cell { w: number; h: number; }
@@ -66,6 +61,7 @@ function makeFieldUniforms() {
     uKosc: { value: KOSC },
     uLens: { value: new Vector2(asciiConfig.lensR, asciiConfig.lensG) },
     uMerge: { value: 0 },
+    uRing: { value: 0 },
     uHeight: { value: 0 },
     uLightDir: { value: new Vector2(1, 0) },
     uRealNormals: { value: 0 },
@@ -73,7 +69,13 @@ function makeFieldUniforms() {
   };
 }
 
-function Stage({ cell, onStats }: { cell: Cell; onStats?: (s: StageStats) => void }) {
+interface StageProps {
+  cell: Cell;
+  parity?: boolean;
+  onStats?: (s: StageStats) => void;
+}
+
+function Stage({ cell, parity = false, onStats }: StageProps) {
   const { gl, scene, camera, size, viewport } = useThree();
   const cam = camera as PerspectiveCamera;
   const dpr = viewport.dpr;
@@ -92,10 +94,9 @@ function Stage({ cell, onStats }: { cell: Cell; onStats?: (s: StageStats) => voi
   const bodyA = useRef<Mesh>(null);
   const bodyB = useRef<Mesh>(null);
 
-  // ── ASCII pass + composer ────────────────────────────────────────────────
-  const effect = useMemo(
+  const ascii = useMemo(
     () =>
-      new BrandAsciiEffect({
+      new AsciiRenderer(gl, {
         styles: STYLES,
         bg: resolveCssColor(getComputedStyle(document.body).backgroundColor),
         repelR: asciiConfig.repelR,
@@ -104,29 +105,25 @@ function Stage({ cell, onStats }: { cell: Cell; onStats?: (s: StageStats) => voi
         lightSharpness: asciiConfig.lightSharpness,
         glowThresholdFrac: asciiConfig.glowThresholdFrac,
       }),
-    [],
+    [gl],
   );
-  const composer = useMemo(() => {
-    const c = new EffectComposer(gl, { frameBufferType: HalfFloatType });
-    c.addPass(new RenderPass(scene, camera));
-    c.addPass(new EffectPass(camera, effect));
-    return c;
-  }, [gl, scene, camera, effect]);
-  useEffect(() => () => composer.dispose(), [composer]);
+  useEffect(() => () => ascii.dispose(), [ascii]);
 
   useEffect(() => {
-    composer.setSize(size.width, size.height);
-    effect.u<Vector2>("uViewport").set(size.width, size.height);
-    effect.u<Vector2>("uCell").set(cell.w, cell.h);
-    effect.uniforms.get("uSlotW")!.value = slotWidth(cell.w);
-    effect.applySkin(skin, size.width);
+    ascii.setSize(size.width, size.height, dpr, cell.w, cell.h);
     uniforms.uMinWH.value = Math.min(size.width, size.height);
-    let cancelled = false;
-    document.fonts.ready.then(() => {
-      if (!cancelled) effect.setAtlas(buildGlyphAtlas(skin.chars, cell.w, cell.h, dpr));
-    });
-    return () => { cancelled = true; };
-  }, [composer, effect, uniforms, size, cell, dpr]);
+  }, [ascii, uniforms, size, cell, dpr]);
+
+  // parity hook: the per-cell level grid, for comparison against bake.ts
+  useEffect(() => {
+    if (!parity) return;
+    const w = window as unknown as { __stage?: unknown };
+    w.__stage = {
+      readLevels: () => ({ cols: ascii.cols, rows: ascii.rows, levels: Array.from(ascii.readLevels()) }),
+      ready: () => ascii.ready,
+    };
+    return () => { delete w.__stage; };
+  }, [parity, ascii]);
 
   // ── pointer trail (same ring buffer semantics as the 2D vessel) ──────────
   const trail = useRef<{ x: number; y: number; t: number }[]>([]);
@@ -143,28 +140,40 @@ function Stage({ cell, onStats }: { cell: Cell; onStats?: (s: StageStats) => voi
 
   // ── per-frame state ──────────────────────────────────────────────────────
   const phase = useRef(0);
-  const light = useRef({ angle: Math.random() * TWO_PI, hue: 0 });
+  const light = useRef({ angle: parity ? 0 : Math.random() * TWO_PI, hue: 0 });
   const rig = useRef({ fov: 4, elev: 90, dist: 0, roll: 0, look: new Vector2() });
   const stats = useRef({ frames: 0, since: performance.now() });
-  const tmp = useMemo(() => ({ f: new Vector3(), up: new Vector3(), pos: new Vector3(), tgt: new Vector3(), at: new Vector3() }), []);
+  const tmp = useMemo(
+    () => ({ f: new Vector3(), up: new Vector3(), pos: new Vector3(), tgt: new Vector3(), at: new Vector3() }),
+    [],
+  );
 
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.1);
     const now = performance.now();
     const H = size.height;
-    const p = journey.state.globalProgress;
+    const st = journey.state;
+    const p = parity ? 0 : st.globalProgress;
+    const { merge, ring } = st.stage;
 
-    // hybrid phase velocity — idle = the 2D loop's 18fps cadence, scroll bends time
-    const vel = journey.state.velocity;
-    phase.current = (((phase.current + (1 + vel * GAIN) * delta * BASE_FPS / N_FRAMES) % 1) + 1) % 1;
+    // hybrid phase velocity — idle = the 2D loop's 18fps cadence, scroll bends
+    // time, and the inspiral speeds the orbit up as it decays
+    if (!parity) {
+      const rate = (1 + st.velocity * GAIN) * (1 + 3 * merge);
+      phase.current = (((phase.current + rate * delta * BASE_FPS / N_FRAMES) % 1) + 1) % 1;
+    }
     uniforms.uTau.value = phase.current;
+    uniforms.uMerge.value = merge;
+    uniforms.uRing.value = ring;
 
     // stochastic light (advanced at the 2D cadence)
     const L = light.current;
-    L.angle += (asciiConfig.lightDrift + (Math.random() - 0.5) * asciiConfig.lightJitter) * delta * BASE_FPS;
-    L.hue += asciiConfig.lightHueDrift * delta * BASE_FPS;
+    if (!parity) {
+      L.angle += (asciiConfig.lightDrift + (Math.random() - 0.5) * asciiConfig.lightJitter) * delta * BASE_FPS;
+      L.hue += asciiConfig.lightHueDrift * delta * BASE_FPS;
+    }
     uniforms.uLightDir.value.set(Math.cos(L.angle), Math.sin(L.angle));
-    effect.u<Vector3>("uHue").x = L.hue;
+    ascii.frame.uHuePhase = L.hue;
 
     // ── camera stations ────────────────────────────────────────────────────
     const b = seg(p, 0.10, 0.45);
@@ -178,18 +187,18 @@ function Stage({ cell, onStats }: { cell: Cell; onStats?: (s: StageStats) => voi
 
     const R = rig.current;
     const k = 6; // damping: glides even when wheel scroll is steppy
-    R.fov = MathUtils.damp(R.fov, fov, k, delta);
-    R.elev = MathUtils.damp(R.elev, elev, k, delta);
-    R.dist = R.dist === 0 ? dist : MathUtils.damp(R.dist, dist, k, delta);
-    R.roll = MathUtils.damp(R.roll, roll, k, delta);
+    const snap = R.dist === 0 || parity;
+    R.fov = snap ? fov : MathUtils.damp(R.fov, fov, k, delta);
+    R.elev = snap ? elev : MathUtils.damp(R.elev, elev, k, delta);
+    R.dist = snap ? dist : MathUtils.damp(R.dist, dist, k, delta);
+    R.roll = snap ? roll : MathUtils.damp(R.roll, roll, k, delta);
     R.look.x = MathUtils.damp(R.look.x, pointer.current.x, 3, delta);
     R.look.y = MathUtils.damp(R.look.y, pointer.current.y, 3, delta);
 
     const e = R.elev * DEG;
     tmp.f.set(0, Math.cos(e), -Math.sin(e));
     tmp.up.set(0, Math.sin(e), Math.cos(e)).applyAxisAngle(tmp.f, R.roll);
-    // mouse-look: nudge the target a little (fades out on the flat station)
-    const lookAmt = 40 * b;
+    const lookAmt = 40 * b; // mouse-look fades out on the flat station
     tmp.tgt.set(R.look.x * lookAmt, -R.look.y * lookAmt, 0);
     tmp.pos.copy(tmp.tgt).addScaledVector(tmp.f, -R.dist);
     cam.position.copy(tmp.pos);
@@ -203,28 +212,39 @@ function Stage({ cell, onStats }: { cell: Cell; onStats?: (s: StageStats) => voi
     // relief + real lighting fade in with the tilt; far field fades to empty
     uniforms.uHeight.value = 130 * b;
     uniforms.uRealNormals.value = b;
-    effect.uniforms.get("uDim")!.value = skin.styleAlphaMul * (1 + 0.7 * b);
-    // punch-through: a ┼ lattice flashes as the camera crosses the sheet
-    effect.uniforms.get("uFlash")!.value = d > 0 && d < 1 ? 1 - MathUtils.smoothstep(Math.abs(cam.position.z), 0, 70) : 0;
     const near = Math.max(Math.abs(R.dist) * 1.25, 1400);
     uniforms.uFade.value.set(near, near + 2800);
 
-    // body markers follow the same orbit math as the shader
+    // skins: the same blend the 2D vessel shows; tilted views get +70% intensity
+    const blend = currentSkinBlend(st);
+    applySkinBlend(ascii.skin, blend.a, blend.b, blend.t, size.width, 1 + 0.7 * b);
+
+    // flashes: ┼ lattice on the punch-through, ◆ burst at the merger
+    const punch = d > 0 && d < 1 ? 1 - MathUtils.smoothstep(Math.abs(cam.position.z), 0, 70) : 0;
+    const burst = MathUtils.smoothstep(merge, 0.9, 1) * (1 - MathUtils.smoothstep(ring, 0, 0.35));
+    ascii.frame.uFlash.value = Math.max(punch, burst);
+    ascii.frame.uFlashSlot.value = burst > punch ? MERGER_SLOT : LATTICE_SLOT;
+
+    // bodies follow the shader's orbit (decaying with the inspiral)
     const tau = phase.current;
     const s = (1 - Math.cos(TWO_PI * KOSC * tau)) / 2;
-    const orbitR = Math.min(size.width, H) *
-      MathUtils.lerp(asciiConfig.orbitFracLo, asciiConfig.orbitFracHi, s);
+    const orbitR =
+      Math.min(size.width, H) * MathUtils.lerp(asciiConfig.orbitFracLo, asciiConfig.orbitFracHi, s) * (1 - merge);
     const bx = orbitR * Math.cos(TWO_PI * tau);
     const by = orbitR * Math.sin(TWO_PI * tau);
-    bodyA.current?.position.set(bx, -by, 18 * b);
-    bodyB.current?.position.set(-bx, by, 18 * b);
-    if (bodyA.current) bodyA.current.visible = b > 0.02;
-    if (bodyB.current) bodyB.current.visible = b > 0.02;
+    const lift = 18 * b;
+    if (bodyA.current && bodyB.current) {
+      bodyA.current.position.set(bx, -by, lift);
+      bodyB.current.position.set(-bx, by, lift);
+      bodyA.current.visible = b > 0.02;
+      bodyB.current.visible = b > 0.02 && ring < 0.05; // one remnant after the merger
+      bodyA.current.scale.setScalar(1 + 0.6 * ring);
+    }
 
-    // pointer trail → pass uniforms (age factor, 0 = dead slot)
+    // pointer trail → cell-pass uniforms (age factor, 0 = dead slot)
     const tr = trail.current;
     while (tr.length && now - tr[0].t > asciiConfig.trailMs) tr.shift();
-    const slots = effect.u<Vector3[]>("uTrail");
+    const slots = ascii.frame.uTrail.value;
     for (let i = 0; i < TRAIL_MAX; i++) {
       const pt = tr[i];
       if (pt) slots[i].set(pt.x, pt.y, 1 - (now - pt.t) / asciiConfig.trailMs);
@@ -232,19 +252,19 @@ function Stage({ cell, onStats }: { cell: Cell; onStats?: (s: StageStats) => voi
     }
 
     gl.info.reset(); // count every pass this frame, not just the last one
-    composer.render(delta);
+    ascii.render(scene, cam);
 
     // stats (DOM callback, throttled — no React state)
-    const st = stats.current;
-    st.frames++;
-    if (onStats && now - st.since > 500) {
+    const sa = stats.current;
+    sa.frames++;
+    if (onStats && now - sa.since > 500) {
       onStats({
-        fps: Math.round((st.frames * 1000) / (now - st.since)),
+        fps: Math.round((sa.frames * 1000) / (now - sa.since)),
         calls: gl.info.render.calls,
         tris: gl.info.render.triangles,
       });
-      st.frames = 0;
-      st.since = now;
+      sa.frames = 0;
+      sa.since = now;
     }
   }, 1);
 
@@ -274,13 +294,10 @@ function Stage({ cell, onStats }: { cell: Cell; onStats?: (s: StageStats) => voi
 
 export default function StageCanvas({
   cell,
+  parity,
   onStats,
   onReady,
-}: {
-  cell: Cell;
-  onStats?: (s: StageStats) => void;
-  onReady?: () => void;
-}) {
+}: StageProps & { onReady?: () => void }) {
   return (
     <Canvas
       linear
@@ -294,7 +311,7 @@ export default function StageCanvas({
         onReady?.();
       }}
     >
-      <Stage cell={cell} onStats={onStats} />
+      <Stage cell={cell} parity={parity} onStats={onStats} />
     </Canvas>
   );
 }
