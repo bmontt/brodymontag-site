@@ -186,7 +186,13 @@ export default function Lab3D() {
         }}
       >
         {cell && (
-          <StageCanvas cell={cell} parity={parity} onStats={onStats} onReady={() => setReady(true)} />
+          <StageCanvas
+            cell={cell}
+            mode="lab"
+            parity={parity}
+            onStats={onStats}
+            onFirstFrame={() => setReady(true)}
+          />
         )}
       </div>
 

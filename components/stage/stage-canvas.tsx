@@ -5,13 +5,8 @@
 // bake.ts, in pixel units) + the two bodies, rendered through AsciiRenderer
 // (lib/ascii-engine/gl). Everything reads journey.state per frame — the same
 // single-writer store the 2D vessel uses — so React never re-renders on scroll.
-// Loaded client-only via next/dynamic.
-//
-// Camera stations (globalProgress) — lab choreography until the director lands:
-//   A 0.00–0.10  flat top-down — cell-for-cell identical to the 2D field
-//   B 0.10–0.45  dolly-zoom (fov 4°→48°, framing held) + tilt 90°→32°
-//   C 0.45–0.78  dive toward the binary, 360° roll (angular's shield move)
-//   D 0.78–1.00  punch through the sheet (┼ lattice flash) and swing under it
+// The camera follows a director track (lib/director): HOME_TRACK anchored to the
+// real chapters, or LAB_TRACK on /lab/3d. Loaded client-only via next/dynamic.
 
 import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -32,6 +27,9 @@ import { AsciiRenderer, TRAIL_MAX } from "@/lib/ascii-engine/gl/ascii-renderer";
 import { applySkinBlend } from "@/lib/ascii-engine/gl/skin-uniforms";
 import { resolveCssColor, slotOf } from "@/lib/ascii-engine/gl/atlas";
 import { journey } from "@/lib/journey-store";
+import { chapters } from "@/lib/chapters";
+import { FLAT, poseAt, resolveTrack, type Pose, type ResolvedTrack } from "@/lib/director/rig";
+import { HOME_TRACK, LAB_TRACK } from "@/lib/director/stations";
 
 const TWO_PI = Math.PI * 2;
 const N_FRAMES = MathUtils.clamp(Math.round(TWO_PI / asciiConfig.dt), 180, 480);
@@ -47,8 +45,8 @@ const MERGER_SLOT = slotOf("◆");
 export interface StageStats { fps: number; calls: number; tris: number; }
 export interface Cell { w: number; h: number; }
 
-const ease = (t: number) => t * t * (3 - 2 * t);
-const seg = (p: number, a: number, b: number) => ease(MathUtils.clamp((p - a) / (b - a), 0, 1));
+const CHAPTER_IDS = chapters.map((c) => c.id);
+const debugOn = typeof window !== "undefined" && /[?&]debug\b/.test(window.location.search);
 
 /** Shared uniforms for everything that evaluates the field. */
 function makeFieldUniforms() {
@@ -69,13 +67,20 @@ function makeFieldUniforms() {
   };
 }
 
+export type StageMode = "journey" | "lab";
+
 interface StageProps {
   cell: Cell;
+  mode?: StageMode;
   parity?: boolean;
   onStats?: (s: StageStats) => void;
+  /** first frame rendered with the glyph atlas in place (safe to crossfade) */
+  onFirstFrame?: () => void;
+  /** WebGL context lost — the caller should fall back to the 2D vessel */
+  onLost?: () => void;
 }
 
-function Stage({ cell, parity = false, onStats }: StageProps) {
+function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, onLost }: StageProps) {
   const { gl, scene, camera, size, viewport } = useThree();
   const cam = camera as PerspectiveCamera;
   const dpr = viewport.dpr;
@@ -125,6 +130,14 @@ function Stage({ cell, parity = false, onStats }: StageProps) {
     return () => { delete w.__stage; };
   }, [parity, ascii]);
 
+  useEffect(() => {
+    if (!onLost) return;
+    const el = gl.domElement;
+    const lost = (e: Event) => { e.preventDefault(); onLost(); };
+    el.addEventListener("webglcontextlost", lost);
+    return () => el.removeEventListener("webglcontextlost", lost);
+  }, [gl, onLost]);
+
   // ── pointer trail (same ring buffer semantics as the 2D vessel) ──────────
   const trail = useRef<{ x: number; y: number; t: number }[]>([]);
   const pointer = useRef(new Vector2());
@@ -141,7 +154,10 @@ function Stage({ cell, parity = false, onStats }: StageProps) {
   // ── per-frame state ──────────────────────────────────────────────────────
   const phase = useRef(0);
   const light = useRef({ angle: parity ? 0 : Math.random() * TWO_PI, hue: 0 });
-  const rig = useRef({ fov: 4, elev: 90, dist: 0, roll: 0, look: new Vector2() });
+  const rig = useRef({ ...FLAT, dist: 0, lookX: 0, lookY: 0 });
+  const target = useRef<Pose>({ ...FLAT });
+  const track = useRef<{ bounds: number[] | null; t: ResolvedTrack | null }>({ bounds: null, t: null });
+  const firstFrame = useRef(false);
   const stats = useRef({ frames: 0, since: performance.now() });
   const tmp = useMemo(
     () => ({ f: new Vector3(), up: new Vector3(), pos: new Vector3(), tgt: new Vector3(), at: new Vector3() }),
@@ -154,7 +170,18 @@ function Stage({ cell, parity = false, onStats }: StageProps) {
     const H = size.height;
     const st = journey.state;
     const p = parity ? 0 : st.globalProgress;
-    const { merge, ring } = st.stage;
+
+    // ── director: resolve the track against the live chapter bounds ──────
+    const tk = track.current;
+    if (!tk.t || tk.bounds !== st.bounds) {
+      tk.bounds = st.bounds;
+      tk.t = resolveTrack(mode === "lab" ? LAB_TRACK : HOME_TRACK, CHAPTER_IDS, st.bounds);
+    }
+    const T = parity ? Object.assign(target.current, FLAT, { dist: (H / 2) / Math.tan((4 * DEG) / 2) })
+      : poseAt(tk.t, p, H, target.current);
+    // the lab drives the merger from the keyboard; the journey from its track
+    const merge = mode === "lab" ? st.stage.merge : T.merge;
+    const ring = mode === "lab" ? st.stage.ring : T.ring;
 
     // hybrid phase velocity — idle = the 2D loop's 18fps cadence, scroll bends
     // time, and the inspiral speeds the orbit up as it decays
@@ -175,32 +202,29 @@ function Stage({ cell, parity = false, onStats }: StageProps) {
     uniforms.uLightDir.value.set(Math.cos(L.angle), Math.sin(L.angle));
     ascii.frame.uHuePhase = L.hue;
 
-    // ── camera stations ────────────────────────────────────────────────────
-    const b = seg(p, 0.10, 0.45);
-    const c = seg(p, 0.45, 0.78);
-    const d = ease(seg(p, 0.78, 1.0)); // double-eased: the edge-on crossing is brief
-    const fov = MathUtils.lerp(4, 48, b);
-    const framing = (H / 2) / Math.tan((fov * DEG) / 2); // dolly-zoom: hold the framing
-    const elev = MathUtils.lerp(MathUtils.lerp(MathUtils.lerp(90, 32, b), 22, c), -26, d);
-    const dist = MathUtils.lerp(MathUtils.lerp(framing, 380, c), 820, d);
-    const roll = TWO_PI * c;
-
+    // ── camera rig: damped toward the director's pose ─────────────────────
     const R = rig.current;
     const k = 6; // damping: glides even when wheel scroll is steppy
     const snap = R.dist === 0 || parity;
-    R.fov = snap ? fov : MathUtils.damp(R.fov, fov, k, delta);
-    R.elev = snap ? elev : MathUtils.damp(R.elev, elev, k, delta);
-    R.dist = snap ? dist : MathUtils.damp(R.dist, dist, k, delta);
-    R.roll = snap ? roll : MathUtils.damp(R.roll, roll, k, delta);
-    R.look.x = MathUtils.damp(R.look.x, pointer.current.x, 3, delta);
-    R.look.y = MathUtils.damp(R.look.y, pointer.current.y, 3, delta);
+    const d = (cur: number, to: number) => (snap ? to : MathUtils.damp(cur, to, k, delta));
+    R.tx = d(R.tx, T.tx);
+    R.ty = d(R.ty, T.ty);
+    R.elev = d(R.elev, T.elev);
+    R.az = d(R.az, T.az);
+    R.roll = d(R.roll, T.roll);
+    R.fov = d(R.fov, T.fov);
+    R.dist = d(R.dist as number, T.dist as number);
+    R.relief = d(R.relief, T.relief);
+    R.lookX = MathUtils.damp(R.lookX, pointer.current.x * T.look, 3, delta);
+    R.lookY = MathUtils.damp(R.lookY, pointer.current.y * T.look, 3, delta);
 
     const e = R.elev * DEG;
-    tmp.f.set(0, Math.cos(e), -Math.sin(e));
-    tmp.up.set(0, Math.sin(e), Math.cos(e)).applyAxisAngle(tmp.f, R.roll);
-    const lookAmt = 40 * b; // mouse-look fades out on the flat station
-    tmp.tgt.set(R.look.x * lookAmt, -R.look.y * lookAmt, 0);
-    tmp.pos.copy(tmp.tgt).addScaledVector(tmp.f, -R.dist);
+    const az = R.az * DEG;
+    const hx = Math.sin(az), hy = Math.cos(az);
+    tmp.f.set(hx * Math.cos(e), hy * Math.cos(e), -Math.sin(e));
+    tmp.up.set(hx * Math.sin(e), hy * Math.sin(e), Math.cos(e)).applyAxisAngle(tmp.f, R.roll);
+    tmp.tgt.set(R.tx + R.lookX * 40, R.ty - R.lookY * 40, 0);
+    tmp.pos.copy(tmp.tgt).addScaledVector(tmp.f, -(R.dist as number));
     cam.position.copy(tmp.pos);
     cam.up.copy(tmp.up);
     cam.lookAt(tmp.at.copy(tmp.pos).add(tmp.f));
@@ -210,17 +234,18 @@ function Stage({ cell, parity = false, onStats }: StageProps) {
     }
 
     // relief + real lighting fade in with the tilt; far field fades to empty
-    uniforms.uHeight.value = 130 * b;
-    uniforms.uRealNormals.value = b;
-    const near = Math.max(Math.abs(R.dist) * 1.25, 1400);
+    const relief = R.relief;
+    uniforms.uHeight.value = 130 * relief;
+    uniforms.uRealNormals.value = relief;
+    const near = Math.max(Math.abs(R.dist as number) * 1.25, 1400);
     uniforms.uFade.value.set(near, near + 2800);
 
     // skins: the same blend the 2D vessel shows; tilted views get +70% intensity
     const blend = currentSkinBlend(st);
-    applySkinBlend(ascii.skin, blend.a, blend.b, blend.t, size.width, 1 + 0.7 * b);
+    applySkinBlend(ascii.skin, blend.a, blend.b, blend.t, size.width, 1 + 0.7 * relief);
 
     // flashes: ┼ lattice on the punch-through, ◆ burst at the merger
-    const punch = d > 0 && d < 1 ? 1 - MathUtils.smoothstep(Math.abs(cam.position.z), 0, 70) : 0;
+    const punch = relief > 0.5 ? 1 - MathUtils.smoothstep(Math.abs(cam.position.z), 0, 70) : 0;
     const burst = MathUtils.smoothstep(merge, 0.9, 1) * (1 - MathUtils.smoothstep(ring, 0, 0.35));
     ascii.frame.uFlash.value = Math.max(punch, burst);
     ascii.frame.uFlashSlot.value = burst > punch ? MERGER_SLOT : LATTICE_SLOT;
@@ -232,12 +257,12 @@ function Stage({ cell, parity = false, onStats }: StageProps) {
       Math.min(size.width, H) * MathUtils.lerp(asciiConfig.orbitFracLo, asciiConfig.orbitFracHi, s) * (1 - merge);
     const bx = orbitR * Math.cos(TWO_PI * tau);
     const by = orbitR * Math.sin(TWO_PI * tau);
-    const lift = 18 * b;
+    const lift = 18 * relief;
     if (bodyA.current && bodyB.current) {
       bodyA.current.position.set(bx, -by, lift);
       bodyB.current.position.set(-bx, by, lift);
-      bodyA.current.visible = b > 0.02;
-      bodyB.current.visible = b > 0.02 && ring < 0.05; // one remnant after the merger
+      bodyA.current.visible = relief > 0.02;
+      bodyB.current.visible = relief > 0.02 && ring < 0.05; // one remnant after the merger
       bodyA.current.scale.setScalar(1 + 0.6 * ring);
     }
 
@@ -253,12 +278,27 @@ function Stage({ cell, parity = false, onStats }: StageProps) {
 
     gl.info.reset(); // count every pass this frame, not just the last one
     ascii.render(scene, cam);
+    if (!firstFrame.current && ascii.ready) {
+      firstFrame.current = true;
+      onFirstFrame?.();
+    }
 
     // stats (DOM callback, throttled — no React state)
     const sa = stats.current;
     sa.frames++;
-    if (onStats && now - sa.since > 500) {
-      onStats({
+    if (debugOn && now - sa.since > 500) {
+      (window as unknown as { __stageDebug?: unknown }).__stageDebug = {
+        g: +p.toFixed(4),
+        bounds: st.bounds.map((x) => +x.toFixed(4)),
+        pose: { elev: +R.elev.toFixed(1), az: +R.az.toFixed(1), dist: Math.round(R.dist as number), fov: +R.fov.toFixed(1), relief: +relief.toFixed(2) },
+        merge: +merge.toFixed(3),
+        ring: +ring.toFixed(3),
+        skin: { t: +blend.t.toFixed(2), density: +ascii.skin.uDensity.value.toFixed(2), dim: +ascii.skin.uDim.value.toFixed(2) },
+        fps: Math.round((sa.frames * 1000) / (now - sa.since)),
+      };
+    }
+    if ((onStats || debugOn) && now - sa.since > 500) {
+      onStats?.({
         fps: Math.round((sa.frames * 1000) / (now - sa.since)),
         calls: gl.info.render.calls,
         tris: gl.info.render.triangles,
@@ -292,12 +332,7 @@ function Stage({ cell, parity = false, onStats }: StageProps) {
   );
 }
 
-export default function StageCanvas({
-  cell,
-  parity,
-  onStats,
-  onReady,
-}: StageProps & { onReady?: () => void }) {
+export default function StageCanvas(props: StageProps) {
   return (
     <Canvas
       linear
@@ -308,10 +343,9 @@ export default function StageCanvas({
       onCreated={({ gl }) => {
         gl.setClearColor(0x000000, 1);
         gl.info.autoReset = false;
-        onReady?.();
       }}
     >
-      <Stage cell={cell} parity={parity} onStats={onStats} />
+      <Stage {...props} />
     </Canvas>
   );
 }

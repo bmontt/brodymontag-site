@@ -4,8 +4,10 @@
 // Single source of truth for scroll→store state. Registers:
 //   1. one global #journey trigger that, each frame, derives which chapter we're
 //      in and the cross-chapter blend from precomputed boundary offsets, writes
-//      them to the journey store + a --journey-progress CSS var, and snaps to
-//      chapter boundaries (desktop only).
+//      them to the journey store + a --journey-progress CSS var, and gently
+//      snaps onto a chapter start when the reader stops near one (desktop only).
+//      It refreshes last (refreshPriority -1) so its range and the chapter
+//      bounds include the timeline pin's spacer.
 //   2. one scrubbed reveal timeline per chapter ([data-reveal] autoAlpha + y).
 //
 // Why a single writer: per-chapter progress triggers overlap (a chapter is
@@ -34,6 +36,9 @@ import { chapters } from "@/lib/chapters";
 import { journey } from "@/lib/journey-store";
 
 const BLEND_BAND = 0.15; // fraction of a chapter's scroll span used to cross-fade
+// snap is magnetic, not a trap: only settle onto a chapter start when the reader
+// stops within this fraction of a viewport of it; mid-chapter stops stay put
+const SNAP_MAGNET_VH = 0.2;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
@@ -48,10 +53,12 @@ export default function JourneyController() {
       // normalized scroll-start of each chapter over the global range; recomputed
       // on every ScrollTrigger refresh (resize, font/image reflow, dvh changes).
       let bounds: number[] = chapters.map(() => 0);
+      let rangePx = 1;
 
       function computeBounds(start: number, end: number) {
         const range = end - start;
         if (range <= 0) return;
+        rangePx = range;
         const scrollY = window.scrollY;
         bounds = chapters.map((c) => {
           const el = document.getElementById(c.id);
@@ -59,6 +66,7 @@ export default function JourneyController() {
           const docY = el.getBoundingClientRect().top + scrollY;
           return clamp01((docY - start) / range);
         });
+        journey.setBounds(bounds);
       }
 
       // snap to the nearest chapter boundary — desktop only (touch momentum +
@@ -69,6 +77,10 @@ export default function JourneyController() {
         trigger: "#journey",
         start: "top top",
         end: "bottom bottom",
+        // refresh LAST: its range and the chapter bounds must be measured after
+        // the timeline pin has inserted its spacer (otherwise progress saturates
+        // at 1 mid-timeline and the epilogue's bound clamps to 1)
+        refreshPriority: -1,
         onRefresh(self) {
           computeBounds(self.start, self.end);
         },
@@ -84,8 +96,8 @@ export default function JourneyController() {
           const span = segEnd - segStart;
           const local = span > 1e-6 ? clamp01((g - segStart) / span) : 0;
 
-          // active chapter (nav highlight): flips at the segment midpoint
-          journey.setChapter(local >= 0.5 ? Math.min(i + 1, lastIndex) : i);
+          // active chapter (nav highlight): the chapter being read
+          journey.setChapter(i);
 
           // cross-chapter blend
           if (local > 1 - BLEND_BAND && i < lastIndex) {
@@ -107,7 +119,8 @@ export default function JourneyController() {
                   const d = Math.abs(b - value);
                   if (d < bestDist) { bestDist = d; best = b; }
                 }
-                return best;
+                // magnetic: settle only when already near a chapter start
+                return bestDist * rangePx <= window.innerHeight * SNAP_MAGNET_VH ? best : value;
               },
               duration: { min: 0.15, max: 0.4 },
               delay: 0.12,
@@ -255,7 +268,10 @@ export default function JourneyController() {
         });
       }
 
-      // recompute all positions now that the pin/spacer exists
+      // recompute all positions now that the pin/spacer exists — sorted so every
+      // trigger below the timeline is measured after its pin (page order), and
+      // the global trigger (refreshPriority -1) last
+      ScrollTrigger.sort();
       ScrollTrigger.refresh();
 
       return () => {

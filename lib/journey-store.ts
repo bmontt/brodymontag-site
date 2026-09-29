@@ -37,7 +37,13 @@ interface JourneyState {
   timelineProgress: number;
   /** set once by the controller's reduced-motion matchMedia branch */
   reducedMotion: boolean;
-  /** 3D stage scene parameters — written by the director, read by the stage loop */
+  /**
+   * Normalized scroll-start of each chapter over the #journey range (same
+   * order as lib/chapters.ts). Measured by the controller on every refresh;
+   * the 3D director resolves chapter-anchored camera stations against it.
+   */
+  bounds: number[];
+  /** 3D stage scene parameters — lab overrides; the home director derives its own */
   stage: {
     /** inspiral 0→1 (orbit decays, frequency chirps) */
     merge: number;
@@ -54,6 +60,7 @@ const state: JourneyState = {
   velocity: 0,
   timelineProgress: -1,
   reducedMotion: false,
+  bounds: [],
   stage: { merge: 0, ring: 0 },
 };
 
@@ -95,6 +102,11 @@ export const journey = {
 
   setReducedMotion(v: boolean) {
     state.reducedMotion = v;
+  },
+
+  /** Chapter start offsets, re-measured on every ScrollTrigger refresh. No notify. */
+  setBounds(b: number[]) {
+    state.bounds = b;
   },
 
   /** Per-frame 3D stage parameters. No notify. */
