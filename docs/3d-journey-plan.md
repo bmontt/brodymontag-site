@@ -2,8 +2,8 @@
 
 Plan to turn brodymontag.com from a 2D scroll journey into an interactive **3D camera
 flight** in the spirit of the angular.dev homepage animation, without losing the site's
-ASCII identity. Written 2026-09-24. Status: **approved 2026-09-24 · Phase 0 done · Phase 1 spike
-done (§8.1), awaiting Brody's visual go/no-go**.
+ASCII identity. Written 2026-09-24. Status: **approved · Phases 0–3 done (§8.1–8.3) ·
+Phase 4 (scenes) in progress** on `feat/3d-stage`.
 
 ---
 
@@ -231,18 +231,20 @@ happens once and applies to both renderers.
 - **Keep native scroll + ScrollTrigger.** Do **not** use drei `ScrollControls`: it moves
   scrolling into an inner div, which breaks Cmd-F, anchors and screen readers, and it fights
   the existing pins.
-- **Master timeline:** one GSAP timeline scrubbed by the global `#journey` trigger, with one
-  label per station. It tweens the store's `rig` and `scene` objects, the same pattern as
-  angular's View `userData`.
-- **Camera path:** a `CatmullRomCurve3` through authored stations (`lib/director/stations.ts`).
-  `rig.u` is progress along the curve, and the look target runs ahead on the same curve by
-  `lookAhead`. Station data sits next to `chapters.ts`.
+- **Director (as built, Phase 3):** a pure keyframe track evaluated every frame from
+  `globalProgress`, not a second GSAP timeline. Stations (`lib/director/stations.ts`) anchor
+  to chapter ids and resolve against the chapter bounds the controller measures, so they
+  follow the real layout through resizes. Poses use orbit parameters (target, elevation,
+  azimuth, distance, roll, fov, relief) rather than world positions, and `dist: "frame"`
+  gives a true dolly-zoom. This is simpler than the planned GSAP master timeline plus
+  CatmullRom curve, and GSAP's global trigger stays the only scroll reader.
 - **Smoothing:** mouse-wheel `scrollY` is steppy, which angular's README also warns about.
   The rig applies frame-rate-independent damping (`maath/easing.damp3`, using delta time) so
   the camera glides even when scroll jumps. **Lenis stays optional:** decide in Phase 6 by
   feel, and if adopted, run it through `gsap.ticker` with `lenis.on('scroll',
   ScrollTrigger.update)`.
-- **Snap:** keep today's desktop-only directional snap to station boundaries.
+- **Snap:** desktop-only and *magnetic*: it only settles onto a chapter start when the
+  reader stops within 0.2 viewport heights of one (fixed in Phase 3; see §8.3).
 - **Worldline pin:** the timeline keeps its pin + `invalidateOnRefresh`, but instead of
   translating the track sideways it drives `scene.gateT`. The DOM panels are stacked
   absolutely and scale in and out in sync. The vertical-stack CSS default stays as the
@@ -327,9 +329,10 @@ components/stage/
   objects/{wave-sheet,binary,monolith,photo-panel,meteor-field,year-gate,remnant}.tsx
   debug-hud.tsx                       ?debug only
 lib/ascii-engine/gl/                  GLSL lives in TS template strings (no Turbopack loader)
-  wave-shader.ts  ascii-effect.ts     (spike, exist)   skin-uniforms.ts (Phase 2)
+  wave-shader.ts  ascii-shaders.ts  ascii-renderer.ts  atlas.ts  skin-uniforms.ts
+lib/ascii-engine/skin-blend.ts        store → current skin blend (same rules as the vessel)
 lib/director/
-  stations.ts  camera-path.ts  master-timeline.ts  route-presets.ts
+  rig.ts  stations.ts                 route-presets.ts arrives with Phase 5
 ```
 
 ---
@@ -399,7 +402,54 @@ deployment can also be restored with Instant Rollback.
 **Gate verdict:** on the measurable criteria (fps, bundle, parity) → **GO**. The
 remaining criterion, *reads on-brand*, is Brody's call after scrolling `/lab/3d`.
 
-**Total ≈ 22–32 focused days** (Phases 0–1 are done). Phases 4 and 5 parallelize well (§9).
+### 8.2 Phase 2 results — engine (2026-09-29)
+
+- **Three-pass renderer** (`AsciiRenderer`) replaces the spike's single full-resolution post
+  effect, and the `postprocessing` dependency is gone:
+  1. The scene renders into a `cols × rows` target, one fragment per cell center.
+     `camera.setViewOffset` widens the frustum so the grid aligns exactly, including
+     partial edge cells.
+  2. A per-cell pass handles level quantization, skin dither, density cull, carve, cursor
+     repulsor and light, once per cell instead of once per pixel.
+  3. A thin full-resolution pass stamps glyphs (including the left neighbor's overflow),
+     tinted light, the glow halo and the lattice or merger flash.
+- **Skins:** one atlas holds every glyph any skin uses. `skin-uniforms` applies the vessel's
+  blend contract (numeric fields lerp; glyphs and LUT dither per cell), and `skin-blend`
+  resolves section blends, timeline eras and reduced motion exactly as the vessel does.
+- **Merger physics** in the wave shader: `uMerge` (the orbit decays while the frequency
+  chirps up) and `uRing` (single-source ringdown). `journey-store` gains `stage.merge/ring`.
+- **Gate: parity with `bake.ts`.** At τ=0, **99.79–99.90%** of cells are identical at
+  1440×900, 1437×893, 390×844 and with 7×14 cells. Every mismatch is within 4.4e-4 of a
+  level threshold (half-float scene-target precision), not a logic error.
+- **Bundle:** the lazy 3D chunk is **240 KB gzip** (down from 248). Home stays at 295 KB
+  after the Next 16.3.3 security upgrade (merged, `npm audit` → 0 vulnerabilities).
+
+### 8.3 Phase 3 results — director + integration (2026-09-29)
+
+- **Director:** `lib/director/rig.ts` + `stations.ts` (see §4.5 for how it differs from the
+  plan). `HOME_TRACK`: flat hero → dolly-zoom tilt on leaving the hero → the cool body (code)
+  → a rise → the warm body (music) → a timeline overview → the epilogue inspiral, merger and
+  ringdown.
+- **Tier gate** (`components/stage/stage-root.tsx`, replacing `<Vessel/>` in `JourneyRoot`):
+  the 2D vessel always paints first. On 3D-capable devices the stage chunk loads lazily,
+  crossfades on its first real frame, and the vessel unmounts. A lost WebGL context drops
+  back to the vessel. `?tier=2d|3d` overrides the choice, and `<html data-stage-tier>`
+  exposes it.
+- **Pre-existing controller bugs fixed** (on both `feat/3d-stage` and `feat/journey`):
+  - The global trigger refreshed before the timeline pin, so progress saturated
+    mid-timeline and the epilogue blended into the timeline skin.
+  - Snap trapped readers at chapter starts.
+  - The nav highlighted the next chapter past each midpoint.
+- **Gate:** a full 60-step scroll causes **4 React commits** (the 4 chapter changes, via the
+  nav's `useSyncExternalStore`), counted with `?debug` and `<Profiler>`. Production build:
+  **120 rAF/s** at every tier and scroll position; no console errors.
+- **Moved to Phase 5:** persisting the stage across routes (a route-group layout) and route
+  presets. They only pay off with click-to-fly into objects that Phase 4 creates.
+- **Environment note:** `~/Documents` is iCloud-synced, and a rapid `npm ci` there produced
+  100+ `"… 2"` conflict copies in `node_modules`, which broke `tsc`. The fix is one clean
+  reinstall. Avoid churning `node_modules` in synced folders.
+
+**Total ≈ 22–32 focused days** (Phases 0–3 are done). Phases 4 and 5 parallelize well (§9).
 
 **Testing:** promote the throwaway Playwright smoke (June, `/tmp/smoke-test`) to a real
 `e2e/` devDependency. With 3D, visual regressions will be constant. Run a filmstrip per

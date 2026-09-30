@@ -90,7 +90,9 @@ export default function JourneyController() {
 
           // segment i: the chapter whose [bounds[i], bounds[i+1]) contains g
           let i = 0;
-          while (i < bounds.length - 1 && g >= bounds[i + 1]) i++;
+          // (epsilon: a snap lands exactly on a start; float noise must not
+          // leave the reader attributed to the previous chapter)
+          while (i < bounds.length - 1 && g >= bounds[i + 1] - 1e-4) i++;
           const segStart = bounds[i];
           const segEnd = i + 1 < bounds.length ? bounds[i + 1] : 1;
           const span = segEnd - segStart;
