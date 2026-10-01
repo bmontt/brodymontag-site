@@ -220,6 +220,34 @@ export default function JourneyController() {
         });
       });
 
+      // ── prologue: pin the hero while the stage performs the fly-through ─────
+      // (hold → dolly-zoom tilt → rolled dive; see HOME_TRACK). The hero content
+      // exits "past the camera" — scale up + fade, angular.dev's scene exit —
+      // during the dive. Shorter on phones.
+      const hero = document.getElementById("hero");
+      const heroContent = hero?.querySelector<HTMLElement>("[data-hero-content]");
+      if (hero && heroContent) {
+        const pinLength = () => window.innerHeight * (window.innerWidth < 768 ? 1.0 : 1.6);
+        const prologue = gsap.timeline({
+          scrollTrigger: {
+            trigger: hero,
+            start: "top top",
+            end: () => `+=${pinLength()}`,
+            pin: true,
+            scrub: 0.6,
+            invalidateOnRefresh: true,
+          },
+        });
+        prologue
+          .to(heroContent, { scale: 1.3, autoAlpha: 0, filter: "blur(6px)", ease: "power2.in", duration: 0.35 }, 0.5)
+          .to({}, { duration: 0.15 }); // hold empty while the dive finishes
+        cleanup.push(() => {
+          prologue.scrollTrigger?.kill();
+          prologue.kill();
+          gsap.set(heroContent, { clearProps: "transform,opacity,visibility,filter" });
+        });
+      }
+
       // ── horizontal timeline: pin the section, scrub the year track sideways ──
       // CSS `.is-horizontal` flips the track to a row first; function-based
       // distance + invalidateOnRefresh keep it correct across resizes. The

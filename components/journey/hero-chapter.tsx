@@ -41,7 +41,10 @@ export default function HeroChapter() {
       id="hero"
       className="relative z-20 flex min-h-screen flex-col justify-center px-6 md:px-12"
     >
-      <motion.div style={{ y: heroY }} className="relative mx-auto w-full max-w-5xl">
+      {/* data-hero-content: the controller scales + fades this wrapper out during
+          the pinned prologue (framer's parallax y stays on the inner element) */}
+      <div data-hero-content className="relative mx-auto w-full max-w-5xl will-change-transform">
+      <motion.div style={{ y: heroY }} className="relative w-full">
 
         <h1
           className="text-iridescent-stroke font-sans font-light text-foreground"
@@ -134,6 +137,18 @@ export default function HeroChapter() {
           {content.hero.elevatorPitch}
         </motion.p>
       </motion.div>
+      </div>
+
+      {/* skip the prologue fly-through — plain anchor, works without JS */}
+      <motion.a
+        href="#code"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 font-mono text-xs text-foreground/35 transition-colors hover:text-foreground/80"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: LINKS_APPEAR + 1.2, duration: 0.8 }}
+      >
+        skip intro ↓
+      </motion.a>
     </section>
   );
 }

@@ -89,7 +89,9 @@ void main() {
       float mul = uDim;
       if (uCarve.x >= 0.0) {
         float inside = clamp((uCarve.y - abs(ctr.x - uCarve.x)) / uCarve.w, 0.0, 1.0);
-        mul *= 1.0 - uCarve.z * inside * inside * (3.0 - 2.0 * inside);
+        float carve = 1.0 - uCarve.z * inside * inside * (3.0 - 2.0 * inside);
+        // scene objects (presence > 1) are only partly calmed by the carve
+        mul *= mix(carve, 1.0, s.b > 1.001 ? 0.6 : 0.0);
       }
       float baseAlpha = (1.0 - suppression(ctr)) * mul * s.b;
       float spec = (lvl >= uShimmerMin && s.g > 0.0)

@@ -30,6 +30,11 @@ import { journey } from "@/lib/journey-store";
 import { chapters } from "@/lib/chapters";
 import { FLAT, poseAt, resolveTrack, type Pose, type ResolvedTrack } from "@/lib/director/rig";
 import { HOME_TRACK, LAB_TRACK } from "@/lib/director/stations";
+import { chapterWeight, layoutScale } from "@/lib/director/weights";
+import type { SolidUniforms } from "@/lib/ascii-engine/gl/solid-shader";
+import BuildScene from "@/components/stage/scenes/build";
+import MontyScene from "@/components/stage/scenes/monty";
+import WorldlineScene, { WORLDLINE_X } from "@/components/stage/scenes/worldline";
 
 const TWO_PI = Math.PI * 2;
 const N_FRAMES = MathUtils.clamp(Math.round(TWO_PI / asciiConfig.dt), 180, 480);
@@ -64,6 +69,7 @@ function makeFieldUniforms() {
     uLightDir: { value: new Vector2(1, 0) },
     uRealNormals: { value: 0 },
     uFade: { value: new Vector2(1e5, 1e5 + 1) },
+    uPresence: { value: 1 },
   };
 }
 
@@ -86,6 +92,11 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
   const dpr = viewport.dpr;
 
   const uniforms = useMemo(makeFieldUniforms, []);
+  // scene objects share the field's light + fade so everything agrees
+  const solidShared = useMemo<SolidUniforms>(
+    () => ({ uLightDir: uniforms.uLightDir, uFade: uniforms.uFade }),
+    [uniforms],
+  );
   const sheetMat = useMemo(
     () =>
       new ShaderMaterial({
@@ -179,6 +190,18 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     }
     const T = parity ? Object.assign(target.current, FLAT, { dist: (H / 2) / Math.tan((4 * DEG) / 2) })
       : poseAt(tk.t, p, H, target.current);
+    // compositions are authored at 1440px wide: scale targets with the layout,
+    // and pull back on narrow aspects (phones) so the scene still fits
+    if (mode === "journey" && !parity) {
+      const ls = layoutScale(size.width);
+      T.tx *= ls;
+      T.ty *= ls;
+      // worldline: truck in lockstep with the DOM year track while it's pinned
+      const tp = st.timelineProgress;
+      if (tp >= 0) T.tx = MathUtils.lerp(WORLDLINE_X[0], WORLDLINE_X[1], tp) * ls;
+      const boost = MathUtils.clamp(Math.sqrt(1.6 / (size.width / H)), 1, 1.9);
+      T.dist = (T.dist as number) * MathUtils.lerp(1, boost, T.relief);
+    }
     // the lab drives the merger from the keyboard; the journey from its track
     const merge = mode === "lab" ? st.stage.merge : T.merge;
     const ring = mode === "lab" ? st.stage.ring : T.ring;
@@ -239,6 +262,15 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     uniforms.uRealNormals.value = relief;
     const near = Math.max(Math.abs(R.dist as number) * 1.25, 1400);
     uniforms.uFade.value.set(near, near + 2800);
+    // the sheet steps back a little while scene objects are on stage
+    const onStage = mode === "journey"
+      ? Math.max(
+          chapterWeight("code", p, CHAPTER_IDS, st.bounds),
+          chapterWeight("music", p, CHAPTER_IDS, st.bounds),
+          chapterWeight("timeline", p, CHAPTER_IDS, st.bounds),
+        )
+      : 0;
+    uniforms.uPresence.value = 1 - 0.15 * onStage;
 
     // skins: the same blend the 2D vessel shows; tilted views get +70% intensity
     const blend = currentSkinBlend(st);
@@ -246,7 +278,8 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
 
     // flashes: ┼ lattice on the punch-through, ◆ burst at the merger
     const punch = relief > 0.5 ? 1 - MathUtils.smoothstep(Math.abs(cam.position.z), 0, 70) : 0;
-    const burst = MathUtils.smoothstep(merge, 0.9, 1) * (1 - MathUtils.smoothstep(ring, 0, 0.35));
+    // brief and faint: the epilogue text sits on top of it
+    const burst = 0.45 * MathUtils.smoothstep(merge, 0.96, 1) * (1 - MathUtils.smoothstep(ring, 0, 0.12));
     ascii.frame.uFlash.value = Math.max(punch, burst);
     ascii.frame.uFlashSlot.value = burst > punch ? MERGER_SLOT : LATTICE_SLOT;
 
@@ -322,6 +355,13 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
       <mesh material={sheetMat} frustumCulled={false}>
         <planeGeometry args={[SHEET, SHEET, 320, 320]} />
       </mesh>
+      {mode === "journey" && (
+        <>
+          <BuildScene shared={solidShared} />
+          <MontyScene shared={solidShared} />
+          <WorldlineScene shared={solidShared} />
+        </>
+      )}
       <mesh ref={bodyA} material={bodyMat} visible={false}>
         <sphereGeometry args={[38, 24, 16]} />
       </mesh>

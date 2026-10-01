@@ -79,6 +79,7 @@ uniform float uHeight;
 uniform vec2  uLightDir;    // unit vector, y-down screen convention (as draw.ts)
 uniform float uRealNormals; // 0 = radial normals (2D parity), 1 = surface normals
 uniform vec2  uFade;        // (near, far) camera distance for presence fade
+uniform float uPresence;    // overall sheet presence (dims while scene objects are on stage)
 varying vec3 vWorld;
 varying vec2 vField;
 
@@ -103,7 +104,7 @@ void main() {
   }
 
   float dist     = distance(cameraPosition, vWorld);
-  float presence = 1.0 - smoothstep(uFade.x, uFade.y, dist);
+  float presence = (1.0 - smoothstep(uFade.x, uFade.y, dist)) * uPresence;
 
   gl_FragColor = vec4(amp, facing, presence, 1.0);
 }

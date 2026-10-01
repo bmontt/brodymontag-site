@@ -3,7 +3,7 @@
 Plan to turn brodymontag.com from a 2D scroll journey into an interactive **3D camera
 flight** in the spirit of the angular.dev homepage animation, without losing the site's
 ASCII identity. Written 2026-09-24. Status: **approved · Phases 0–3 done (§8.1–8.3) ·
-Phase 4 (scenes) in progress** on `feat/3d-stage`.
+Phase 4 first pass done (§8.4), awaiting visual review** on `feat/3d-stage`.
 
 ---
 
@@ -449,7 +449,40 @@ remaining criterion, *reads on-brand*, is Brody's call after scrolling `/lab/3d`
   100+ `"… 2"` conflict copies in `node_modules`, which broke `tsc`. The fix is one clean
   reinstall. Avoid churning `node_modules` in synced folders.
 
-**Total ≈ 22–32 focused days** (Phases 0–3 are done). Phases 4 and 5 parallelize well (§9).
+### 8.4 Phase 4 results — scenes, first pass (2026-10-01)
+
+- **Prologue:** the hero pins (1.6 viewport heights on desktop, 1.0 on phones) while the
+  camera holds flat, dolly-zooms into the tilt, then dives between the bodies with a full
+  roll. The hero content exits "past the camera" (scale 1.3 + fade + blur), and a
+  "skip intro ↓" anchor lets readers jump ahead.
+- **The build (code):** one glyph monolith per project (live projects stand taller). They
+  rise from the sheet in a stagger and flank the camera's truck in the screen margins. The
+  lateral offset is proportional to depth, which keeps them beside the text column at
+  every distance.
+- **Monty (music):** event photos become ASCII panels: contrast-stretched luminance drives
+  glyph level and highlight, with a `◆` frame. They load through the Next image optimizer at
+  128px (`q=75`, the only quality Next 16 allows by default). Above them is a wall of 48
+  meteor streaks that fly in over angular's four waves (5/15/25/rest %), hover, and fly out
+  together at the chapter's end.
+- **Worldline (timeline):** six year gates (2021→2026). While the section is pinned, the
+  camera trucks past them in lockstep with the horizontal DOM year track
+  (`timelineProgress`), and the gate for the year in view lights up.
+- **Merger (epilogue):** inspiral → merger → ringdown from the track; a brief, faint `◆`
+  burst at the merger.
+- **Engine additions:** scene materials (`solid-shader.ts`) write presence above 1 as
+  *emphasis*: brighter, and only 40% calmed by the reading-column carve. The sheet dims 15%
+  while objects are on stage. Phones get a layout scale plus a pull-back on narrow aspects.
+- **Checks:** 4 React commits across a full scroll; no console errors (desktop and phone);
+  lazy 3D chunk **244 KB** gzip; home unchanged.
+- **Frame rate:** the last measurement read 30 fps everywhere, but a blank page also read
+  30. The Mac was on battery at 17% and macOS was throttling refresh. Earlier
+  measurements of the same code were 120. Re-measure on power.
+- **Environment:** the worktree moved to `brodymontag-site-3d.nosync`; iCloud skips
+  `.nosync` folders, which stops the `"… 2"` conflict copies.
+- **Gate:** Brody's visual review. Expect taste tuning: brightness per skin, monolith and
+  panel sizes, meteor density, pin length.
+
+**Total ≈ 22–32 focused days** (Phases 0–3 are done, Phase 4 has a first pass). Phases 4 and 5 parallelize well (§9).
 
 **Testing:** promote the throwaway Playwright smoke (June, `/tmp/smoke-test`) to a real
 `e2e/` devDependency. With 3D, visual regressions will be constant. Run a filmstrip per
