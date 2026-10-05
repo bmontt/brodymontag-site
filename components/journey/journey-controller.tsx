@@ -226,6 +226,7 @@ export default function JourneyController() {
       // during the dive. Shorter on phones.
       const hero = document.getElementById("hero");
       const heroContent = hero?.querySelector<HTMLElement>("[data-hero-content]");
+      const heroSkip = hero?.querySelector<HTMLElement>("[data-hero-skip]");
       if (hero && heroContent) {
         const pinLength = () => window.innerHeight * (window.innerWidth < 768 ? 1.0 : 1.6);
         const prologue = gsap.timeline({
@@ -240,11 +241,13 @@ export default function JourneyController() {
         });
         prologue
           .to(heroContent, { scale: 1.3, autoAlpha: 0, filter: "blur(6px)", ease: "power2.in", duration: 0.35 }, 0.5)
+          .to(heroSkip ?? {}, { autoAlpha: 0, duration: 0.2 }, 0.4)
           .to({}, { duration: 0.15 }); // hold empty while the dive finishes
         cleanup.push(() => {
           prologue.scrollTrigger?.kill();
           prologue.kill();
           gsap.set(heroContent, { clearProps: "transform,opacity,visibility,filter" });
+          if (heroSkip) gsap.set(heroSkip, { clearProps: "opacity,visibility" });
         });
       }
 

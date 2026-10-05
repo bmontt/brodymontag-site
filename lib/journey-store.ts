@@ -18,6 +18,8 @@ export interface ChapterBlend {
   t: number;
 }
 
+export type StageRouteKind = "home" | "project" | "show";
+
 interface JourneyState {
   /** 0–1 progress through the whole #journey scroll range */
   globalProgress: number;
@@ -43,6 +45,15 @@ interface JourneyState {
    * the 3D director resolves chapter-anchored camera stations against it.
    */
   bounds: number[];
+  /** Interaction + routing context for the persistent 3D stage. Never notifies. */
+  focus: {
+    /** which page the stage is serving: home runs the journey, details park the camera */
+    route: { kind: StageRouteKind; index: number };
+    /** data-stage-id of the hovered/focused entry ("project:<id>", "show:<id>") */
+    hover: string | null;
+    /** click-to-fly in flight: destination + start time (performance.now) */
+    fly: { kind: Exclude<StageRouteKind, "home">; index: number; start: number } | null;
+  };
   /** 3D stage scene parameters — lab overrides; the home director derives its own */
   stage: {
     /** inspiral 0→1 (orbit decays, frequency chirps) */
@@ -61,6 +72,7 @@ const state: JourneyState = {
   timelineProgress: -1,
   reducedMotion: false,
   bounds: [],
+  focus: { route: { kind: "home", index: -1 }, hover: null, fly: null },
   stage: { merge: 0, ring: 0 },
 };
 
@@ -107,6 +119,19 @@ export const journey = {
   /** Chapter start offsets, re-measured on every ScrollTrigger refresh. No notify. */
   setBounds(b: number[]) {
     state.bounds = b;
+  },
+
+  setRoute(kind: StageRouteKind, index = -1) {
+    state.focus.route = { kind, index };
+    if (kind === "home") state.focus.fly = null;
+  },
+
+  setHover(id: string | null) {
+    state.focus.hover = id;
+  },
+
+  setFly(kind: Exclude<StageRouteKind, "home">, index: number) {
+    state.focus.fly = { kind, index, start: performance.now() };
   },
 
   /** Per-frame 3D stage parameters. No notify. */

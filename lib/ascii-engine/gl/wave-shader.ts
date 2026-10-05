@@ -27,6 +27,8 @@ uniform float uKosc;
 uniform vec2  uLens;       // (lensR, lensG)
 uniform float uMerge;      // inspiral 0→1: orbit decays to 0 while the frequency chirps up
 uniform float uRing;       // ringdown 0→1: single-source waves from the merged remnant
+uniform float uHeight;
+uniform vec3  uDent;       // cursor as negative mass: field xy (y-down) + strength 0–1
 
 const float TWO_PI = 6.283185307179586;
 
@@ -54,18 +56,25 @@ float fieldWave(vec2 p) {
   float ring = 2.0 * sin(wf * lensR(r) - psi) * exp(-r / (uMinWH * 1.1));
   return mix(binary, ring, clamp(uRing, 0.0, 1.0));
 }
+
+// surface height: the wave relief plus the cursor's crater. Both scale with
+// uHeight (0 on the flat station), so the 2D-identical view is untouched.
+float heightAt(vec2 p) {
+  vec2 d = p - uDent.xy;
+  float dent = -uDent.z * 70.0 * exp(-dot(d, d) / (110.0 * 110.0));
+  return fieldWave(p) * 0.5 * uHeight + dent * (uHeight / 130.0);
+}
 `;
 
 export const waveVertex = /* glsl */ `
 ${FIELD_COMMON}
-uniform float uHeight;
 varying vec3 vWorld;
 varying vec2 vField;   // y-down field coords
 
 void main() {
   vec3 pos = position;
   vec2 p   = vec2(pos.x, -pos.y);
-  pos.z   += fieldWave(p) * 0.5 * uHeight;
+  pos.z   += heightAt(p);
   vec4 world = modelMatrix * vec4(pos, 1.0);
   vWorld = world.xyz;
   vField = p;
@@ -75,7 +84,6 @@ void main() {
 
 export const waveFragment = /* glsl */ `
 ${FIELD_COMMON}
-uniform float uHeight;
 uniform vec2  uLightDir;    // unit vector, y-down screen convention (as draw.ts)
 uniform float uRealNormals; // 0 = radial normals (2D parity), 1 = surface normals
 uniform vec2  uFade;        // (near, far) camera distance for presence fade
@@ -96,8 +104,8 @@ void main() {
   float facing = facingFlat;
   if (uRealNormals > 0.0) {
     float e  = 1.5;
-    float hx = (fieldWave(vField + vec2(e, 0.0)) - fieldWave(vField - vec2(e, 0.0))) * 0.25 * uHeight / e;
-    float hy = (fieldWave(vField + vec2(0.0, e)) - fieldWave(vField - vec2(0.0, e))) * 0.25 * uHeight / e;
+    float hx = (heightAt(vField + vec2(e, 0.0)) - heightAt(vField - vec2(e, 0.0))) / (2.0 * e);
+    float hy = (heightAt(vField + vec2(0.0, e)) - heightAt(vField - vec2(0.0, e))) / (2.0 * e);
     vec3  n  = normalize(vec3(-hx, -hy, 1.0));
     vec3  L  = normalize(vec3(uLightDir, 0.55));
     facing = mix(facingFlat, max(dot(n, L), 0.0), uRealNormals);

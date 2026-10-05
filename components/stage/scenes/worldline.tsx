@@ -12,7 +12,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { TorusGeometry, type Group, type Mesh } from "three";
 import { chapters } from "@/lib/chapters";
 import { journey } from "@/lib/journey-store";
-import { chapterWeight, layoutScale } from "@/lib/director/weights";
+import { layoutScale, sceneWeight } from "@/lib/director/weights";
 import { solidMaterial, type SolidUniforms } from "@/lib/ascii-engine/gl/solid-shader";
 
 const IDS = chapters.map((c) => c.id);
@@ -45,7 +45,7 @@ export default function WorldlineScene({ shared }: { shared: SolidUniforms }) {
 
   useFrame(() => {
     const st = journey.state;
-    const w = chapterWeight("timeline", st.globalProgress, IDS, st.bounds, 0.5, 0.5);
+    const w = sceneWeight("timeline", st, IDS, 0.5, 0.5);
     const g = group.current;
     if (!g) return;
     g.visible = w > 0.01;

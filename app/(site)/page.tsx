@@ -8,6 +8,7 @@
 // A client shell (JourneyRoot → Vessel + TimelineNav + JourneyController) wraps
 // the server-rendered chapters; only hero/vessel/nav/controller/presence are
 // client. Entry wrappers carry `data-reveal`; the controller animates them.
+// `data-stage-id` links an entry to its 3D object (hover/focus lights it up).
 
 import Image from "next/image";
 import JourneyRoot from "@/components/journey/journey-root";
@@ -69,7 +70,7 @@ export default function Home() {
               <SectionLabel>projects</SectionLabel>
               <div className="flex flex-col gap-2">
                 {projects.map((p) => (
-                  <div key={p.id} data-reveal>
+                  <div key={p.id} data-reveal data-stage-id={`project:${p.id}`}>
                     <ProjectCard project={p} />
                   </div>
                 ))}
@@ -112,7 +113,7 @@ export default function Home() {
               <SectionLabel>gigs</SectionLabel>
               <div className="flex flex-col gap-1">
                 {pastShows.map((e) => (
-                  <div key={e.id} data-reveal>
+                  <div key={e.id} data-reveal data-stage-id={`show:${e.id}`}>
                     <EntryCard entry={e} />
                   </div>
                 ))}

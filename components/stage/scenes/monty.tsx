@@ -3,16 +3,19 @@
 // ── scene: monty (music chapter) ──────────────────────────────────────────────
 // The warm side of the sheet. Event photos stand as panels whose glyph levels
 // follow the photo's luminance (ASCII photography), flanking the camera's path
-// like a gallery. Overhead, angular.dev's meteor shower: glyph streaks fly in
-// over four waves (5% / 15% / 25% / the rest), settle into a hovering
-// constellation, and all fly out together as the chapter ends.
-// Photos load through the Next image optimizer at 128px (q=75: Next 16 allows only 75 by default) — a panel only needs a
-// few dozen cells of detail, not a 4000px decode.
+// like a gallery (lib/director/layouts.ts). Hovering/focusing a show — or being
+// on its page — lights its panel. Overhead, angular.dev's meteor shower: glyph
+// streaks fly in over four waves (5% / 15% / 25% / the rest), hold as a wall
+// of lights, and all fly out together as the chapter ends.
+// Photos load through the Next image optimizer at 128px (q=75: Next 16 allows
+// only 75 by default) — a panel needs a few dozen cells of detail, not a 4000px
+// decode.
 
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   BoxGeometry,
+  MathUtils,
   Object3D,
   PlaneGeometry,
   TextureLoader,
@@ -22,27 +25,15 @@ import {
   type Mesh,
   type Texture,
 } from "three";
-import { events } from "@/lib/brody-events";
 import { chapters } from "@/lib/chapters";
 import { journey } from "@/lib/journey-store";
-import { chapterWeight, layoutScale } from "@/lib/director/weights";
+import { MONTY, PANELS } from "@/lib/director/layouts";
+import { layoutScale, sceneWeight } from "@/lib/director/weights";
 import { photoMaterial, solidMaterial, type SolidUniforms } from "@/lib/ascii-engine/gl/solid-shader";
 
 const IDS = chapters.map((c) => c.id);
-const AZ = (24 * Math.PI) / 180;
-const H: [number, number] = [Math.sin(AZ), Math.cos(AZ)];
-const RIGHT: [number, number] = [H[1], -H[0]];
-const ORIGIN: [number, number] = [260, -20]; // the music station's look target
-// lateral offset ∝ depth keeps panels in the screen margin (see build.tsx)
-const CAMERA_BACK = 645;
-const MARGIN_RATIO = 0.54;
 
-const PHOTOS = [
-  ...new Set(events.flatMap((e) => e.media.filter((m) => m.type === "image").map((m) => m.src))),
-].slice(0, 6);
-
-// meteor field: an 8 × 6 wall of lights standing behind the gallery on the
-// right (vertical, facing the camera — like angular's screen-filling field)
+// meteor wall: 8 × 6, standing over the right margin behind the gallery
 const COLS = 8, ROWS = 6, COUNT = COLS * ROWS, SPACING = 64;
 const WAVES = [
   { at: 0.04, share: 0.05 },
@@ -53,6 +44,7 @@ const WAVES = [
 const FLIGHT = 0.1;         // share of the chapter a meteor spends flying in
 const EXIT = [0.86, 0.97];  // everyone flies out together
 const SPAWN = new Vector3(360, 360, 520);
+const SETTLED_U = 0.6;      // detail pages hold the wall fully formed
 
 const smooth = (t: number) => t * t * (3 - 2 * t);
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t));
@@ -75,6 +67,7 @@ export default function MontyScene({ shared }: { shared: SolidUniforms }) {
   const group = useRef<Group>(null);
   const panels = useRef<(Mesh | null)[]>([]);
   const meteors = useRef<InstancedMesh>(null);
+  const glow = useRef(PANELS.map(() => 0));
 
   // ── photo panels ─────────────────────────────────────────────────────────
   const panelGeo = useMemo(() => {
@@ -85,25 +78,10 @@ export default function MontyScene({ shared }: { shared: SolidUniforms }) {
   }, []);
   const textures = useMemo<Texture[]>(() => {
     const loader = new TextureLoader();
-    return PHOTOS.map((src) => loader.load(`/_next/image?url=${encodeURIComponent(src)}&w=128&q=75`));
+    return PANELS.map((p) => loader.load(`/_next/image?url=${encodeURIComponent(p.src)}&w=128&q=75`));
   }, []);
   useEffect(() => () => textures.forEach((t) => t.dispose()), [textures]);
   const panelMats = useMemo(() => textures.map((t) => photoMaterial(shared, t)), [shared, textures]);
-
-  const layout = useMemo(
-    () =>
-      PHOTOS.map((_, i) => {
-        const side = i % 2 === 0 ? -1 : 1;
-        const depth = 80 + i * 150;
-        const lateral = MARGIN_RATIO * (CAMERA_BACK + depth);
-        return {
-          x: ORIGIN[0] + H[0] * depth + RIGHT[0] * side * lateral,
-          y: ORIGIN[1] + H[1] * depth + RIGHT[1] * side * lateral,
-          rot: AZ - side * 0.35, // turned in toward the path
-        };
-      }),
-    [],
-  );
 
   // ── meteors ──────────────────────────────────────────────────────────────
   const meteorMat = useMemo(() => solidMaterial(shared, 0.76, 0.5, true), [shared]);
@@ -118,18 +96,14 @@ export default function MontyScene({ shared }: { shared: SolidUniforms }) {
         start[order[k]] = w.at + ((order[k] * 0.618) % 1) * 0.06;
       }
     }
-    // over the right margin, clear of the reading column
-    const center = new Vector3(
-      ORIGIN[0] + H[0] * 700 + RIGHT[0] * 760,
-      ORIGIN[1] + H[1] * 700 + RIGHT[1] * 760,
-      250,
-    );
+    const { origin, h, right } = MONTY;
+    const center = new Vector3(origin[0] + h[0] * 700 + right[0] * 760, origin[1] + h[1] * 700 + right[1] * 760, 250);
     const slots = Array.from({ length: COUNT }, (_, i) => {
       const c = i % COLS, r = Math.floor(i / COLS);
       const jitter = ((c * 7 + r * 13) % 5) * 9; // break the grid a little
       return new Vector3(
-        center.x + RIGHT[0] * (c - (COLS - 1) / 2) * SPACING + H[0] * jitter,
-        center.y + RIGHT[1] * (c - (COLS - 1) / 2) * SPACING + H[1] * jitter,
+        center.x + right[0] * (c - (COLS - 1) / 2) * SPACING + h[0] * jitter,
+        center.y + right[1] * (c - (COLS - 1) / 2) * SPACING + h[1] * jitter,
         center.z + (r - (ROWS - 1) / 2) * 56,
       );
     });
@@ -137,26 +111,30 @@ export default function MontyScene({ shared }: { shared: SolidUniforms }) {
   }, []);
   const tmp = useMemo(() => ({ o: new Object3D(), p: new Vector3(), dir: new Vector3() }), []);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     const st = journey.state;
-    const w = chapterWeight("music", st.globalProgress, IDS, st.bounds);
+    const w = sceneWeight("music", st, IDS);
     const g = group.current;
     if (!g) return;
     g.visible = w > 0.01;
     if (!g.visible) return;
     const ls = layoutScale(size.width);
     g.scale.set(ls, ls, 1);
-
-    for (const m of panelMats) m.uniforms.uWeight.value = w;
     meteorMat.uniforms.uWeight.value = w;
+    const { route, hover } = st.focus;
 
-    // panels rise in a stagger; aspect follows the loaded photo
-    layout.forEach((_, i) => {
+    // panels: rise in a stagger, aspect follows the loaded photo, lit on hover
+    PANELS.forEach((pn, i) => {
       const mesh = panels.current[i];
       if (!mesh) return;
+      const lit = (hover !== null && pn.ids.includes(hover)) || (route.kind === "show" && route.index === i) ? 1 : 0;
+      glow.current[i] = MathUtils.damp(glow.current[i], lit, 8, Math.min(delta, 0.1));
+      const u = panelMats[i].uniforms;
+      u.uWeight.value = w;
+      u.uEmphasis.value = 2.0 + (route.kind === "home" ? 1.8 : 0.8) * glow.current[i];
       const img = textures[i].image as { width?: number; height?: number } | undefined;
       const aspect = img?.width && img?.height ? img.width / img.height : 4 / 3;
-      const long = 230;
+      const long = 230 * (1 + 0.08 * glow.current[i]);
       const pw = aspect >= 1 ? long : long * aspect;
       const ph = aspect >= 1 ? long / aspect : long;
       const rise = smooth(clamp01(w * 1.6 - i * 0.1));
@@ -167,10 +145,13 @@ export default function MontyScene({ shared }: { shared: SolidUniforms }) {
     // meteors: progress through the music chapter drives the waves
     const im = meteors.current;
     if (!im) return;
-    const i0 = IDS.indexOf("music");
-    const s = st.bounds[i0] ?? 0;
-    const e = st.bounds[i0 + 1] ?? 1;
-    const u = (st.globalProgress - s) / Math.max(e - s, 1e-4);
+    let u = SETTLED_U;
+    if (route.kind === "home") {
+      const i0 = IDS.indexOf("music");
+      const s = st.bounds[i0] ?? 0;
+      const e = st.bounds[i0 + 1] ?? 1;
+      u = (st.globalProgress - s) / Math.max(e - s, 1e-4);
+    }
     const out = clamp01((u - EXIT[0]) / (EXIT[1] - EXIT[0]));
     const { o, p, dir } = tmp;
     for (let i = 0; i < COUNT; i++) {
@@ -179,18 +160,16 @@ export default function MontyScene({ shared }: { shared: SolidUniforms }) {
       if (q <= 0 || out >= 1) {
         o.scale.setScalar(0);
       } else {
-        let stretch = 10;
+        let stretch: number;
         if (out > 0) {
-          const x = easeOut(out);
-          p.copy(slot).addScaledVector(SPAWN, -x);
-          dir.copy(SPAWN).negate();
+          p.copy(slot).addScaledVector(SPAWN, -easeOut(out));
           stretch = 10 + 70 * Math.sin(Math.PI * out);
         } else {
           const qe = easeOut(q);
           p.copy(slot).addScaledVector(SPAWN, 1 - qe);
-          dir.copy(SPAWN).negate();
           stretch = 10 + 70 * (1 - qe);
         }
+        dir.copy(SPAWN).negate();
         o.position.copy(p);
         o.lookAt(p.x + dir.x, p.y + dir.y, p.z + dir.z);
         o.scale.set(26, 26, stretch + 16); // ≥ a cell at wall distance, or it samples in and out
@@ -203,22 +182,18 @@ export default function MontyScene({ shared }: { shared: SolidUniforms }) {
 
   return (
     <group ref={group} visible={false}>
-      {layout.map((pl, i) => (
+      {PANELS.map((pn, i) => (
         <mesh
-          key={PHOTOS[i]}
+          key={pn.src}
           ref={(el) => { panels.current[i] = el; }}
           geometry={panelGeo}
           material={panelMats[i]}
-          position={[pl.x, pl.y, 0]}
-          rotation={[0, 0, pl.rot]}
+          position={[pn.x, pn.y, 0]}
+          rotation={[0, 0, pn.rot]}
           frustumCulled={false}
         />
       ))}
-      <instancedMesh
-        ref={meteors}
-        args={[meteorGeo, meteorMat, COUNT]}
-        frustumCulled={false}
-      />
+      <instancedMesh ref={meteors} args={[meteorGeo, meteorMat, COUNT]} frustumCulled={false} />
     </group>
   );
 }

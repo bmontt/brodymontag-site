@@ -3,7 +3,6 @@
 import { notFound, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Nav from "@/components/nav";
-import AsciiBg from "@/components/ascii-bg";
 import BackLink from "@/components/back-link";
 import { projects } from "@/lib/projects";
 
@@ -28,7 +27,7 @@ export default function ProjectPage() {
 
   return (
     <div className="relative min-h-screen bg-background">
-      <AsciiBg subpage />
+      {/* background: the persistent stage in app/(site)/layout.tsx */}
       <Nav />
 
       <main className="relative z-10 pt-32 px-6 md:px-12 pb-32">

@@ -1,20 +1,32 @@
 "use client";
 
 // ── stage-root ────────────────────────────────────────────────────────────────
-// Capability gate for the background stage. The 2D vessel always renders first
-// (instant, SSR-safe, and the reduced-motion / low-end path). When the device
-// qualifies for the 3D tier, the stage chunk loads lazily and crossfades in on
-// its first real frame; the vessel then unmounts so its rAF loop stops. A lost
-// WebGL context drops straight back to the vessel — never a blank background.
+// The persistent background stage, mounted once in app/(site)/layout.tsx so it
+// survives navigation between the journey and the detail pages.
+//
+// Capability gate: the 2D canvas always renders first (instant, SSR-safe, and
+// the reduced-motion / low-end path) — the journey's Vessel on home, the dimmed
+// AsciiBg on detail pages. When the device qualifies for the 3D tier, the stage
+// chunk loads lazily and crossfades in on its first real frame; the 2D canvas
+// then unmounts so its rAF loop stops. A lost WebGL context drops straight back
+// to 2D — never a blank background.
 //
 // Tier decision (first match wins):
 //   ?tier=2d|3d override → reduced motion → Save-Data → low memory/cores →
 //   no WebGL2 (or only with a major performance caveat) → otherwise 3D.
 // The chosen tier is mirrored to <html data-stage-tier> for tests/CSS.
+//
+// Interaction (3D tier): hovering/focusing a [data-stage-id] entry lights its
+// object; clicking a project/show link on the journey flies the camera to that
+// object (FLY_MS) before navigating — the stage then stays parked beside it.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { usePathname, useRouter } from "next/navigation";
 import Vessel from "@/components/vessel";
+import AsciiBg from "@/components/ascii-bg";
+import { journey, type StageRouteKind } from "@/lib/journey-store";
+import { FLY_MS, panelIndexBySlug, pillarIndexBySlug } from "@/lib/director/layouts";
 
 const StageCanvas = dynamic(() => import("@/components/stage/stage-canvas"), { ssr: false });
 
@@ -42,10 +54,24 @@ function detectTier(): Tier {
   return "3d";
 }
 
+/** "/projects/<slug>" → { kind: "project", index } etc. */
+function routeOf(pathname: string): { kind: StageRouteKind; index: number } {
+  const m = /^\/(projects|shows)\/([^/?#]+)/.exec(pathname);
+  if (!m) return { kind: "home", index: -1 };
+  const slug = decodeURIComponent(m[2]);
+  return m[1] === "projects"
+    ? { kind: "project", index: pillarIndexBySlug(slug) }
+    : { kind: "show", index: panelIndexBySlug(slug) };
+}
+
 export default function StageRoot() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const isHome = routeOf(pathname).kind === "home";
   const [tier, setTier] = useState<Tier | null>(null);
   const [stageReady, setStageReady] = useState(false);
-  const [vesselGone, setVesselGone] = useState(false);
+  const [canvas2dGone, setCanvas2dGone] = useState(false);
+  const flying = useRef(false);
 
   useEffect(() => setTier(detectTier()), []);
 
@@ -53,25 +79,76 @@ export default function StageRoot() {
     document.documentElement.dataset.stageTier = tier ?? "pending";
   }, [tier]);
 
-  // after the stage's first frame, let the crossfade finish, then drop the vessel
+  // the stage follows the route: journey on home, parked beside the object on details
+  useEffect(() => {
+    const r = routeOf(pathname);
+    journey.setRoute(r.kind, r.index);
+    journey.setHover(null);
+    flying.current = false;
+  }, [pathname]);
+
+  // after the stage's first frame, let the crossfade finish, then drop the 2D canvas
   useEffect(() => {
     if (!stageReady) return;
-    const t = setTimeout(() => setVesselGone(true), CROSSFADE_MS + 100);
+    const t = setTimeout(() => setCanvas2dGone(true), CROSSFADE_MS + 100);
     return () => clearTimeout(t);
   }, [stageReady]);
+
+  // hover/focus an entry → light its 3D object (delegated; no React state)
+  useEffect(() => {
+    if (tier !== "3d") return;
+    const idOf = (t: EventTarget | null) =>
+      (t instanceof Element ? t.closest<HTMLElement>("[data-stage-id]")?.dataset.stageId : undefined) ?? null;
+    const enter = (e: Event) => journey.setHover(idOf(e.target));
+    const leave = (e: Event) => {
+      const next = (e as PointerEvent | FocusEvent).relatedTarget;
+      if (idOf(next) !== journey.state.focus.hover) journey.setHover(idOf(next));
+    };
+    document.addEventListener("pointerover", enter);
+    document.addEventListener("pointerout", leave);
+    document.addEventListener("focusin", enter);
+    document.addEventListener("focusout", leave);
+    return () => {
+      document.removeEventListener("pointerover", enter);
+      document.removeEventListener("pointerout", leave);
+      document.removeEventListener("focusin", enter);
+      document.removeEventListener("focusout", leave);
+    };
+  }, [tier]);
+
+  // click a project/show on the journey → fly to its object, then navigate
+  useEffect(() => {
+    if (tier !== "3d" || !stageReady || !isHome) return;
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as Element | null)?.closest?.<HTMLAnchorElement>("a[href]");
+      if (!a || a.target === "_blank") return;
+      const url = new URL(a.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+      const r = routeOf(url.pathname);
+      if (r.kind === "home" || flying.current) return;
+      e.preventDefault();
+      e.stopPropagation(); // keep the Link from navigating before the flight lands
+      flying.current = true;
+      journey.setFly(r.kind, r.index);
+      window.setTimeout(() => router.push(url.pathname + url.search + url.hash), FLY_MS);
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [tier, stageReady, isHome, router]);
 
   const onFirstFrame = useCallback(() => setStageReady(true), []);
   const onLost = useCallback(() => {
     setTier("2d");
     setStageReady(false);
-    setVesselGone(false);
+    setCanvas2dGone(false);
   }, []);
 
   return (
     <>
-      {!vesselGone && (
+      {!canvas2dGone && (
         <div style={{ opacity: stageReady ? 0 : 1, transition: `opacity ${CROSSFADE_MS}ms ease` }}>
-          <Vessel />
+          {isHome ? <Vessel /> : <AsciiBg subpage />}
         </div>
       )}
       {tier === "3d" && (

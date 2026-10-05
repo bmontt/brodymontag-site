@@ -141,6 +141,7 @@ export default function HeroChapter() {
 
       {/* skip the prologue fly-through — plain anchor, works without JS */}
       <motion.a
+        data-hero-skip
         href="#code"
         className="absolute bottom-8 left-1/2 -translate-x-1/2 font-mono text-xs text-foreground/35 transition-colors hover:text-foreground/80"
         initial={{ opacity: 0 }}

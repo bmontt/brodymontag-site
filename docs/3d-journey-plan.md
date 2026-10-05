@@ -3,7 +3,7 @@
 Plan to turn brodymontag.com from a 2D scroll journey into an interactive **3D camera
 flight** in the spirit of the angular.dev homepage animation, without losing the site's
 ASCII identity. Written 2026-09-24. Status: **approved · Phases 0–3 done (§8.1–8.3) ·
-Phase 4 first pass done (§8.4), awaiting visual review** on `feat/3d-stage`.
+Phases 4–5 first pass done (§8.4–8.5); Phase 6 (hardening) next** on `feat/3d-stage`.
 
 ---
 
@@ -482,7 +482,37 @@ remaining criterion, *reads on-brand*, is Brody's call after scrolling `/lab/3d`
 - **Gate:** Brody's visual review. Expect taste tuning: brightness per skin, monolith and
   panel sizes, meteor density, pin length.
 
-**Total ≈ 22–32 focused days** (Phases 0–3 are done, Phase 4 has a first pass). Phases 4 and 5 parallelize well (§9).
+### 8.5 Phase 5 results — interaction (2026-10-05)
+
+- **Persistent stage:** the home and detail routes moved into `app/(site)/` (URLs
+  unchanged), and its layout mounts `StageRoot` once, so the canvas survives navigation.
+  The route sets the stage mode: home runs the journey, `/projects/<slug>` parks the camera
+  beside that project's monolith, `/shows/<slug>` beside its photo panel (or a warm-side
+  overview for shows without photos). Detail pages dim the field to 60%. On the 2D tier,
+  detail pages keep their original `AsciiBg subpage`.
+- **Click-to-fly:** on the journey (3D tier), a project or show link first blends the
+  camera into the destination preset over `FLY_MS` (650 ms), then navigates. The stage
+  is already parked there when the page swaps. Back restores scroll and the journey resumes.
+  Modifier clicks and new-tab clicks pass through untouched.
+- **Entry ↔ object linking:** `data-stage-id` on project and show entries. Delegated
+  hover and focus (keyboard included) light the matching monolith or panel. On its own
+  detail page the object stays lit, more gently.
+- **Cursor as negative mass:** the pointer is raycast onto the sheet, and a Gaussian crater
+  (relief and lighting) follows it while it moves, relaxing about 1.5 s after it stops. In
+  3D the glyph-clearing bubble softens to 40% so the crater reads. The flat station is
+  unaffected (it scales with relief).
+- **Keyboard:** native scroll (PageDown, Space, arrows) drives the camera. Focusing an
+  entry lights its object.
+- **Shared layouts:** `lib/director/layouts.ts` holds pillar and panel placement, which
+  the scenes, the detail presets and the fly targets all use.
+- **Gate (all pass):** 4 commits per full scroll; the skip link hides after the prologue;
+  click-to-fly holds the URL mid-flight, lands parked, and keeps one canvas; direct detail
+  loads work on both tiers; reduced motion → 2D tier; no console errors. Bundle: lazy 3D
+  chunk 245 KB gzip, home 299 KB, three.js not in home.
+- **Not done (stretch):** React `<ViewTransition>` for the DOM swap, drag-orbit of the
+  remnant, gyro parallax, audio-reactive mode.
+
+**Total ≈ 22–32 focused days** (Phases 0–3 done; Phases 4–5 have a first pass). Phases 4 and 5 parallelize well (§9).
 
 **Testing:** promote the throwaway Playwright smoke (June, `/tmp/smoke-test`) to a real
 `e2e/` devDependency. With 3D, visual regressions will be constant. Run a filmstrip per

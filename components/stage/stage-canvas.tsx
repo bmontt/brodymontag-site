@@ -13,6 +13,8 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   DoubleSide,
   MathUtils,
+  Plane,
+  Raycaster,
   ShaderMaterial,
   Vector2,
   Vector3,
@@ -29,6 +31,7 @@ import { resolveCssColor, slotOf } from "@/lib/ascii-engine/gl/atlas";
 import { journey } from "@/lib/journey-store";
 import { chapters } from "@/lib/chapters";
 import { FLAT, poseAt, resolveTrack, type Pose, type ResolvedTrack } from "@/lib/director/rig";
+import { FLY_MS, presetPose } from "@/lib/director/layouts";
 import { HOME_TRACK, LAB_TRACK } from "@/lib/director/stations";
 import { chapterWeight, layoutScale } from "@/lib/director/weights";
 import type { SolidUniforms } from "@/lib/ascii-engine/gl/solid-shader";
@@ -51,6 +54,15 @@ export interface StageStats { fps: number; calls: number; tris: number; }
 export interface Cell { w: number; h: number; }
 
 const CHAPTER_IDS = chapters.map((c) => c.id);
+const easeInOut = (t: number) => { const c = Math.min(1, Math.max(0, t)); return c * c * (3 - 2 * c); };
+const POSE_KEYS = ["tx", "ty", "elev", "az", "roll", "fov", "relief", "look", "merge", "ring"] as const;
+function blendPose(T: Pose, D: Partial<Pose>, e: number) {
+  for (const k of POSE_KEYS) {
+    const to = D[k];
+    if (typeof to === "number") T[k] = T[k] + (to - T[k]) * e;
+  }
+  if (typeof D.dist === "number") T.dist = (T.dist as number) + (D.dist - (T.dist as number)) * e;
+}
 const debugOn = typeof window !== "undefined" && /[?&]debug\b/.test(window.location.search);
 
 /** Shared uniforms for everything that evaluates the field. */
@@ -68,6 +80,7 @@ function makeFieldUniforms() {
     uHeight: { value: 0 },
     uLightDir: { value: new Vector2(1, 0) },
     uRealNormals: { value: 0 },
+    uDent: { value: new Vector3() },
     uFade: { value: new Vector2(1e5, 1e5 + 1) },
     uPresence: { value: 1 },
   };
@@ -152,8 +165,10 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
   // ── pointer trail (same ring buffer semantics as the 2D vessel) ──────────
   const trail = useRef<{ x: number; y: number; t: number }[]>([]);
   const pointer = useRef(new Vector2());
+  const lastMove = useRef(-1e9);
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
+      lastMove.current = performance.now();
       trail.current.push({ x: e.clientX, y: e.clientY, t: performance.now() });
       if (trail.current.length > TRAIL_MAX) trail.current.shift();
       pointer.current.set((e.clientX / window.innerWidth) * 2 - 1, (e.clientY / window.innerHeight) * 2 - 1);
@@ -171,7 +186,10 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
   const firstFrame = useRef(false);
   const stats = useRef({ frames: 0, since: performance.now() });
   const tmp = useMemo(
-    () => ({ f: new Vector3(), up: new Vector3(), pos: new Vector3(), tgt: new Vector3(), at: new Vector3() }),
+    () => ({
+      f: new Vector3(), up: new Vector3(), pos: new Vector3(), tgt: new Vector3(), at: new Vector3(),
+      ray: new Raycaster(), sheet: new Plane(new Vector3(0, 0, 1), 0), hit: new Vector3(), ndc: new Vector2(),
+    }),
     [],
   );
 
@@ -190,15 +208,25 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     }
     const T = parity ? Object.assign(target.current, FLAT, { dist: (H / 2) / Math.tan((4 * DEG) / 2) })
       : poseAt(tk.t, p, H, target.current);
-    // compositions are authored at 1440px wide: scale targets with the layout,
-    // and pull back on narrow aspects (phones) so the scene still fits
+    const routeKind = st.focus.route.kind;
     if (mode === "journey" && !parity) {
+      const { route, fly } = st.focus;
+      if (route.kind !== "home") {
+        // detail page: parked beside its object (the persistent stage keeps the
+        // camera where a click-to-fly left it)
+        Object.assign(T, FLAT, presetPose(route.kind, route.index));
+      } else {
+        // worldline: truck in lockstep with the DOM year track while it's pinned
+        const tp = st.timelineProgress;
+        if (tp >= 0) T.tx = MathUtils.lerp(WORLDLINE_X[0], WORLDLINE_X[1], tp);
+        // click-to-fly: blend from the journey pose into the destination preset
+        if (fly) blendPose(T, presetPose(fly.kind, fly.index), easeInOut((now - fly.start) / FLY_MS));
+      }
+      // compositions are authored at 1440px wide: scale targets with the layout,
+      // and pull back on narrow aspects (phones) so the scene still fits
       const ls = layoutScale(size.width);
       T.tx *= ls;
       T.ty *= ls;
-      // worldline: truck in lockstep with the DOM year track while it's pinned
-      const tp = st.timelineProgress;
-      if (tp >= 0) T.tx = MathUtils.lerp(WORLDLINE_X[0], WORLDLINE_X[1], tp) * ls;
       const boost = MathUtils.clamp(Math.sqrt(1.6 / (size.width / H)), 1, 1.9);
       T.dist = (T.dist as number) * MathUtils.lerp(1, boost, T.relief);
     }
@@ -270,11 +298,27 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
           chapterWeight("timeline", p, CHAPTER_IDS, st.bounds),
         )
       : 0;
-    uniforms.uPresence.value = 1 - 0.15 * onStage;
+    uniforms.uPresence.value = (1 - 0.15 * onStage) * (routeKind === "home" ? 1 : 0.75);
+
+    // cursor as negative mass: raycast onto the sheet; the crater fades in
+    // while the pointer moves and relaxes ~1.5 s after it stops
+    const moving = now - lastMove.current < 1500 && relief > 0.2 ? 1 : 0;
+    const dent = uniforms.uDent.value;
+    dent.z = MathUtils.damp(dent.z, moving, 4, delta);
+    if (dent.z > 0.001) {
+      tmp.ndc.set(pointer.current.x, -pointer.current.y);
+      tmp.ray.setFromCamera(tmp.ndc, cam);
+      if (tmp.ray.ray.intersectPlane(tmp.sheet, tmp.hit)) {
+        dent.x = MathUtils.damp(dent.x, tmp.hit.x, 12, delta);
+        dent.y = MathUtils.damp(dent.y, -tmp.hit.y, 12, delta); // field coords are y-down
+      }
+    }
 
     // skins: the same blend the 2D vessel shows; tilted views get +70% intensity
     const blend = currentSkinBlend(st);
-    applySkinBlend(ascii.skin, blend.a, blend.b, blend.t, size.width, 1 + 0.7 * relief);
+    // detail pages dim the field so the page reads first
+    applySkinBlend(ascii.skin, blend.a, blend.b, blend.t, size.width,
+      (1 + 0.7 * relief) * (routeKind === "home" ? 1 : 0.6));
 
     // flashes: ┼ lattice on the punch-through, ◆ burst at the merger
     const punch = relief > 0.5 ? 1 - MathUtils.smoothstep(Math.abs(cam.position.z), 0, 70) : 0;
@@ -305,7 +349,8 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     const slots = ascii.frame.uTrail.value;
     for (let i = 0; i < TRAIL_MAX; i++) {
       const pt = tr[i];
-      if (pt) slots[i].set(pt.x, pt.y, 1 - (now - pt.t) / asciiConfig.trailMs);
+      // in 3D the glyph-clearing bubble softens so the crater reads
+      if (pt) slots[i].set(pt.x, pt.y, (1 - (now - pt.t) / asciiConfig.trailMs) * (1 - 0.6 * relief));
       else slots[i].z = 0;
     }
 
@@ -328,6 +373,8 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
         ring: +ring.toFixed(3),
         skin: { t: +blend.t.toFixed(2), density: +ascii.skin.uDensity.value.toFixed(2), dim: +ascii.skin.uDim.value.toFixed(2) },
         fps: Math.round((sa.frames * 1000) / (now - sa.since)),
+        focus: { route: `${st.focus.route.kind}:${st.focus.route.index}`, hover: st.focus.hover, fly: !!st.focus.fly },
+        dent: +uniforms.uDent.value.z.toFixed(2),
       };
     }
     if ((onStats || debugOn) && now - sa.since > 500) {
