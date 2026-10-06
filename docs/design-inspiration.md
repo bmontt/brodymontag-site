@@ -1,0 +1,86 @@
+# Design inspiration — reverse-engineering notes
+
+Four reference sites, inspected 2026-10-05 with an instrumented headless browser. It hooked
+`shaderSource` and `getContext` to capture every compiled shader and context, and recorded
+libraries, fonts, canvases, scroll setup and screenshots at a few scroll positions. These
+are notes on **techniques and design moves**, not code to copy. unicorn.studio's shaders
+carry an explicit "no copying" notice, and nothing below reuses anyone's source.
+
+---
+
+## What each site actually does
+
+### unicorn.studio — layered WebGL effect stacks
+- **Stack:** a custom WebGL2 compositor, 7 canvases, 31 unique shaders, no framework
+  globals. It's a no-code tool whose embeds are effect *layers*: uniforms are namespaced
+  per layer (`uL0_… uL5_*`), and each layer has opacity, mask, mouse-tracking and time.
+- **Signature effects:** an aurora / light-streak hero; light "strands" converging on a
+  point; chrome-glow display type; dither ×4, bloom, Kawase-style blur, ASCII and
+  SDF-text passes.
+- **Cursor:** a GPU particle system. Positions and lifecycle live in a ping-pong state
+  texture (`uPingPongTexture`, `texelFetch` by particle id, up to 840 particles), and it
+  spawns from `uPreviousMousePos` → `uMousePos` velocity.
+- **Takeaway:** everything is a stack of cheap passes with per-layer masks and pointer
+  coupling. Polish comes from *combinations* (bloom + grain + subtle chromatic shift), not
+  any single heavy effect.
+
+### lenis.dev — Lenis + kinetic typography + one physical object
+- **Stack:** Next.js, Lenis (`html.lenis`), one WebGL2 canvas with only 4 shaders.
+- **Hero:** blackletter "LENIS" in salmon with physical-material depth (the captured
+  shaders include `MeshPhysicalMaterial` with iridescence, dispersion, transmission and
+  clearcoat), plus Panchang-wide "SMOOTH SCROLL".
+- **Kinetic type:** screen-filling Anton letters slide past as you scroll. They are
+  **SVG** (29 inline SVGs; no DOM text above 150px), so transforms are cheap and crisp.
+- **Starfield:** each particle wobbles in depth with simplex noise and is displaced by
+  `uScroll × depth`, then wrapped with `mod(y, height)`. That's infinite parallax, and
+  scroll *speed* reads as depth.
+- **Takeaway:** extreme typographic scale contrast (enormous display type next to tiny
+  mono labels), and one small particle trick that sells depth during scroll.
+
+### basement.studio — a real place, plus a machine-readable twin
+- **Stack:** Next.js, 2 WebGL2 canvases, 73 unique shaders. Set in **Geist + Geist Mono**
+  (your site's mono) plus a display face, "flauta".
+- **Hero:** their office as a lightmapped 3D interior. Uniforms show day/night city
+  lighting (`uCityNight`, `uNightFactor`, `uCloudCover`, `uSunDir`), godrays, matcap
+  glass, lamp lightmaps and an **inspect mode** (`inspectingEnabled`).
+- **Featured projects:** stippled / halftone 3D renders. The "dither" in their shaders is
+  three.js's standard anti-banding, so the stylization lives in the assets.
+- **"HUMAN / MACHINE" toggle:** *Machine* goes to **`/ai/home`**, a **plain-text,
+  machine-readable mirror** of the site. It has a box-drawing ASCII banner, slash-nav,
+  "MACHINE-READABLE INDEX", and all content as text, and it uses no canvas at all.
+- **Takeaway:** a physical "place" as identity, an inspect interaction (our click-to-fly
+  is the same idea), and an AI-native second face of the site.
+
+### shadergradient.co — animated noise gradients + grain
+- **Stack:** Framer site; the product is a three.js/R3F component. 9 WebGL2 canvases, 8
+  unique shaders.
+- **Technique:** a plane or sphere displaced by Perlin noise (`uNoiseDensity`,
+  `uNoiseStrength`, `uFrequency`, `uAmplitude`, `uSpeed`), lit with physical shading, with
+  three colors (`uC1…uC3`) and heavy film grain.
+- **Seamless loops:** noise is sampled at 4 points around a circle in noise space, then
+  interpolated (`uLoop`, `uLoopDuration`). This is the same idea as the site's τ-loop
+  bake, a nice validation.
+- **Takeaway:** color as a slowly moving *field*, not a flat fill; grain makes gradients
+  feel physical.
+
+---
+
+## What to adopt — proposals for brodymontag.com
+
+Ranked by fit with the ASCII / "The Binary" identity, divided by effort.
+
+| # | Proposal | From | Fit | Effort | Notes |
+|---|---|---|---|---|---|
+| **1** | **Human / Machine mode.** A toggle pill (bottom center) switches to `/machine`: a plain-text mirror generated from `content.json` with a box-drawing banner, slash-nav and every project, show and release as text. Ship `/llms.txt` alongside. | basement | ★★★★★ ASCII aesthetic + agentic-AI engineer; also SEO / LLM discoverability | S (≈0.5–1 d) | Server-rendered, no JS, no canvas. Single source = `content.json`, so it can't drift. |
+| **2** | **Field-native kinetic type.** At each chapter transition the chapter word (THE BUILD · MONTY · 2021→NOW · MERGER) is written *into the wave sheet*. A text mask from an offscreen canvas raises the amplitude, so giant lettering emerges in glyphs and dissolves back into waves (angular's MSDF headline, ASCII-native). | lenis, angular | ★★★★★ | M (≈1.5–2 d) | Reuses the sheet + ASCII pass, so there's no new renderer. DOM headings stay for a11y/SEO. |
+| **3** | **Moving gradient for the glyph light.** Replace the per-cell hue cycle with a slow 3-color noise gradient across the screen (cool in code, warm in music, iridescent in the hero), keeping the current saturation caps. | shadergradient | ★★★★ richer "iridescent" theme, still terminal-crisp | S (≈0.5 d) | A compose-pass change only; skins carry the three colors. |
+| **4** | **Scroll-parallax glyph dust.** Sparse `·` / `∘` specks at several depths, displaced by scroll velocity × depth and wrapped, mostly visible during fast scrolls and transitions. | lenis | ★★★★ | S (≈0.5 d) | Instanced, cell-sized, through the existing ASCII pass. Off on the flat hero station. |
+| **5** | **Lenis smooth scroll** (the plan's Phase 6 go/no-go). Today the camera glides while the DOM steps per wheel tick; Lenis aligns them. | lenis | ★★★ | S | `ScrollTrigger.update` on scroll, `gsap.ticker` drives `lenis.raf`, native touch (no `syncTouch`), disabled under reduced motion. |
+| **6** | **Typographic scale contrast.** One oversized display moment per chapter (Neue Haas, `clamp(4rem, 12vw, 10rem)`) set against the existing tiny mono labels. | lenis, basement | ★★★ | S | CSS + the existing SplitText entrance. |
+| 7 | Grain + bloom finish: a whisper of film grain and bloom on peak glyph cells only. | unicorn, shadergradient | ★★ | S | Optional. Risks muddying the crisp terminal look, so test behind a flag. |
+| — | **Not adopted:** cursor particle trails (unicorn). | unicorn | — | — | You removed spawned cursor particles in June ("cursor clears, doesn't eject"). The current repulsor plus the sheet dent is the deliberate choice. |
+| — | **Not adopted (for now):** a lightmapped "real place" hero (basement). | basement | ★★ | L | A DJ booth / studio scene is a big asset job and fights the ASCII identity. Revisit as a detail-page easter egg. |
+
+**Recommended next step:** build **#1 (Machine mode)** and **#3 (gradient glyph light)**
+first. They're small, distinctive and low-risk. Then **#2 (field-native kinetic type)**
+as the signature moment, and fold **#4–#6** into Phase 6 hardening.
