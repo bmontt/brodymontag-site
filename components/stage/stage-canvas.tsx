@@ -252,6 +252,8 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     }
     uniforms.uLightDir.value.set(Math.cos(L.angle), Math.sin(L.angle));
     ascii.frame.uHuePhase = L.hue;
+    ascii.frame.uTime.value = parity ? 0 : now / 1000;
+    ascii.frame.uGradientMix.value = st.stage.flatLight ? 0 : 1;
 
     // ── camera rig: damped toward the director's pose ─────────────────────
     const R = rig.current;

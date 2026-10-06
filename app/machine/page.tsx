@@ -1,0 +1,46 @@
+// ── /machine ──────────────────────────────────────────────────────────────────
+// The machine-readable face of the site: everything as plain text (lib/machine).
+// No stage, no canvas, no client JS — it sits outside the (site) route group.
+
+import type { Metadata } from "next";
+import Link from "next/link";
+import HumanMachineToggle from "@/components/human-machine-toggle";
+import { machineText } from "@/lib/machine";
+
+export const metadata: Metadata = {
+  title: "Brody Montag :: machine",
+  description: "Plain-text, machine-readable mirror of brodymontag.com.",
+  alternates: { canonical: "/machine", types: { "text/plain": "/llms.txt" } },
+};
+
+// absolute URLs and site paths become links for human readers of the mirror
+const LINK = /(https?:\/\/[^\s<>)]+|\/(?:projects|shows)\/[\w-]+|\/llms\.txt)/g;
+const ORIGIN = /^https:\/\/brodymontag\.com/;
+
+function linkify(text: string) {
+  return text.split(LINK).map((part, i) => {
+    if (i % 2 === 0) return part;
+    const local = part.startsWith("/") || ORIGIN.test(part);
+    const href = part.replace(ORIGIN, "") || "/";
+    return local ? (
+      <Link key={i} href={href} className="underline decoration-white/20 underline-offset-2 hover:text-foreground">
+        {part}
+      </Link>
+    ) : (
+      <a key={i} href={part} rel="noopener noreferrer" className="underline decoration-white/20 underline-offset-2 hover:text-foreground">
+        {part}
+      </a>
+    );
+  });
+}
+
+export default function MachinePage() {
+  return (
+    <main className="min-h-screen bg-background px-4 pb-24 pt-10 md:px-10">
+      <pre className="mx-auto max-w-4xl whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-foreground/75 md:text-xs">
+        {linkify(machineText())}
+      </pre>
+      <HumanMachineToggle mode="machine" />
+    </main>
+  );
+}

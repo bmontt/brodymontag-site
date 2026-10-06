@@ -118,8 +118,30 @@ uniform vec4  uLight;              // sharpness, strength, glowThresholdFrac, gl
 uniform vec3  uHue;                // phase (palette steps), bias, saturation
 uniform float uFlash;              // 0–1 full-grid glyph flash
 uniform float uFlashSlot;
+uniform float uTime;               // seconds
+uniform float uGradientMix;        // 1 = moving gradient light, 0 = the 2D vessel's per-cell hue cycle
 
 const float STEPS = 90.0;
+
+float h21(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float vnoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), u.x), mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+// Hue (degrees) of the light that catches a cell. The gradient mode borrows
+// shadergradient's idea — color as a slowly moving field, not a per-cell
+// rainbow: two octaves of value noise sweep ±55° around the skin's hue bias
+// (cool in code, warm in music) and drift over time.
+float lightHue(vec2 cell) {
+  if (uGradientMix < 0.5) {
+    return mod(floor(uHue.x + uHue.y + cell.x * 0.7 + cell.y * 0.5), STEPS) / STEPS * 360.0;
+  }
+  vec2 q = cell * vec2(0.045, 0.11) + vec2(uTime * 0.05, -uTime * 0.035);
+  float n = vnoise(q) * 0.65 + vnoise(q * 2.3 + 7.31) * 0.35;
+  return mod(uHue.y / STEPS * 360.0 + (n - 0.5) * 110.0 + uTime * 3.0, 360.0);
+}
 
 vec3 hsl2rgb(float h, float s, float l) {
   vec3 k = mod(vec3(0.0, 8.0, 4.0) + h / 30.0, 12.0);
@@ -156,12 +178,14 @@ void shade(vec2 cell, vec2 off, inout vec3 col) {
   col = mix(col, st.rgb, g * st.a * baseAlpha);
 
   if (spec > 0.012) {
-    float hi  = mod(floor(uHue.x + uHue.y + cell.x * 0.7 + cell.y * 0.5), STEPS);
-    vec3 tint = hsl2rgb(hi / STEPS * 360.0, uHue.z, 0.86);
+    float hue = lightHue(cell);
+    // the gradient light carries more color so its regions read as cool/warm washes
+    float sat = uGradientMix > 0.5 ? min(uHue.z * 1.5, 0.9) : uHue.z;
+    vec3 tint = hsl2rgb(hue, sat, 0.86);
     col = mix(col, tint, g * spec);
     if (glows) {
       float k = (spec - glowThr) / max(strength - glowThr, 0.001) * uLight.w;
-      vec3 glowTint = hsl2rgb(hi / STEPS * 360.0, min(uHue.z * 1.15, 1.0), 0.93);
+      vec3 glowTint = hsl2rgb(hue, min(sat * 1.15, 1.0), 0.93);
       col = mix(col, glowTint, clamp(halo * k * 0.16, 0.0, 1.0));
       col = mix(col, glowTint, g * k * spec);
     }

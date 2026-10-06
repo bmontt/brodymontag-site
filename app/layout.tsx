@@ -39,6 +39,8 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+  // machine-readable face of the site (see lib/machine.ts)
+  alternates: { types: { "text/plain": "/llms.txt" } },
 };
 
 export const viewport: Viewport = {

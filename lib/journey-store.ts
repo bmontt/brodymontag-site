@@ -56,6 +56,8 @@ interface JourneyState {
   };
   /** 3D stage scene parameters — lab overrides; the home director derives its own */
   stage: {
+    /** lab A/B: true = the 2D vessel's per-cell hue cycle instead of the gradient light */
+    flatLight: boolean;
     /** inspiral 0→1 (orbit decays, frequency chirps) */
     merge: number;
     /** ringdown 0→1 after the merger */
@@ -73,7 +75,7 @@ const state: JourneyState = {
   reducedMotion: false,
   bounds: [],
   focus: { route: { kind: "home", index: -1 }, hover: null, fly: null },
-  stage: { merge: 0, ring: 0 },
+  stage: { flatLight: false, merge: 0, ring: 0 },
 };
 
 const listeners = new Set<() => void>();

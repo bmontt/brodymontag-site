@@ -63,6 +63,9 @@ export class AsciiRenderer {
     uHuePhase: 0,
     uFlash: { value: 0 },
     uFlashSlot: { value: 0 },
+    uTime: { value: 0 },
+    /** 1 = moving gradient glyph light (3D default), 0 = the vessel's per-cell hue cycle */
+    uGradientMix: { value: 1 },
   };
 
   private readonly sceneRT = new WebGLRenderTarget(1, 1, {
@@ -128,6 +131,8 @@ export class AsciiRenderer {
         uHue: { value: new Vector3(0, 0, 0.58) },
         uFlash: this.frame.uFlash,
         uFlashSlot: this.frame.uFlashSlot,
+        uTime: this.frame.uTime,
+        uGradientMix: this.frame.uGradientMix,
       },
     });
 

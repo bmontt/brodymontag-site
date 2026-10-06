@@ -147,6 +147,9 @@ export default function Lab3D() {
           .timeline({ onUpdate: () => journey.setStage(proxy.merge, proxy.ring) })
           .to(proxy, { merge: 1, duration: 3.2, ease: "power2.in" })
           .to(proxy, { ring: 1, duration: 2.4, ease: "power1.out" });
+      } else if (e.key === "g") {
+        journey.state.stage.flatLight = !journey.state.stage.flatLight;
+        status.current = journey.state.stage.flatLight ? "light: per-cell cycle (2D)" : "light: moving gradient";
       } else if (e.key === "r") {
         gsap.killTweensOf(proxy);
         proxy.merge = proxy.ring = 0;
@@ -165,7 +168,7 @@ export default function Lab3D() {
       `fps ${s.fps}  calls ${s.calls}  tris ${s.tris}\n` +
       `cell ${cell.w}×${cell.h}  progress ${p.toFixed(3)}${parity ? "  PARITY" : ""}\n` +
       `${status.current}\n` +
-      `keys: 1–5 skin · t eras · m merger · r reset`;
+      `keys: 1–5 skin · t eras · m merger · g light · r reset`;
   };
 
   return (

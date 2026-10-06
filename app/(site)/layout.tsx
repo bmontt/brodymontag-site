@@ -5,12 +5,14 @@
 // segment; /lab stays outside it and brings its own stage.
 
 import StageRoot from "@/components/stage/stage-root";
+import HumanMachineToggle from "@/components/human-machine-toggle";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <StageRoot />
       {children}
+      <HumanMachineToggle mode="human" />
     </>
   );
 }
