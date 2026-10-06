@@ -1,7 +1,7 @@
 // ── machine ───────────────────────────────────────────────────────────────────
 // The machine-readable face of the site (/machine, /llms.txt): every project,
 // show, release and paragraph as plain text, generated from content.json so it
-// can never drift from the human site. No canvas, no JS — for agents, crawlers,
+// can never drift from the human site. No canvas; readable without JavaScript — for agents, crawlers,
 // terminals, and anyone who prefers text.
 
 import { content } from "./content";
@@ -43,7 +43,7 @@ export function machineText(): string {
 
   push(banner(c.meta.name), "");
   push(`${c.meta.domain.toUpperCase()} :: MACHINE-READABLE INDEX`);
-  push(`# plain-text mirror of ${c.meta.domain} — same content, no canvas, no javascript.`);
+  push(`# plain-text mirror of ${c.meta.domain} — same content, no canvas, readable without javascript.`);
   push(`# generated from the site's content source at build time. summary for llms: /llms.txt`);
   push("");
 

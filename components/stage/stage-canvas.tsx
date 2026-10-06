@@ -38,6 +38,7 @@ import type { SolidUniforms } from "@/lib/ascii-engine/gl/solid-shader";
 import BuildScene from "@/components/stage/scenes/build";
 import MontyScene from "@/components/stage/scenes/monty";
 import WorldlineScene, { WORLDLINE_X } from "@/components/stage/scenes/worldline";
+import TitlesScene from "@/components/stage/scenes/titles";
 
 const TWO_PI = Math.PI * 2;
 const N_FRAMES = MathUtils.clamp(Math.round(TWO_PI / asciiConfig.dt), 180, 480);
@@ -409,6 +410,7 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
           <BuildScene shared={solidShared} />
           <MontyScene shared={solidShared} />
           <WorldlineScene shared={solidShared} />
+          <TitlesScene shared={solidShared} />
         </>
       )}
       <mesh ref={bodyA} material={bodyMat} visible={false}>

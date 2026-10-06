@@ -84,3 +84,28 @@ Ranked by fit with the ASCII / "The Binary" identity, divided by effort.
 **Recommended next step:** build **#1 (Machine mode)** and **#3 (gradient glyph light)**
 first. They're small, distinctive and low-risk. Then **#2 (field-native kinetic type)**
 as the signature moment, and fold **#4–#6** into Phase 6 hardening.
+
+## Status (2026-10-05)
+
+- **#1 Human / Machine mode — shipped.**
+  - `/machine` is a server-rendered plain-text mirror from `lib/machine.ts`, with an
+    original block-letter banner. It works without JavaScript and prerenders statically.
+  - `/llms.txt` follows the llmstxt.org format and is static `text/plain`.
+  - Every page advertises it with `<link rel="alternate" type="text/plain">`, and a
+    human/machine pill sits bottom-right.
+- **#3 Moving-gradient glyph light — shipped, subtle by design.**
+  - Hue is now a slow two-octave noise field, ±55° around each skin's bias, with a
+    1.5× saturation lift.
+  - Measured on lit frames: more tinted glyphs than the old per-cell cycle (≈3.0k vs
+    1.7k px), arranged in coherent regions. Average saturation stays low (≈0.06)
+    because the highlights are faint.
+  - Lab key `g` A/Bs it against the old cycle.
+- **#2 Field-native kinetic type — first pass.**
+  - THE BUILD, MONTY and THE MERGER (`content.json` → `journey.<id>.word`) assemble
+    cell by cell out of glyphs on a plane. It is placed at each chapter's destination
+    camera pose (the director's first station) and dissolves as reading begins.
+  - The timeline title was dropped: its pinned DOM track already carries giant year
+    numerals, and the low worldline camera made it hard to frame.
+  - **Bug found and fixed on the way:** upright planes were rotated by `+az` instead of
+    `−az`, so every one faced 2·az off-axis. The music photo panels were about 48° off.
+    `faceRotation()` in `layouts.ts` now derives rotation from the facing direction.

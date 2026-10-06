@@ -130,3 +130,37 @@ export function photoMaterial(shared: SolidUniforms, map: Texture, tone = 0.72) 
     },
   });
 }
+
+const titleFragment = /* glsl */ `
+uniform sampler2D uMap;      // white-on-black word mask
+uniform float uReveal;       // 0 → 1: the word assembles cell by cell
+uniform vec2  uGrain;        // reveal blocks across the plane (≈ glyph cells)
+${LIGHT}
+float hash12(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void main() {
+  float m = texture2D(uMap, vUv).r;
+  float n = hash12(floor(vUv * uGrain));
+  if (m < 0.5 || n > uReveal) discard;   // no letter here (yet): the sheet shows through
+  float lam = lambert();
+  // letter strokes: bright ◆-level glyphs that catch the light
+  gl_FragColor = vec4(0.74, 0.7 + 0.3 * lam, presence(), 1.0);
+}
+`;
+
+/** A word written in glyphs: assembles from scattered cells as uReveal rises. */
+export function titleMaterial(shared: SolidUniforms, map: Texture, grain: [number, number]) {
+  return new ShaderMaterial({
+    vertexShader: vertex,
+    fragmentShader: titleFragment,
+    side: DoubleSide,
+    uniforms: {
+      uLightDir: shared.uLightDir,
+      uFade: shared.uFade,
+      uWeight: { value: 0 },
+      uEmphasis: { value: 3.0 },
+      uMap: { value: map },
+      uReveal: { value: 0 },
+      uGrain: { value: new Vector2(...grain) },
+    },
+  });
+}

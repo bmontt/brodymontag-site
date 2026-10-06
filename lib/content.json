@@ -921,16 +921,20 @@
       "heading": "brody montag."
     },
     "code": {
-      "heading": "the build — systems, models, tools."
+      "heading": "the build — systems, models, tools.",
+      "word": "the build"
     },
     "music": {
-      "heading": "monty — rooms, records, the collective."
+      "heading": "monty — rooms, records, the collective.",
+      "word": "monty"
     },
     "timeline": {
-      "heading": "the timeline — 2021 to now."
+      "heading": "the timeline — 2021 to now.",
+      "word": "2021 → now"
     },
     "epilogue": {
-      "heading": "technology in service of sound."
+      "heading": "technology in service of sound.",
+      "word": "the merger"
     }
   }
 }

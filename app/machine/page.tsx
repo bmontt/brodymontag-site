@@ -1,6 +1,6 @@
 // ── /machine ──────────────────────────────────────────────────────────────────
 // The machine-readable face of the site: everything as plain text (lib/machine).
-// No stage, no canvas, no client JS — it sits outside the (site) route group.
+// No stage, no canvas; fully server-rendered (works without JavaScript) — it sits outside the (site) route group.
 
 import type { Metadata } from "next";
 import Link from "next/link";

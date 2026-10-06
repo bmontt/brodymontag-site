@@ -13,6 +13,13 @@ import type { Pose } from "./rig";
 const DEG = Math.PI / 180;
 const MARGIN_RATIO = 0.54;
 
+/**
+ * Z-rotation that turns an upright plane/slab (built facing -y) to face the
+ * world direction (nx, ny). Rotating (0,-1) by θ gives (sin θ, -cos θ), so
+ * θ = atan2(nx, -ny). Facing back along a heading az is therefore θ = -az.
+ */
+export const faceRotation = (nx: number, ny: number) => Math.atan2(nx, -ny);
+
 /** Click-to-fly duration: the stage blends to the destination, then the route changes. */
 export const FLY_MS = 650;
 
@@ -42,7 +49,8 @@ export const PILLARS = projects.map((p, i) => {
     side,
     ...flank(BUILD, 60 + i * 170, side),
     h: (p.status === "live" ? 360 : 250) + ((i * 53) % 70),
-    rot: BUILD.az * DEG + side * 0.12,
+    // face back toward the camera path, turned slightly in toward it
+    rot: faceRotation(-BUILD.h[0] - side * BUILD.right[0] * 0.12, -BUILD.h[1] - side * BUILD.right[1] * 0.12),
   };
 });
 
@@ -63,7 +71,9 @@ export const PHOTOS: { src: string; ids: string[]; slugs: string[] }[] = (() => 
 
 export const PANELS = PHOTOS.map((photo, i) => {
   const side = i % 2 === 0 ? -1 : 1;
-  return { ...photo, side, ...flank(MONTY, 80 + i * 150, side), rot: MONTY.az * DEG - side * 0.35 };
+  // face back toward the camera path, turned in toward it so the photo reads
+  const rot = faceRotation(-MONTY.h[0] - side * MONTY.right[0] * 0.4, -MONTY.h[1] - side * MONTY.right[1] * 0.4);
+  return { ...photo, side, ...flank(MONTY, 80 + i * 150, side), rot };
 });
 
 /** Camera parked beside an object (detail pages, end of a click-to-fly). */
