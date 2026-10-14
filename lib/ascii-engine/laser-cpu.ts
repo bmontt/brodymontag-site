@@ -20,8 +20,13 @@ export interface LaserCell {
   pal: number;
 }
 
-/** degrees per second of the shimmer's hue cycle (globals.css: one turn / 4.2s) */
-export const SHIMMER_DEG_S = 360 / 4.2;
+/**
+ * The sound scale's hue at a cell and time — the pearlescent band (sky blue ↔
+ * orchid, 205°–315°, every 6s); mirrors laserColor in ascii-shaders.ts.
+ */
+export function shimmerHue(time: number, col: number, row: number): number {
+  return 260 + 55 * Math.sin((Math.PI * 2 * time) / 6 + col * 0.035 + row * 0.09);
+}
 
 function hsl2rgb(h: number, sat: number, l: number): [number, number, number] {
   const a = sat * Math.min(l, 1 - l);

@@ -5,7 +5,7 @@
 
 :root {
   /* two scales (docs/design-inspiration.md): tech is white-grey-black, sound
-     is the iridescent shimmer (a pastel whose hue circles every 4.2s). The
+     is the pearlescent shimmer (sky blue ↔ orchid, every 6s). The
      default accent is tech-white; #music and .theme-sound swap in a pastel.
      --sheen-* drive the shimmer classes below. */
   --background: oklch(0.13 0 0);
@@ -121,32 +121,36 @@ html, body { overflow-x: clip; }
   height: 100%;
 }
 
-/* The shimmer — a pastel hue circling every 4.2s. It is the sound scale
-   (the laser layer's music signal uses the same cycle). --pill-hue animates
-   per element; --iri-h inherits, for small subtrees that share one cycle
-   (.iri-cycle: platform cards, the hero links). */
+/* The shimmer — the sound scale: a pearlescent pastel that sweeps between
+   sky blue and orchid (205°–315°) and back every 6s, never the full rainbow.
+   The laser layer's music signal uses the same band and period
+   (ascii-shaders.ts laserColor). --pill-hue animates per element; --iri-h
+   inherits, for small subtrees that share one sweep (.iri-cycle: platform
+   cards, the hero links). */
 @property --pill-hue {
   syntax: "<angle>";
-  initial-value: 0deg;
+  initial-value: 205deg;
   inherits: false;
 }
 @keyframes pill-hue-cycle {
-  to { --pill-hue: 360deg; }
+  0%, 100% { --pill-hue: 205deg; }
+  50%      { --pill-hue: 315deg; }
 }
 @property --iri-h {
   syntax: "<angle>";
-  initial-value: 0deg;
+  initial-value: 205deg;
   inherits: true;
 }
 @keyframes iri-cycle {
-  to { --iri-h: 360deg; }
+  0%, 100% { --iri-h: 205deg; }
+  50%      { --iri-h: 315deg; }
 }
 .iri-cycle {
-  animation: iri-cycle 4.2s linear infinite;
+  animation: iri-cycle 6s ease-in-out infinite;
 }
 .text-shimmer {
   color: oklch(0.84 0.09 var(--pill-hue));
-  animation: pill-hue-cycle 4.2s linear infinite;
+  animation: pill-hue-cycle 6s ease-in-out infinite;
 }
 
 /* Sheen — the iridescent classes on the tech scale: a slow lightness breath
@@ -189,7 +193,7 @@ html, body { overflow-x: clip; }
 :is(#music, .theme-sound) :is(.pill-iridescent, .text-iridescent-stroke, .text-iridescent, .text-iridescent-dim, .bg-iridescent) {
   --sheen-c: 0.06;
   --sheen-h: var(--pill-hue);
-  animation: pill-hue-cycle 4.2s linear infinite, sheen 4.2s ease-in-out infinite;
+  animation: pill-hue-cycle 6s ease-in-out infinite, sheen 4.2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -203,5 +207,5 @@ html, body { overflow-x: clip; }
   :is(#music, .theme-sound) :is(.pill-iridescent, .text-iridescent-stroke, .text-iridescent, .text-iridescent-dim, .bg-iridescent) {
     animation: none; /* --sheen-l rests at 0.8; hues rest on their initial angle */
   }
-  .text-shimmer { color: oklch(0.84 0.09 300); }
+  .text-shimmer { color: oklch(0.84 0.09 265); }
 }

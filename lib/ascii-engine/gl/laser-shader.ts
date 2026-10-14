@@ -15,7 +15,7 @@ import { Vector2, Vector4 } from "three";
  *
  * Color is a palette coordinate, not a hue — two monochrome scales:
  *   [0, 0.5)  tech  — black → grey → white
- *   [0.5, 1)  sound — the site's iridescent shimmer, dark → luminous → white-hot
+ *   [0.5, 1)  sound — the site's pearlescent shimmer (sky blue ↔ orchid), dark → luminous → white-hot
  * (the compose pass maps it; see laserColor in ascii-shaders.ts). Figures:
  *   scope  — an oscilloscope trace (hero)
  *   liss   — a spinning 3D Lissajous knot (hero dive → the build)

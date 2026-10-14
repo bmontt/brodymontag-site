@@ -19,7 +19,7 @@ import { FLAT, poseAt, resolveTrack, type Pose, type ResolvedTrack } from "@/lib
 import { HOME_TRACK } from "@/lib/director/stations";
 import { createLaserDirector } from "@/lib/director/laser";
 import { makeLaserUniforms } from "@/lib/ascii-engine/gl/laser-shader";
-import { laserFrame, laserRgb, SHIMMER_DEG_S } from "@/lib/ascii-engine/laser-cpu";
+import { laserFrame, laserRgb, shimmerHue } from "@/lib/ascii-engine/laser-cpu";
 import { readAnchor } from "@/lib/laser-anchors";
 
 const IDS = chapters.map((c) => c.id);
@@ -55,11 +55,11 @@ export default function Laser2D({ dim = 1 }: { dim?: number }) {
     let brightness = 1;
     const palStyle = (v: number, hue: number) => {
       const pq = Math.round(v * 128);
-      const hq = v < 0.5 ? 0 : Math.round(hue / 15) % 24;
-      const k = (pq * 24 + hq) * 8 + Math.round(brightness * 6);
+      const hq = v < 0.5 ? 0 : Math.round(hue / 5) % 72;
+      const k = (pq * 72 + hq) * 8 + Math.round(brightness * 6);
       let s = styles.get(k);
       if (!s) {
-        const [r, g, b] = laserRgb(pq / 128, hq * 15).map((c) => Math.min(255, Math.round(c * brightness)));
+        const [r, g, b] = laserRgb(pq / 128, hq * 5).map((c) => Math.min(255, Math.round(c * brightness)));
         styles.set(k, (s = `rgb(${r} ${g} ${b})`));
       }
       return s;
@@ -128,7 +128,7 @@ export default function Laser2D({ dim = 1 }: { dim?: number }) {
       laserFrame(u, cols, rows, CELL_W, CELL_H, (col, row, c) => {
         if (row !== tearRow) { tearRow = row; shift = tear(row); }
         ctx.globalAlpha = Math.min(1, c.alpha);
-        ctx.fillStyle = palStyle(c.pal, (time * SHIMMER_DEG_S + col * 2.4 + row * 5) % 360);
+        ctx.fillStyle = palStyle(c.pal, shimmerHue(time, col, row));
         ctx.fillText(c.ch, col * CELL_W + shift, row * CELL_H);
       }, calm);
       ctx.globalAlpha = 1;

@@ -169,14 +169,14 @@ vec3 hsl2rgb(float h, float s, float l) {
 }
 
 // laser palette coordinate → color. [0,0.5): the tech scale, black → grey →
-// white. [0.5,1): the sound scale — the site's shimmer (globals.css
-// pill-hue-cycle, one turn per 4.2s) as light: a pastel whose hue circles in
-// time and drifts along the beam, dark → luminous → a white-hot crest.
-const float SHIMMER_DEG_S = 360.0 / 4.2;
+// white. [0.5,1): the sound scale — the site's pearlescent shimmer
+// (globals.css pill-hue-cycle: sky blue ↔ orchid, 205°–315°, every 6s) as
+// light, drifting along the beam, dark → luminous → a white-hot crest.
+const float SHIMMER_CENTER = 260.0, SHIMMER_SWING = 55.0, SHIMMER_PERIOD = 6.0;
 vec3 laserColor(float v, vec2 cell) {
   if (v < 0.5) return vec3(mix(0.16, 1.0, v * 2.0));
   float t = (v - 0.5) * 2.0;
-  float hue = mod(uTime * SHIMMER_DEG_S + cell.x * 2.4 + cell.y * 5.0, 360.0);
+  float hue = SHIMMER_CENTER + SHIMMER_SWING * sin(6.2831853 * uTime / SHIMMER_PERIOD + cell.x * 0.035 + cell.y * 0.09);
   vec3 iri = hsl2rgb(hue, 0.7, mix(0.16, 0.74, smoothstep(0.0, 0.75, t)));
   return mix(iri, vec3(1.0), 0.7 * smoothstep(0.85, 1.0, t));
 }

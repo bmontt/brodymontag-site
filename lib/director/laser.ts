@@ -4,7 +4,7 @@
 //
 //   TECH  — the white-grey-black scale (code, systems, structure)
 //   SOUND — the iridescent shimmer, dark → luminous → white-hot (music, heat,
-//           release) — the same 4.2s hue cycle as the site's pills
+//           release) — the same pearlescent sweep as the site's pills
 //
 //   hero      apart     two faint traces share the rule under the name — a grey
 //                       one and a dim shimmering one, out of phase, barely alive. They

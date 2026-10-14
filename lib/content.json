@@ -269,9 +269,9 @@
       "supportedArtists": [
         {
           "name": "ian asher",
-          "logo": "ian_asher_logo",
-          "w": 706,
-          "h": 97
+          "logo": "ian_asher",
+          "w": 800,
+          "h": 175
         },
         {
           "name": "biscits",
@@ -316,10 +316,16 @@
           "h": 496
         },
         {
-          "name": "noizu"
+          "name": "noizu",
+          "logo": "noizu_logo",
+          "w": 195,
+          "h": 96
         },
         {
-          "name": "rivo"
+          "name": "rivo",
+          "logo": "rivo_logo",
+          "w": 648,
+          "h": 116
         }
       ],
       "events": [
@@ -647,7 +653,7 @@
       ]
     },
     "releases": {
-      "soundcloudEmbedUrl": "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/brodymontag&color=%23d4a500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false",
+      "soundcloudEmbedUrl": "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/brodymontag&color=%239b8cf2&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false",
       "items": [
         {
           "id": "fire",
