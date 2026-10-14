@@ -69,8 +69,6 @@ export class AsciiRenderer {
     uTime: { value: 0 },
     /** 1 = moving gradient glyph light (3D default), 0 = the vessel's per-cell hue cycle */
     uGradientMix: { value: 1 },
-    /** 0–1 analog glitch in the compose pass (row tears, RGB split, flicker) */
-    uGlitch: { value: 0 },
     /** laser brightness + white-hot amount (lib/director/laser.ts sets the mood) */
     uLaserTone: { value: new Vector2(1, 0.2) },
   };
@@ -143,7 +141,6 @@ export class AsciiRenderer {
         uFlashSlot: this.frame.uFlashSlot,
         uTime: this.frame.uTime,
         uGradientMix: this.frame.uGradientMix,
-        uGlitch: this.frame.uGlitch,
         uLaserTone: this.frame.uLaserTone,
       },
     });

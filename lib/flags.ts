@@ -21,10 +21,10 @@ export const FLAGS = {
   next: true, // each section page hands off to the next
   now: true, // live "now" lines on the landing and openers
   // runtime (stage)
-  room: true, // the 3D laser room: perspective beams, floor and ceiling, parallax
-  drag: true, // grab and spin the knot
+  room: false, // the 3D laser room: perspective beams, floor and ceiling, parallax (off: too crowded)
+  drag: false, // grab and spin the knot
   wipe: true, // shader page transitions: a glyph wave from the click
-  titles: true, // 3D laser titles the camera passes through in the openers
+  titles: false, // 3D laser titles the camera passes through in the openers (off: too crowded)
 } as const;
 
 export type Flag = keyof typeof FLAGS;

@@ -19,8 +19,10 @@ export function AsciiRule({ className = "" }: { className?: string }) {
   );
 }
 
+// a transition point ([data-tp]): a shimmer draws out of it as it comes into
+// view, and it drifts on its own plane (journey-controller.tsx)
 export function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p data-scramble className="font-mono text-xs text-iridescent-dim mb-4">{`// ${children}`}</p>;
+  return <p data-scramble data-tp className="tp-line font-mono text-xs text-iridescent-dim mb-4">{`// ${children}`}</p>;
 }
 
 export function SiteFooter() {

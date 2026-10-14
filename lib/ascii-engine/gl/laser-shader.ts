@@ -30,7 +30,6 @@ export const ROOM_SEGS = 32;
 export interface LaserUniforms {
   uLaserMix: { value: number };
   uView: { value: Vector2 };
-  uJitter: { value: Vector2 };
   uLaserTime: { value: number };
   uLaserSlots: { value: Vector4 };
   uLaserDot: { value: number };
@@ -49,6 +48,7 @@ export interface LaserUniforms {
   uRails: { value: Vector4 };
   uOrbit: { value: Vector4 };
   uOrbitB: { value: Vector4 };
+  uOrbitC: { value: Vector4 };
   uRingL: { value: Vector4 };
   /** the 3D room: projected segments (a.xy, b.xy px) + (palette, weight at a, weight at b, —) */
   uSegs: { value: Vector4[] };
@@ -67,7 +67,6 @@ export function makeLaserUniforms(): LaserUniforms {
   return {
     uLaserMix: { value: 0 },
     uView: { value: new Vector2(1, 1) },
-    uJitter: { value: new Vector2() },
     uLaserTime: { value: 0 },
     uLaserSlots: { value: new Vector4() },
     uLaserDot: { value: 0 },
@@ -86,6 +85,7 @@ export function makeLaserUniforms(): LaserUniforms {
     uRails: { value: new Vector4() },
     uOrbit: { value: new Vector4() },
     uOrbitB: { value: new Vector4() },
+    uOrbitC: { value: new Vector4(0, 0, 1, 0) },
     uRingL: { value: new Vector4() },
     uSegs: { value: Array.from({ length: ROOM_SEGS }, () => new Vector4()) },
     uSegsB: { value: Array.from({ length: ROOM_SEGS }, () => new Vector4()) },
@@ -107,7 +107,6 @@ function blank(): Texture {
 export const laserChunk = /* glsl */ `
 uniform float uLaserMix;           // 0 = wave field, 1 = laser layer
 uniform vec2  uView;               // css px
-uniform vec2  uJitter;             // css px — analog scanner wobble, per frame
 uniform float uLaserTime;
 uniform vec4  uLaserSlots;         // atlas slots: ─ │ ╲ ╱
 uniform float uLaserDot;           // atlas slot: ·
@@ -120,12 +119,13 @@ uniform vec4  uLissB;              // spin rad, radius px, hue, tilt rad
 uniform vec2  uLissC;              // center px
 uniform vec4  uFan;                // weight, beam count, spread rad, sweep rad
 uniform vec4  uFanB;               // origin px (xy), hue, length px
-uniform vec4  uFanC;               // hue spread across the beams, —, —, —
+uniform vec4  uFanC;               // hue spread across the beams, far fade 0–1, pulse position (0 origin … 1 tip), pulse strength
 uniform vec4  uGridL;              // weight, horizon y px, scroll, hue
 uniform vec4  uGridB;              // vanishing x px, rail spacing px (at the bottom), rung density, —
 uniform vec4  uRails;              // two lit rails to the vanishing point: weight, half-gap px at the bottom, hue A, hue B
 uniform vec4  uOrbit;              // weight, separation px, phase rad, ring radius px
 uniform vec4  uOrbitB;             // center px (xy), hue A, hue B
+uniform vec4  uOrbitC;             // hoop spin A rad, hoop spin B rad, roundness (1 = plain circles), —
 uniform vec4  uRingL;              // weight, radius px, hue, —
 uniform vec4  uSegs[${ROOM_SEGS}];    // the room: projected segments a.xy, b.xy (px)
 uniform vec4  uSegsB[${ROOM_SEGS}];   // palette, weight at a, weight at b (depth fog), —
@@ -195,33 +195,43 @@ vec3 lissPt(float t) {
 void lissL(inout Hit h, vec2 p) {
   if (uLiss.x < 0.002 || uLissB.y < 1.0) return;
   if (distance(p, uLissC) > uLissB.y * 1.9 + 80.0) return;         // outside figure + haze
-  float best = 1e9, bz = 0.0; vec2 bn = vec2(0.0, 1.0);
+  float best = 1e9, bz = 0.0, bi = 0.0; vec2 bn = vec2(0.0, 1.0);
   vec3 a = lissPt(0.0);
   for (int i = 1; i <= 120; i++) {
     vec3 b = lissPt(float(i) * (6.2831853 / 120.0));
     float before = best;
     segMin(p, a.xy, b.xy, best, bn);
-    if (best < before) bz = a.z;
+    if (best < before) { bz = a.z; bi = float(i - 1); }
     a = b;
   }
-  // far strands sink toward black within the knot's scale — monochrome depth
-  take(h, best, bn, uLissB.z * mix(1.0, 0.4, (bz + 1.0) * 0.5), uLiss.x);
+  // far strands sink toward black and thin out, so the near ones cross in
+  // front — monochrome depth; two lights run along the curve, like a galvo
+  // drawing it
+  float far = (bz + 1.0) * 0.5;
+  float run = fract((uLaserTime * 0.08 - bi / 120.0) * 2.0);
+  take(h, best, bn, uLissB.z * mix(1.0, 0.4, far), uLiss.x * mix(1.0, 0.6, far) * (0.78 + 0.5 * exp(-run * 9.0)));
 }
 
 void fanL(inout Hit h, vec2 p) {
   if (uFan.x < 0.002) return;
   int n = int(uFan.y + 0.5);
-  float best = 1e9, bk = 0.0; vec2 bn = vec2(0.0, 1.0);
+  float best = 1e9, bk = 0.0, bt = 0.0; vec2 bn = vec2(0.0, 1.0);
   for (int i = 0; i < 12; i++) {
     if (i >= n) break;
     float k = n > 1 ? float(i) / float(n - 1) - 0.5 : 0.0;
     float ang = -1.5707963 + uFan.w + k * uFan.z;                    // -π/2 = straight up (y-down)
-    float before = best;
-    segMin(p, uFanB.xy, uFanB.xy + vec2(cos(ang), sin(ang)) * uFanB.w, best, bn);
-    if (best < before) bk = k;
+    vec2 ab = vec2(cos(ang), sin(ang)) * uFanB.w;
+    float t = clamp(dot(p - uFanB.xy, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
+    vec2 dv = p - (uFanB.xy + ab * t);
+    float d = length(dv);
+    if (d < best) { best = d; bn = d > 1e-3 ? dv / d : normalize(vec2(-ab.y, ab.x) + 1e-5); bk = k; bt = t; }
   }
   float lo = uFanB.z < 0.5 ? 0.0 : 0.5;
-  take(h, best, bn, clamp(uFanB.z + bk * uFanC.x, lo, lo + 0.499), uFan.x);
+  // away from the music page the beams fade as they rise — their tops far
+  // away; a pulse runs up every beam
+  float far = mix(1.0, pow(1.0 - bt, 1.6), uFanC.y);
+  float pd = (bt - uFanC.z) / 0.07;
+  take(h, best, bn, clamp(uFanB.z + bk * uFanC.x, lo, lo + 0.499), uFan.x * far * (1.0 + uFanC.w * exp(-pd * pd)));
 }
 
 void gridL(inout Hit h, vec2 p) {
@@ -259,11 +269,31 @@ void circleL(inout Hit h, vec2 p, vec2 c, float r, float hue, float w) {
   take(h, abs(L - r), L > 1e-3 ? dv / L : vec2(0.0, 1.0), hue, w);
 }
 
+// a hoop: a circle spinning about an in-plane axis, seen as an ellipse whose
+// minor axis breathes with the spin (round = 1: a plain circle). First-order
+// distance to the ellipse — exact enough within the couple of cells that light.
+void hoopL(inout Hit h, vec2 p, vec2 c, float r, float spin, float axis, float round, float hue, float w) {
+  float ca = cos(axis), sa = sin(axis);
+  vec2 q = p - c;
+  q = vec2(ca * q.x + sa * q.y, -sa * q.x + ca * q.y);
+  vec2 ab = vec2(r, r * mix(0.22 + 0.78 * abs(cos(spin)), 1.0, round));
+  vec2 u = q / ab;
+  float L = length(u);
+  if (L < 1e-4) return;
+  vec2 g = u / ab;
+  float gl = max(length(g), 1e-5);
+  vec2 n = g / gl;
+  take(h, abs(L - 1.0) * L / gl, vec2(ca * n.x - sa * n.y, sa * n.x + ca * n.y), hue, w);
+}
+
 void orbitL(inout Hit h, vec2 p) {
   if (uOrbit.x >= 0.002) {
-    vec2 o = vec2(cos(uOrbit.z), sin(uOrbit.z) * 0.42) * uOrbit.y; // inclined orbit
-    circleL(h, p, uOrbitB.xy + o, uOrbit.w, uOrbitB.z, uOrbit.x);
-    circleL(h, p, uOrbitB.xy - o, uOrbit.w, uOrbitB.w, uOrbit.x);
+    // the binary, its orbit inclined toward you: the body in front is a
+    // touch larger and brighter, and wins where they cross
+    vec2 o = vec2(cos(uOrbit.z), sin(uOrbit.z) * 0.42) * uOrbit.y;
+    float z = sin(uOrbit.z) * clamp(uOrbit.y / max(uOrbit.w, 1.0), 0.0, 1.0);
+    hoopL(h, p, uOrbitB.xy + o, uOrbit.w * (1.0 + 0.14 * z), uOrbitC.x, uOrbitC.x * 0.37, uOrbitC.z, uOrbitB.z, uOrbit.x * (1.0 + 0.3 * z));
+    hoopL(h, p, uOrbitB.xy - o, uOrbit.w * (1.0 - 0.14 * z), uOrbitC.y, -uOrbitC.y * 0.29, uOrbitC.z, uOrbitB.w, uOrbit.x * (1.0 - 0.3 * z));
   }
   if (uRingL.x >= 0.002) circleL(h, p, uOrbitB.xy, uRingL.y, uRingL.z, uRingL.x);
 }
@@ -323,7 +353,7 @@ void titleL(inout Hit h, vec2 p, vec2 cell) {
 
 // → (slot, alpha, hue); slot 0 = nothing here
 vec3 laserCell(vec2 cell, vec2 ctr) {
-  vec2 p = ctr + uJitter;
+  vec2 p = ctr;
   Hit h = Hit(1e9, 1e9, vec2(0.0, 1.0), 0.0, 0.0);
   scopeL(h, p);
   lissL(h, p);

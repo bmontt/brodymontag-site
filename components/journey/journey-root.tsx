@@ -37,7 +37,7 @@ export default function JourneyRoot({ children }: JourneyRootProps) {
     // page-exit); named titles inside morph across instead
     <PageTransition>
     <Profiler id="journey" onRender={onCommit}>
-      <div className="relative min-h-screen bg-background">
+      <div className="relative min-h-screen">
         {/* mounts all ScrollTriggers — renders null */}
         <JourneyController />
         {/* server-rendered chapters flow here */}

@@ -191,12 +191,22 @@ test("a WebGL context that fails to create falls back to 2D (probe passed, canva
 test("runtime feature flags: ?ff= toggles, persists, and resets", async ({ page }) => {
   const flags = () =>
     page.evaluate(() => (window as unknown as { __flags?: Record<string, boolean> }).__flags ?? null);
-  await page.goto("/?tier=3d&ff=-room,-titles");
-  await expect.poll(async () => (await flags())?.room).toBe(false);
-  expect((await flags())?.titles).toBe(false);
-  expect((await flags())?.wipe).toBe(true);
-  await page.goto("/software?tier=3d"); // remembered
-  await expect.poll(async () => (await flags())?.room).toBe(false);
-  await page.goto("/?tier=3d&ff=reset");
+  await page.goto("/?tier=3d&ff=room,-wipe");
   await expect.poll(async () => (await flags())?.room).toBe(true);
+  expect((await flags())?.wipe).toBe(false);
+  expect((await flags())?.titles).toBe(false); // untouched: its default
+  await page.goto("/software?tier=3d"); // remembered
+  await expect.poll(async () => (await flags())?.room).toBe(true);
+  await page.goto("/?tier=3d&ff=reset");
+  await expect.poll(async () => (await flags())?.room).toBe(false);
+  expect((await flags())?.wipe).toBe(true);
+});
+
+test("the entering page layer is see-through, so the morphing title and the stage show through it", async ({ page }) => {
+  // the page's view-transition snapshot is painted above the title's and the
+  // stage's: an opaque background there hides the morph until it ends (the
+  // title fades out, then pops back)
+  await page.goto("/software?tier=2d");
+  const wrapper = page.locator("#journey").locator("xpath=..");
+  expect(await wrapper.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
 });

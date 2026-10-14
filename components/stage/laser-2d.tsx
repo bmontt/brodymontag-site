@@ -7,8 +7,8 @@
 // first on every visit (before the 3D stage crossfades in) and is what reduced-
 // motion, low-end and lost-WebGL visitors keep.
 //
-//   motion OK      → ~30fps, scroll-driven like the 3D layer, row-tear glitch
-//   reduced motion → no clock, no glitch, no glides: still frames, redrawn only
+//   motion OK      → ~30fps, scroll-driven like the 3D layer
+//   reduced motion → no clock, no glides: still frames, redrawn only
 //                    when the layout the figures sit in moves (scroll, route,
 //                    hover, resize)
 
@@ -25,11 +25,6 @@ const CELL_H = 22;
 const FRAME_MS = 33;
 // a gentle vignette — figures live in the gutters and rise from the floor now
 const MASK = "radial-gradient(ellipse 125% 115% at 50% 45%, black 58%, transparent 100%)";
-
-const h21 = (x: number, y: number) => {
-  const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
-  return s - Math.floor(s);
-};
 
 export default function Laser2D() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -96,28 +91,16 @@ export default function Laser2D() {
         title = { text, data: c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data, w: c.width, h: c.height };
         u.uTitleB.value.y = TITLE_ASPECT;
       }
-      const glitch = lo.glitch;
       brightness = Math.round(lo.brightness * 6) / 6;
-      if (reduced) u.uJitter.value.set(0, 0);
 
       ctx.clearRect(0, 0, W, H);
       ctx.globalCompositeOperation = "lighter";
       ctx.font = `${Math.round(CELL_H * (16 / 22))}px ${family}`;
       ctx.textBaseline = "top";
-      // glitch: bands of three rows tear sideways for a tick
-      const tick = Math.floor(time * 14);
-      const tear = (row: number) => {
-        if (reduced) return 0;
-        const band = Math.floor(row / 3);
-        const roll = h21(band, tick);
-        return roll > 1 - glitch * 0.35 ? (h21(roll * 91.7, tick) - 0.5) * (14 + 90 * glitch) : 0;
-      };
-      let tearRow = -1, shift = 0;
       laserFrame(u, cols, rows, CELL_W, CELL_H, (col, row, c) => {
-        if (row !== tearRow) { tearRow = row; shift = tear(row); }
         ctx.globalAlpha = Math.min(1, c.alpha);
         ctx.fillStyle = palStyle(c.pal, shimmerHue(time, col, row));
-        ctx.fillText(c.ch, col * CELL_W + shift, row * CELL_H);
+        ctx.fillText(c.ch, col * CELL_W, row * CELL_H);
       }, calm, lo.title ? title : null);
       ctx.globalAlpha = 1;
     };

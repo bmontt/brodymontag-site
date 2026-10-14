@@ -341,6 +341,33 @@ export default function JourneyController() {
         });
       }
 
+      // ── transition points ([data-tp]: section labels, the next-section
+      //    handoff) — a shimmer draws through each as it comes into view
+      //    (globals.css .tp-line), and each drifts on its own plane: a scrubbed,
+      //    sine-eased offset slows it as it crosses the middle of the screen and
+      //    lets it catch up after, so the page's momentum varies as you pass
+      //    from one section into the next
+      gsap.utils.toArray<HTMLElement>("[data-tp]").forEach((el) => {
+        const lit = ScrollTrigger.create({
+          trigger: el,
+          start: "top 82%",
+          onEnter: () => el.classList.add("tp-on"),
+          onLeaveBack: () => el.classList.remove("tp-on"),
+        });
+        const drift = gsap.fromTo(
+          el,
+          { y: -36 },
+          { y: 36, ease: "sine.inOut", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 0.8 } },
+        );
+        cleanup.push(() => {
+          lit.kill();
+          drift.scrollTrigger?.kill();
+          drift.kill();
+          gsap.set(el, { clearProps: "transform" });
+          el.classList.remove("tp-on");
+        });
+      });
+
       // recompute all positions now that the pin/spacer exists — sorted so every
       // trigger below the timeline is measured after its pin (page order), and
       // the global trigger (refreshPriority -1) last

@@ -162,9 +162,13 @@ html, body { overflow-x: clip; }
   animation: pill-hue-cycle 6s ease-in-out infinite;
 }
 
-/* landing: a choice in focus quiets the others */
-.landing-opt { transition: opacity 0.4s ease; }
-.landing-opts:has(a:hover, a:focus-visible) .landing-opt:not(:has(a:hover, a:focus-visible)) { opacity: 0.32; }
+/* landing: a choice in focus glows and quiets the others (and the laser
+   figures follow — lib/director/laser.ts). On the link, not .landing-opt: the
+   wrapper's inline opacity belongs to its entrance animation. */
+.landing-opt > a { transition: opacity 0.45s ease; }
+.landing-opt > a > :first-child { transition: letter-spacing 0.5s ease, filter 0.45s ease; }
+.landing-opts:has(a:hover, a:focus-visible) .landing-opt > a:not(:hover, :focus-visible) { opacity: 0.26; }
+.landing-opt > a:is(:hover, :focus-visible) > :first-child { filter: drop-shadow(0 0 24px oklch(1 0 0 / 0.3)); }
 
 /* Sheen — the iridescent classes on the tech scale: a slow lightness breath
    (grey ↔ white). Inside #music / .theme-sound they shimmer instead (below).
@@ -238,6 +242,14 @@ html, body { overflow-x: clip; }
 @keyframes vt-blur {
   40% { filter: blur(5px); }
 }
+/* a word with no partner on the other page (the name, the words not picked)
+   leaves with the page instead of lingering for the morph's length */
+::view-transition-old(.morph):only-child {
+  animation: 240ms ease-in both vt-out;
+}
+::view-transition-new(.morph):only-child {
+  animation: 520ms 120ms cubic-bezier(0.22, 1, 0.36, 1) both vt-in;
+}
 ::view-transition-old(.page-exit) {
   animation: 240ms ease-in both vt-out;
 }
@@ -266,6 +278,35 @@ html, body { overflow-x: clip; }
   ::view-transition-new(*) {
     animation: none !important;
   }
+}
+
+/* transition points ([data-tp], journey-controller.tsx): a pearl hairline
+   draws out of the label as it comes into view, and a glint runs along it once */
+.tp-line { display: flex; align-items: center; gap: 1rem; }
+.tp-line::after {
+  content: "";
+  flex: 1;
+  max-width: 26rem;
+  height: 1px;
+  background:
+    linear-gradient(90deg, transparent 30%, oklch(1 0 0 / 0.95) 50%, transparent 70%) no-repeat,
+    linear-gradient(90deg, oklch(0.88 0.06 225 / 0.55), oklch(0.84 0.08 300 / 0.3) 55%, transparent);
+  background-size: 35% 100%, 100% 100%;
+  background-position: -80% 0, 0 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tp-line.tp-on::after {
+  transform: scaleX(1);
+  animation: tp-glint 1.5s 0.35s cubic-bezier(0.45, 0, 0.2, 1) both;
+}
+@keyframes tp-glint {
+  from { background-position: -80% 0, 0 0; }
+  to { background-position: 180% 0, 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tp-line::after { transform: none; transition: none; animation: none; }
 }
 
 /* the live dot beside each "now" line */

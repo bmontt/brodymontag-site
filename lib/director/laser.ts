@@ -13,18 +13,22 @@
 //                        meet in the middle. Each choice has its figure asleep
 //                        behind it (the knot behind software, fans rising
 //                        under music, two rings flanking "about me"); hovering
-//                        a choice wakes it, picking one bursts it.
+//                        a choice wakes it and puts the other two to sleep;
+//                        picking one bursts it.
 //   software  clarity    a white trace under the heading; a white knot held in
 //                        the gutter beside the projects, shaded by depth,
-//                        tilting as you read down. Clean — almost no glitch.
+//                        tilting as you read down, a light running along it.
 //   music     heat       a pearl trace pulsing on a 124 bpm kick under the
-//                        heading; shimmering fans rising in the gutter, and the
-//                        glitch hits on the kick.
-//   about     union      the two signals orbit as rings inside the circle the
-//                        about text wraps, spiral in as you read, fuse white-hot
-//                        (a one-shot flash), ring down over a couple of seconds,
-//                        and lie down as one calm trace — the horizon of the timeline
-//                        floor, where a white and a pearl rail converge.
+//                        heading; shimmering fans rising in the gutter, a pulse
+//                        running up every beam on the kick. Seen from any other
+//                        page the fans fade out as they rise — far away.
+//   about     union      the two signals as spinning hoops in a binary orbit
+//                        (Kepler: eccentric, faster when close) inside the
+//                        circle the about text wraps. Reading tightens the
+//                        orbit; they keep twirling until "Let's work together."
+//                        comes on screen, then spiral in beside it and fuse
+//                        white-hot (a one-shot flash), ring down, and lie down
+//                        as one calm trace — the horizon of the timeline floor.
 //   detail    an echo    a project page keeps a faint knot, a show page faint fans.
 //
 // Every figure parameter is damped toward its page's target, so moving between
@@ -47,10 +51,6 @@ const smooth = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-const hash = (n: number) => {
-  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
-  return x - Math.floor(x);
-};
 
 /** the exit beat: how long a picked figure bursts before the page changes */
 export const TRANSITION_MS = 280;
@@ -87,7 +87,6 @@ export interface LaserOutput {
   knot: { x: number; y: number; r: number; w: number };
   /** whether a 3D title is showing (the caller supplies its mask) */
   title: boolean;
-  glitch: number; // 0–1
   burst: number; // 0–1 white flash at the merger
   brightness: number;
   hot: number; // white-hot core amount
@@ -100,28 +99,28 @@ interface Frame {
   // knot
   kW: number; kX: number; kY: number; kR: number; kPal: number; kTilt: number;
   // fans
-  fW: number; fX: number; fY: number; fSpread: number; fLen: number; fPal: number; fCount: number;
+  fW: number; fX: number; fY: number; fSpread: number; fLen: number; fPal: number; fCount: number; fFade: number;
   // orbit + ring
   oW: number; oX: number; oY: number; oSep: number; oR: number; oA: number; oB: number;
   rW: number; rR: number; rPal: number;
   // floor
   gW: number; gRails: number; gGap: number;
   // mood
-  bright: number; hot: number; glitch: number;
+  bright: number; hot: number;
 }
 
 const ZERO: Frame = {
   sW: 0, sWB: 0, sBase: 0, sAmp: 0, sCyc: 3, sHarm: 0, sA: 0, sB: 0.5, sSplit: -1,
   kW: 0, kX: 0, kY: 0, kR: 1, kPal: 0.45, kTilt: 0.35,
-  fW: 0, fX: 0, fY: 0, fSpread: 0.8, fLen: 1, fPal: 0.8, fCount: 6,
+  fW: 0, fX: 0, fY: 0, fSpread: 0.8, fLen: 1, fPal: 0.8, fCount: 6, fFade: 1,
   oW: 0, oX: 0, oY: 0, oSep: 0, oR: 1, oA: 0.47, oB: 0.8,
   rW: 0, rR: 0, rPal: 0.9,
   gW: 0, gRails: 0, gGap: 0,
-  bright: 1, hot: 0.15, glitch: 0.02,
+  bright: 1, hot: 0.15,
 };
 const KEYS = Object.keys(ZERO) as (keyof Frame)[];
 // weights and moods ease; geometry follows anchors closely (but glides on arrival)
-const SLOW = new Set<keyof Frame>(["sW", "sWB", "kW", "fW", "oW", "rW", "gW", "gRails", "bright", "hot", "glitch"]);
+const SLOW = new Set<keyof Frame>(["sW", "sWB", "kW", "fW", "oW", "rW", "gW", "gRails", "bright", "hot"]);
 const WEIGHT_OF: Partial<Record<keyof Frame, keyof Frame>> = {};
 for (const k of KEYS) if (!SLOW.has(k)) WEIGHT_OF[k] = k[0] === "k" ? "kW" : k[0] === "f" ? "fW" : k[0] === "o" ? "oW" : undefined;
 
@@ -130,12 +129,13 @@ export function createLaserDirector() {
   let cur: Frame | null = null;
   const tgt: Frame = { ...ZERO };
   let orbitPhase = 0;
+  let hoopSpin = 0;
   let lissSpin = 0;
   let lastMerge = 0;
   let fuseAt = -1e9;
   let page: StageRouteKind | null = null;
   let pageAt = 0;
-  const out: LaserOutput = { knot: { x: 0, y: 0, r: 0, w: 0 }, title: false, glitch: 0, burst: 0, brightness: 1, hot: 0.2 };
+  const out: LaserOutput = { knot: { x: 0, y: 0, r: 0, w: 0 }, title: false, burst: 0, brightness: 1, hot: 0.2 };
   const segs = new Float32Array(ROOM_SEGS * 4);
   const segsB = new Float32Array(ROOM_SEGS * 4);
 
@@ -149,8 +149,8 @@ export function createLaserDirector() {
     }
     const still = x.delta <= 0; // reduced motion: still frames, fully formed
     const since = still ? 10 : time - pageAt;
-    const arrive = Math.exp(-since * 3.5); // a little glitch as a page lands
-    const beat = Math.pow(1 - ((time * 124) / 60) % 1, 3); // 124 bpm kick, decaying
+    const beatPhase = ((time * 124) / 60) % 1; // 124 bpm
+    const beat = Math.pow(1 - beatPhase, 3); // the kick, decaying
     const breathe = 0.75 + 0.25 * Math.sin(time * 0.8);
     const hov = (k: string) => (x.hover === k ? 1 : 0);
     const flyT = x.fly ? smooth(0, 1, x.fly.t) : 0;
@@ -162,6 +162,7 @@ export function createLaserDirector() {
 
     Object.assign(tgt, ZERO);
     let merge = 0, ring = 0, resolve = 0;
+    let orbitRate = 0.6, ecc = 0.15; // rad/s at rest, orbit eccentricity
     // section openers: the figure starts large in the opening screen, then is
     // carried into its gutter as the opener scrolls away
     const op = x.anchor("opener");
@@ -177,21 +178,24 @@ export function createLaserDirector() {
     if (x.page === "home") {
       const life = smooth(0.6, 2.6, since);
       const hS = hov("nav:software"), hM = hov("nav:music"), hA = hov("nav:about");
+      // hovering a choice wakes its figure and dims the other two
+      const any = Math.max(hS, hM, hA);
+      const idle = (h: number, rest: number) => (h ? 1 : rest * (1 - 0.8 * any));
       const rule = x.anchor("rule");
       Object.assign(tgt, {
-        sW: 1, sWB: 1, sBase: rule ? rule.y + rule.h / 2 : H * 0.45, sSplit: rule ? rule.x + rule.w / 2 : W / 2,
+        sW: 1 - 0.65 * hM - 0.3 * hA, sWB: 1 - 0.65 * hS - 0.3 * hA, sBase: rule ? rule.y + rule.h / 2 : H * 0.45, sSplit: rule ? rule.x + rule.w / 2 : W / 2,
         sAmp: H * 0.02 * life * breathe * (1 + 0.8 * Math.max(hS, hM)), sCyc: 4, sHarm: 0.5,
         sA: TECH(0.55 + 0.35 * hS), sB: SOUND(0.5 + 0.35 * hM),
-        bright: 0.92, hot: 0.12 + 0.3 * flyT, glitch: 0.012,
+        bright: 0.92, hot: 0.12 + 0.3 * flyT,
       });
       const os = x.anchor("opt-software");
-      if (os) Object.assign(tgt, { kW: 0.2 + 0.8 * hS, kX: os.x + os.w / 2, kY: os.y + os.h * 0.36, kR: Math.max(os.h * 0.8, 70), kPal: TECH(0.8 + 0.15 * hS) });
+      if (os) Object.assign(tgt, { kW: idle(hS, 0.2), kX: os.x + os.w / 2, kY: os.y + os.h * 0.36, kR: Math.max(os.h * 0.8, 70), kPal: TECH(0.8 + 0.15 * hS) });
       const om = x.anchor("opt-music");
-      if (om) Object.assign(tgt, { fW: 0.2 + 0.8 * hM, fX: om.x + om.w / 2, fY: om.y + om.h + H * 0.14, fSpread: 0.75, fLen: H * 0.55, fCount: 5, fPal: SOUND(0.62) });
+      if (om) Object.assign(tgt, { fW: idle(hM, 0.2), fX: om.x + om.w / 2, fY: om.y + om.h + H * 0.14, fSpread: 0.75, fLen: H * 0.55, fCount: 5, fPal: SOUND(0.62) });
       const oa = x.anchor("opt-about");
       if (oa) {
         const ur = oa.h * 0.55;
-        Object.assign(tgt, { oW: 0.25 + 0.75 * hA, oX: oa.x + oa.w / 2, oY: oa.y + oa.h * 0.36, oSep: Math.max(oa.w * 0.62, ur * 2) * (1 - 0.35 * hA), oR: ur * 0.55, oA: TECH(0.9), oB: SOUND(0.75) });
+        Object.assign(tgt, { oW: idle(hA, 0.25), oX: oa.x + oa.w / 2, oY: oa.y + oa.h * 0.36, oSep: Math.max(oa.w * 0.62, ur * 2) * (1 - 0.35 * hA), oR: ur * 0.55, oA: TECH(0.9), oB: SOUND(0.75) });
       }
     } else if (x.page === "software" || x.page === "project") {
       const detail = x.page === "project";
@@ -215,7 +219,7 @@ export function createLaserDirector() {
       const nx = nextVis("next-music");
       if (nx && nx.v > 0) Object.assign(tgt, { fW: 0.7 * nx.v, fX: nx.r.x + nx.r.w * 0.3, fY: nx.r.y + nx.r.h + H * 0.12, fSpread: 0.8, fLen: H * 0.6, fCount: 5, fPal: SOUND(0.62) });
       const hoverProject = x.hover?.startsWith("project:") ? 1 : 0;
-      Object.assign(tgt, { kPal: TECH(0.95), kTilt: 0.35 + 0.6 * p, bright: detail ? 0.9 : 1, hot: 0.18 + 0.25 * hoverProject, glitch: 0.015 });
+      Object.assign(tgt, { kPal: TECH(0.95), kTilt: 0.35 + 0.6 * p, bright: detail ? 0.9 : 1, hot: 0.18 + 0.25 * hoverProject });
     } else if (x.page === "music" || x.page === "show") {
       const detail = x.page === "show";
       const rule = detail ? null : x.anchor("music-rule");
@@ -228,7 +232,8 @@ export function createLaserDirector() {
         fY: ma ? Math.min(Math.max(ma.y + ma.h, H * 0.55), H * 1.04) : H * 1.04,
         fSpread: ma ? lerp(0.6, 0.9, p) : 0.75, fLen: H * 1.3, fCount: 6,
         fPal: SOUND(lerp(0.55, 0.75, p) + 0.15 * beat),
-        bright: 1.05, hot: 0.22 + 0.25 * beat, glitch: 0.04 + (detail ? 0 : 0.3 * Math.pow(beat, 6)),
+        fFade: 0, // its own page: the beams burn full length
+        bright: 1.05, hot: 0.22 + 0.25 * beat,
       });
       if (inOpener > 0) {
         // the opener: a wide fan rising behind the title from the floor
@@ -244,24 +249,36 @@ export function createLaserDirector() {
       }
     } else if (x.page === "about") {
       const ua = x.anchor("union");
-      let ucx = W * 0.5, ucy = H * 0.5, ur = M * 0.22;
+      let ucx = W * 0.5, ucy = H * 0.5, ur = M * 0.22, read = 0, past = 0;
       if (ua) {
         const cy = ua.y + ua.h / 2;
-        // spiral in while the about text crosses the screen, merge as it
-        // reaches the upper third, ring down as you read on past it
-        const read = clamp01((H * 0.95 - cy) / (H * 0.7));
-        merge = smooth(0.05, 0.92, read);
-        ucx = ua.x + ua.w / 2;
-        ucy = Math.max(cy, H * 0.25); // rides the text, then holds near the top
+        // reading the about text tightens the orbit; once the text has gone by
+        // they wait out to the right, smaller and calmer, still twirling
+        read = clamp01((H * 0.95 - cy) / (H * 0.7));
+        past = smooth(H * 0.25, -H * 0.35, cy);
         ur = Math.min(ua.w, ua.h) / 2;
+        ucx = lerp(ua.x + ua.w / 2, Math.min(W * 0.84, W - ur), past);
+        ucy = lerp(Math.max(cy, H * 0.28), H * 0.3, past);
       }
+      // "Let's work together." coming on screen pulls them in: they drift beside
+      // it and spiral the last of the way together as it rises, fusing as it
+      // reaches the middle of the screen
+      const tg = x.anchor("together");
+      let pull = 0, k = 0;
+      if (tg) {
+        pull = clamp01((H * 0.98 - tg.y) / (H * 0.42));
+        k = smooth(0, 0.55, pull);
+        ucx = lerp(ucx, Math.min(tg.x + tg.w + ur * 1.1, W - ur * 0.9), k);
+        ucy = lerp(ucy, tg.y + tg.h / 2, k);
+      }
+      merge = smooth(0.45, 0.97, pull);
       // the ringdown is an event, not a place: once the signals fuse it spreads
       // on its own clock (scrolling back up before the fusion resets it)
       if (merge >= 0.97 && lastMerge < 0.97) fuseAt = time;
       lastMerge = merge;
       ring = merge >= 0.97 ? (still ? 1 : clamp01((time - fuseAt) / 2.4)) : 0;
       if (inOpener > 0) {
-        // the opener: the two rings orbit wide to the right of the title
+        // the opener: the two hoops orbit wide to the right of the title
         ucx = lerp(ucx, W * 0.72, inOpener);
         ucy = lerp(ucy, opCy, inOpener);
         ur = lerp(ur, M * 0.3, inOpener);
@@ -269,16 +286,23 @@ export function createLaserDirector() {
       const fused = smooth(0.88, 1, merge);
       const floor = x.timelineProgress >= 0 ? 1 : 0;
       resolve = smooth(0.55, 1, ring) * (1 - floor);
+      // the orbit's size: wide, tightened by reading, then the plunge
+      const a = ur * 0.56 * lerp(1, 0.55, smooth(0, 1, read)) * Math.pow(1 - merge, 1.2);
+      // gravity: closer is faster (Kepler, a^-1.5), and the orbit circularizes
+      // as it decays
+      orbitRate = Math.min(0.7 * Math.pow((ur * 0.56) / Math.max(a, ur * 0.04), 1.5), 18);
+      ecc = 0.24 * (1 - merge);
+      const wait = past * (1 - k);
       Object.assign(tgt, {
-        oW: 1 - fused * smooth(0, 0.12, ring), oX: ucx, oY: ucy,
-        oSep: lerp(ur * 0.56, 0, Math.pow(merge, 1.3)), oR: ur * lerp(0.36, 0.5, merge),
-        oA: TECH(0.95), oB: SOUND(lerp(0.62, 0.9, merge)),
+        // one hoop stays beside the line once they've fused, breathing slowly
+        oW: (1 - 0.3 * wait - 0.2 * fused) * (1 - floor), oX: ucx, oY: ucy,
+        oSep: a, oR: ur * lerp(0.36, 0.5, merge) * (1 - 0.25 * wait) * (1 + 0.035 * fused * Math.sin(time * 1.4)),
+        oA: fused > 0.5 ? SOUND(0.97) : TECH(0.95), oB: SOUND(lerp(0.62, 0.9, merge)),
         rW: smooth(0, 0.05, ring) * (1 - ring) * (1 - floor), rR: ring * Math.hypot(W, H) * 0.75, rPal: SOUND(lerp(0.98, 0.3, ring)),
         // the one calm trace — the timeline floor's horizon when it arrives
         sW: Math.max(resolve, 0.6 * floor), sBase: H * 0.56, sAmp: H * 0.02 * (1 - floor), sCyc: 1.2, sA: SOUND(0.97),
         gW: floor * 0.7, gRails: floor, gGap: W * 0.34 * (1 - 0.88 * smooth(0, 1, Math.max(x.timelineProgress, 0))),
         bright: lerp(0.95, 0.82, floor), hot: lerp(0.2, 0.08, floor) + 0.5 * fused * (1 - ring),
-        glitch: lerp(0.015, 0.05, floor) * (1 - 0.95 * resolve),
       });
     }
 
@@ -320,10 +344,19 @@ export function createLaserDirector() {
 
     u.uFan.value.set(c.fW, Math.round(c.fCount), c.fSpread, 0.36 * Math.sin(time * 0.55 + p * 7));
     u.uFanB.value.set(c.fX, c.fY, c.fPal, c.fLen);
-    u.uFanC.value.set(0.42, 0, 0, 0); // beams span the sound scale, edge to edge
+    // beams span the sound scale edge to edge; a pulse runs up them — on the
+    // kick on the music page, slow and faint elsewhere
+    const onMusic = x.page === "music" || x.page === "show";
+    u.uFanC.value.set(0.42, c.fFade, onMusic ? beatPhase * 1.3 : ((time * 0.22) % 1) * 1.4, onMusic ? 0.55 : 0.3);
 
-    orbitPhase += dt * (0.6 + 7 * merge * merge);
-    u.uOrbit.value.set(c.oW, c.oSep, orbitPhase, c.oR);
+    // equal masses on an eccentric orbit: the angle sweeps faster near
+    // periapsis (Kepler's second law), the separation follows the ellipse
+    const e2 = 1 - ecc * ecc;
+    orbitPhase += dt * orbitRate * Math.pow(1 + ecc * Math.cos(orbitPhase), 2) / Math.pow(e2, 1.5);
+    hoopSpin += dt * (0.5 + 0.08 * orbitRate);
+    u.uOrbit.value.set(c.oW, (c.oSep * e2) / (1 + ecc * Math.cos(orbitPhase)), orbitPhase, c.oR);
+    // each hoop spins on its own axis; they round out into circles as they fuse
+    u.uOrbitC.value.set(hoopSpin, hoopSpin * 0.77 + 1.9, smooth(0.6, 1, merge), 0);
     u.uOrbitB.value.set(c.oX, c.oY, c.oA, c.oB);
     u.uRingL.value.set(c.rW, c.rR, c.rPal, 0);
 
@@ -379,14 +412,10 @@ export function createLaserDirector() {
       u.uTitleB.value.z = ptr.x * 0.05 + s * 0.08;
     } else u.uTitle.value.w = 0;
 
-    // ── mood + glitch ───────────────────────────────────────────────────
-    const speed = Math.min(Math.abs(x.velocity) / 3000, 1);
-    const rare = hash(Math.floor(time * 4)) > 0.975 ? 0.4 : 0;
+    // ── mood ────────────────────────────────────────────────────────────
     out.brightness = c.bright;
     out.hot = c.hot;
-    out.glitch = clamp01((c.glitch + 0.45 * speed + 0.45 * arrive + rare + 0.8 * flyT) * (1 - 0.95 * resolve));
     out.burst = x.page === "about" ? 0.5 * Math.exp(-Math.max(0, time - fuseAt) * 3.5) : 0;
-    u.uJitter.value.set(Math.sin(time * 37) * 0.35 + (hash(time * 60) - 0.5) * 6 * out.glitch, Math.cos(time * 23) * 0.25);
     u.uLaserTime.value = time;
     return out;
   };

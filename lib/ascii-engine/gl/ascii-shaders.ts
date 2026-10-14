@@ -137,7 +137,6 @@ uniform float uFlash;              // 0–1 full-grid glyph flash
 uniform float uFlashSlot;
 uniform float uTime;               // seconds
 uniform float uGradientMix;        // 1 = moving gradient light, 0 = the 2D vessel's per-cell hue cycle
-uniform float uGlitch;             // 0–1 analog glitch: row tears, RGB split, flicker (laser mode)
 uniform vec2  uLaserTone;          // laser brightness, white-hot amount — the story's emotional temperature
 
 const float STEPS = 90.0;
@@ -251,22 +250,6 @@ vec3 field(vec2 px) {
 
 void main() {
   vec2 px = vec2(gl_FragCoord.x, uViewport.y * uDpr - gl_FragCoord.y) / uDpr;  // y-down css px
-  if (uGlitch <= 0.0) {
-    gl_FragColor = vec4(field(px), 1.0);
-    return;
-  }
-  // analog glitch — bands of three rows tear sideways for a tick (14/s) and
-  // leave a dim ghost echo (monochrome — no RGB fringes in a two-scale
-  // palette); faint scanlines and a brightness flicker
-  float tick = floor(uTime * 14.0);
-  float band = floor(px.y / (uCell.y * 3.0));
-  float roll = h21(vec2(band, tick));
-  float tear = step(1.0 - uGlitch * 0.35, roll);
-  px.x += tear * (h21(vec2(roll * 91.7, tick)) - 0.5) * (14.0 + 90.0 * uGlitch);
-  vec3 col = field(px);
-  if (tear > 0.0) col = max(col, field(px + vec2(6.0 + 14.0 * uGlitch, 0.0)) * 0.45);
-  col *= 1.0 - 0.06 * step(0.5, fract(px.y * 0.5));                  // scanlines
-  col *= 1.0 - 0.08 * uGlitch * h21(vec2(tick, 9.1));               // flicker
-  gl_FragColor = vec4(min(col, vec3(1.0)), 1.0);
+  gl_FragColor = vec4(field(px), 1.0);
 }
 `;

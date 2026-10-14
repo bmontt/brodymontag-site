@@ -113,7 +113,8 @@ export default function AboutPage() {
                 data-reveal
                 className="text-iridescent mb-12 font-sans text-3xl font-light md:text-4xl"
               >
-                {content.contact.headline}
+                {/* the two signals fuse beside this line (lib/director/laser.ts) */}
+                <span data-laser-anchor="together">{content.contact.headline}</span>
               </p>
 
               <div className="flex flex-col gap-4" data-reveal>

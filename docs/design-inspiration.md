@@ -244,3 +244,44 @@ as the signature moment, and fold **#4–#6** into Phase 6 hardening.
   - **Runtime flags** (`room`, `drag`, `wipe`, `titles`): also settable live
     with `?ff=-room,titles`, remembered in localStorage until `?ff=reset`.
     `window.__flags` shows the resolved set.
+
+## Round 5: calmer, more detail (2026-10-14)
+
+- **Removed:**
+  - **The VHS glitch:** row tears, ghost echo, scanlines, flicker and the
+    scanner jitter, in both tiers.
+  - **The laser room and 3D titles:** too crowded, so they're off by default
+    (`room` and `titles` flags; `?ff=room,titles` brings them back).
+  - **The grey glyph balls:** the old wave field's two sphere bodies were
+    still drawn under the lasers. They're hidden in laser mode now.
+  - **The scroll dust.**
+- **More detail in the main figures:**
+  - **Knot:** far strands thin out as well as darken, so the near ones cross
+    in front. Two lights run along the curve, like a galvo drawing it.
+  - **Fans:** a pulse runs up every beam, on the kick on the music page and
+    slow and faint elsewhere. Away from the music page the beams fade as they
+    rise, so their tops read as far away.
+  - **Rings → hoops:** each ring spins about its own axis, shown as an
+    ellipse that breathes. The pair orbit in an inclined plane, with the
+    near one larger and brighter.
+- **About: a binary held by gravity:**
+  - The hoops orbit on a Kepler ellipse: faster at periapsis, faster overall
+    as the orbit tightens (a^-1.5).
+  - Reading the about text tightens the orbit. Past it, they wait off to the
+    right, smaller and calmer.
+  - They keep twirling until "Let's work together." comes on screen. Then
+    they drift beside it, spiral in and fuse, and one hoop stays there,
+    breathing.
+- **Landing:** hovering a choice glows it and dims the other two, both the
+  words and their laser figures.
+- **Title morph fix:** JourneyRoot's wrapper had an opaque background. Its
+  view-transition snapshot is painted above the title's and the stage's, so
+  the title faded out and then popped back when the transition ended. It's
+  transparent now (e2e guard). Words without a partner on the new page
+  leave with the page.
+- **Transition points (`[data-tp]`):**
+  - A pearl hairline draws out of each section label as it comes into view,
+    and a glint runs along it once.
+  - Each label drifts on a scrubbed, sine-eased offset (±36px). It slows as
+    it crosses mid-screen and catches up after, so the momentum varies from
+    section to section.

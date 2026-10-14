@@ -40,7 +40,6 @@ import BuildScene from "@/components/stage/scenes/build";
 import MontyScene from "@/components/stage/scenes/monty";
 import WorldlineScene, { WORLDLINE_X } from "@/components/stage/scenes/worldline";
 import TitlesScene from "@/components/stage/scenes/titles";
-import DustScene from "@/components/stage/scenes/dust";
 import { createLaserDirector, laserInputFrom, noteKnot, TRANSITION_MS } from "@/lib/director/laser";
 import { TITLE_ASPECT, TITLE_TEXT, titleCanvas } from "@/lib/ascii-engine/title-mask";
 import { readAnchor } from "@/lib/laser-anchors";
@@ -387,7 +386,10 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     ascii.frame.uFlash.value = Math.max(punch, burst);
     ascii.frame.uFlashSlot.value = burst > punch ? MERGER_SLOT : LATTICE_SLOT;
 
-    // bodies follow the shader's orbit (decaying with the inspiral)
+    // the wave field's two bodies follow its orbit (decaying with the
+    // inspiral) — wave field only: under the laser layer they'd be two grey
+    // glyph balls drifting behind everything
+    const laserOn = mode === "journey" && !parity && !waveBg;
     const tau = phase.current;
     const s = (1 - Math.cos(TWO_PI * KOSC * tau)) / 2;
     const orbitR =
@@ -398,8 +400,8 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     if (bodyA.current && bodyB.current) {
       bodyA.current.position.set(bx, -by, lift);
       bodyB.current.position.set(-bx, by, lift);
-      bodyA.current.visible = relief > 0.02;
-      bodyB.current.visible = relief > 0.02 && ring < 0.05; // one remnant after the merger
+      bodyA.current.visible = !laserOn && relief > 0.02;
+      bodyB.current.visible = !laserOn && relief > 0.02 && ring < 0.05; // one remnant after the merger
       bodyA.current.scale.setScalar(1 + 0.6 * ring);
     }
 
@@ -415,7 +417,6 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     }
 
     // ── background: laser layer (journey) or the wave sheet (lab, ?bg=wave) ──
-    const laserOn = mode === "journey" && !parity && !waveBg;
     if (sheet.current) sheet.current.visible = !laserOn;
     if (laserOn) {
       const L = ascii.laser;
@@ -431,7 +432,6 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
         L.uTitleTex.value = t;
         L.uTitleB.value.y = TITLE_ASPECT;
       }
-      ascii.frame.uGlitch.value = lo.glitch;
       ascii.frame.uLaserTone.value.set(lo.brightness, lo.hot);
       // the merger flash follows the laser story (anchored to the about text)
       ascii.frame.uFlash.value = lo.burst;
@@ -440,7 +440,6 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
       ascii.skin.uSat.value = 0;
     } else {
       ascii.laser.uLaserMix.value = 0;
-      ascii.frame.uGlitch.value = 0;
     }
 
     gl.info.reset(); // count every pass this frame, not just the last one
@@ -491,18 +490,13 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
       <mesh ref={sheet} material={sheetMat} frustumCulled={false}>
         <planeGeometry args={[SHEET, SHEET, 320, 320]} />
       </mesh>
-      {mode === "journey" && (
+      {/* the wave-field journey's objects; the laser story tells it alone */}
+      {mode === "journey" && waveBg && (
         <>
-          {/* the wave-field journey's objects; the laser story tells it alone */}
-          {waveBg && (
-            <>
-              <BuildScene shared={solidShared} />
-              <MontyScene shared={solidShared} />
-              <WorldlineScene shared={solidShared} />
-              <TitlesScene shared={solidShared} />
-            </>
-          )}
-          <DustScene rig={rig} />
+          <BuildScene shared={solidShared} />
+          <MontyScene shared={solidShared} />
+          <WorldlineScene shared={solidShared} />
+          <TitlesScene shared={solidShared} />
         </>
       )}
       <mesh ref={bodyA} material={bodyMat} visible={false}>
