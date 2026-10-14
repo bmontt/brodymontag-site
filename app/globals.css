@@ -419,3 +419,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
    quiet like the site's photos, in color when their card is hovered */
 .brand-icon { filter: grayscale(1) brightness(1.1); opacity: 0.75; transition: filter 0.3s ease, opacity 0.3s ease; }
 .group:hover .brand-icon, .brand-icon:hover { filter: none; opacity: 1; }
+
+/* touch screens: text links are tappable beyond their 16px line. Vertical
+   padding on an inline box enlarges its hit area without changing layout. */
+@media (pointer: coarse) {
+  main a:not([class*="absolute"]):not([class*="block"]):not([class*="flex"]):not([class*="grid"]),
+  footer a { padding-block: 0.6rem; }
+}

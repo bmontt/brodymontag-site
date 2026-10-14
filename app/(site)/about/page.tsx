@@ -38,7 +38,7 @@ export default function AboutPage() {
               <div className="min-w-0 flex-1">
                 <div className="mb-10 flex flex-col gap-3" data-reveal>
                   {content.about.meta.map(({ label, value }, i) => (
-                    <div key={i} className="grid grid-cols-[6.5rem_1fr] gap-x-8">
+                    <div key={i} className="grid gap-y-0.5 sm:grid-cols-[6.5rem_1fr] sm:gap-x-8">
                       <span className="font-mono text-xs text-foreground/45">{label}</span>
                       <span className="font-mono text-xs text-foreground/75">{value}</span>
                     </div>
@@ -119,7 +119,7 @@ export default function AboutPage() {
 
               <div className="flex flex-col gap-4" data-reveal>
                 {content.contact.items.map(({ label, value, href }) => (
-                  <div key={label} className="grid grid-cols-[6.5rem_1fr] gap-x-8">
+                  <div key={label} className="grid gap-y-0.5 sm:grid-cols-[6.5rem_1fr] sm:gap-x-8">
                     <span className="font-mono text-xs text-foreground/45 pt-0.5">
                       {label}
                     </span>

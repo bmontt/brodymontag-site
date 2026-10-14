@@ -92,7 +92,7 @@ export default function Chapter({
         <div data-laser-anchor="opener" className="relative z-20 flex min-h-svh flex-col justify-center px-6 pt-20 md:px-12">
           <div className="mx-auto w-full max-w-6xl">
             {opener.back && (
-              <Link href={opener.back} className="mb-8 inline-flex items-center gap-2 font-mono text-xs text-foreground/45 transition-colors duration-200 hover:text-foreground/85">
+              <Link href={opener.back} className="-my-2.5 mb-5.5 inline-flex items-center gap-2 py-2.5 font-mono text-xs text-foreground/45 transition-colors duration-200 hover:text-foreground/85">
                 ← back
               </Link>
             )}

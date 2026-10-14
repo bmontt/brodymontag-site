@@ -122,7 +122,7 @@ export default function Landing({ now }: { now: NowLines | null }) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={label}
-            className="social-link"
+            className="social-link -mx-2.5 px-2.5"
             style={{ "--glow": glow(glowRgb, 1) } as CSSProperties}
           >
             <Icon className="h-4 w-4" />

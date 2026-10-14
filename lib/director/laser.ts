@@ -64,8 +64,10 @@ export const TRANSITION_MS = 280;
 /** the transition waves stay local: their reach is a fraction of the shorter
  *  screen side, clamped, and they fade out as they reach it */
 /** phone widths: the laser layer's brightness over content, and over the road */
-const PHONE_DIM = 0.38;
+const PHONE_DIM = 0.28;
 const PHONE_DIM_ROAD = 0.6;
+/** …and over an opener, where the figure crosses the title on a narrow screen */
+const PHONE_DIM_OPENER = 0.62;
 
 /** the timeline road's half-width at the bottom edge. A share of the width on
  *  wide screens; on tall ones (phones) it follows the road's depth instead, so
@@ -273,7 +275,9 @@ export function createLaserDirector() {
       }
     } else if (x.page === "about") {
       const ua = x.anchor("union");
-      let ucx = W * 0.5, ucy = H * 0.5, ur = M * 0.22, read = 0, past = 0;
+      // no anchor (phones: no side column): a smaller orbit parked at the right
+      // edge, where it grazes line ends instead of sitting on the text
+      let ucx = W < 768 ? W * 0.9 : W * 0.5, ucy = H * 0.5, ur = W < 768 ? M * 0.12 : M * 0.22, read = 0, past = 0;
       if (ua) {
         const cy = ua.y + ua.h / 2;
         // reading the about text tightens the orbit; once the text has gone by
@@ -358,7 +362,7 @@ export function createLaserDirector() {
     //    mood, so it fades rather than snaps.
     if (W < 768 && x.page !== "home") {
       const road = x.page === "about" && (x.timelineProgress >= 0 || pastTimeline);
-      tgt.bright *= lerp(road ? PHONE_DIM_ROAD : PHONE_DIM, 1, inOpener);
+      tgt.bright *= lerp(road ? PHONE_DIM_ROAD : PHONE_DIM, PHONE_DIM_OPENER, inOpener);
     }
 
     // ── damp toward the page's targets ─────────────────────────────────

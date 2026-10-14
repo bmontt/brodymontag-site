@@ -867,8 +867,7 @@
           "Paper trading alongside real accounts, to prove changes first",
           "Per-avenue health checks and a degraded mode",
           "Terminal UI and a setup wizard for every connection"
-        ],
-        "icon": "/icons/coinbase.svg"
+        ]
       },
       {
         "id": "superset",

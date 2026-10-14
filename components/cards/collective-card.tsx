@@ -18,7 +18,7 @@ export default function CollectiveCard() {
         </p>
         <div className="flex flex-col gap-3 pl-3 border-l border-white/10">
           {(collective.meta as Meta[]).map(({ label, value, href }) => (
-            <div key={label} className="grid grid-cols-[7rem_1fr] gap-x-6">
+            <div key={label} className="grid gap-y-0.5 sm:grid-cols-[7rem_1fr] sm:gap-x-6">
               <span className="font-mono text-xs text-foreground/35">{label}</span>
               {href ? (
                 <a
@@ -40,7 +40,7 @@ export default function CollectiveCard() {
       {/* affiliations */}
       <div className="flex flex-col gap-6">
         {(collective.affiliations as Affiliation[]).map((aff) => (
-          <div key={aff.label} className="grid grid-cols-[6.5rem_1fr] gap-x-8">
+          <div key={aff.label} className="grid gap-y-0.5 sm:grid-cols-[6.5rem_1fr] sm:gap-x-8">
             <span className="flex items-start gap-2 pt-0.5 font-mono text-xs text-foreground/45">
               <BrandIcon src={aff.icon} size={14} />
               {aff.label}

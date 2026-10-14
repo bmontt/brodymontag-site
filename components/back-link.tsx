@@ -6,7 +6,7 @@ export default function BackLink({ href = "/" }: { href?: string }) {
     <div className="enter mb-12" style={enterStyle({ x: -10, dur: 0.35 })}>
       <Link
         href={href}
-        className="inline-flex items-center gap-2 font-mono text-xs text-foreground/38 hover:text-foreground/75 transition-colors duration-200"
+        className="-my-2.5 inline-flex items-center gap-2 py-2.5 font-mono text-xs text-foreground/38 hover:text-foreground/75 transition-colors duration-200"
       >
         ← back
       </Link>
