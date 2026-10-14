@@ -51,7 +51,7 @@ export function machineText(): string {
   push(dots("name") + c.hero.name.toLowerCase());
   push(dots("also") + "monty (us)");
   for (const { label, value } of c.about.meta) if (label) push(dots(label) + value);
-  push(dots("thesis") + c.journey.epilogue.heading);
+  push(dots("in his words") + c.journey.epilogue.heading);
   push("", "## summary", c.hero.elevatorPitch, "");
 
   push("## code / projects");
@@ -95,7 +95,7 @@ export function llmsText(): string {
   const c = content;
   const L: string[] = [];
   L.push(`# ${c.meta.name}`, "", `> ${c.hero.elevatorPitch}`, "");
-  L.push(`${c.meta.name} is a ${c.hero.subtitle}. ${c.journey.epilogue.heading}`, "");
+  L.push(`${c.meta.name} is a ${c.hero.subtitle}.`, "");
   L.push("## Projects");
   for (const p of projects) L.push(`- [${p.name}](${ORIGIN}/projects/${p.slug}): ${p.description}`);
   L.push("", "## Shows");

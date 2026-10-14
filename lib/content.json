@@ -16,7 +16,7 @@
     "name": "Brody Montag",
     "subtitle": "full stack developer · dj/producer",
     "_subtitleNote": "Length drives the link/pitch reveal timing (currently 38 chars). If you change it, the staggered entrance retimes automatically once wired.",
-    "elevatorPitch": "a software engineer specializing in machine learning and agentic systems — and, performing as monty (us), a producer and dj with credits up to the #1-ranked club in the country. one aim across both: technology in service of sound.",
+    "elevatorPitch": "a software engineer specializing in machine learning and agentic systems — and, performing as monty (us), a producer and dj with credits up to the #1-ranked club in the country. i've always loved making things, and these are the two i keep coming back to.",
     "links": [
       {
         "id": "sc",
@@ -81,7 +81,7 @@
     "paragraphs": [
       "I grew up in New Jersey splitting time between making things and performing them — two halves that never felt separate. Before I wrote a line of code I was a competitive ice hockey player and a classically trained musician: piano, oboe, viola, drums. What held my attention was always the building, whether the result was a song, a system, or a set.",
       "I started producing at ten on GarageBand and moved to FL Studio two years later. Early on I made rap and hip-hop beats for local artists; then dance music reorganized how I heard everything. Now I produce and DJ as Monty (US) — warm basslines, crisp percussion, a UK- and minimal-leaning take on house and tech house — and I've opened and closed for artists I grew up listening to across DC, Baltimore, and New York.",
-      "I studied Computer Science at the University of Maryland, where I gravitated toward audio engineering, signal processing, and machine learning — including research-grade work on auditory signals. Today I'm a full-stack developer on the ML/AI team at Fiserv. The thesis behind nearly everything I build holds steady: technology in service of music. Most projects I take on solve a problem I have as an artist — a setlist optimizer, audio-analysis pipelines, the tooling that runs my own workflow.",
+      "I studied Computer Science at the University of Maryland, where I gravitated toward audio engineering, signal processing, and machine learning — including research-grade work on auditory signals. Today I'm a full-stack developer on the ML/AI team at Fiserv. A lot of what I build starts with the music. Most projects I take on solve a problem I have as an artist — a setlist optimizer, audio-analysis pipelines, the tooling that runs my own workflow.",
       "With two close friends I co-founded [PB&J Sounds](https://pbandjsounds.com), an East Coast collective and label built around underground house, and I hold a residency with [Beatprint](https://www.instagram.com/beatprint__) at Transmission DC. My investment is in the grassroots side of this scene — small rooms, real crowds, music you have to dig for — and in owning the whole stack that supports it, from the label's website to the software that prepares my sets.",
       "Lately my focus has been agentic AI and local-first systems: running models on my own hardware, building small fleets of agents, and writing the architecture down before the code. I work for craft, rigor, and ownership — understanding something well enough to build it myself, and building it well enough to trust it on stage or in production.",
       "Right now, music is the priority. Production is the work that compounds — it drives the long-term growth and the bookings that follow — so most of my creative energy lives in the studio and the next room I'm trying to play. The direction I care most about pulls both halves together: machine learning and signal processing applied to sound — deep learning, on-device and edge models, the territory companies like Dolby, Bose, and Sony work in — aimed at live performance and the tools producers use to make records. I want to build the instruments and systems that change how DJs play and how records get made. The engineering and the music were never two separate careers to me. They're one practice: the code serves the sets, and the sets inform the code."
@@ -961,7 +961,7 @@
       "word": "2021 → now"
     },
     "epilogue": {
-      "heading": "technology in service of sound.",
+      "heading": "i've always loved making things.",
       "word": "the merger"
     }
   }
