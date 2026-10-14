@@ -33,7 +33,7 @@ export default function SoftwarePage() {
           <div className="flex flex-col gap-16">
             <div>
               <SectionLabel>projects</SectionLabel>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-4">
                 {projects.map((p) => (
                   <div key={p.id} data-reveal data-stage-id={`project:${p.id}`}>
                     <ProjectCard project={p} />
@@ -44,7 +44,7 @@ export default function SoftwarePage() {
 
             <div>
               <SectionLabel>experience</SectionLabel>
-              <div className="flex flex-col gap-10">
+              <div className="flex flex-col gap-4">
                 {experience.map((e) => (
                   <div key={e.id} data-reveal>
                     <ExperienceCard entry={e} />

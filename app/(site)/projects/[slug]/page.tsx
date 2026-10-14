@@ -4,6 +4,7 @@ import { enterStyle } from "@/lib/enter";
 import SiteNav from "@/components/nav";
 import BackLink from "@/components/back-link";
 import { SECTION_HEADING, SECTION_SIZE } from "@/components/journey/section-bits";
+import { SubWidgets } from "@/components/widgets";
 import { projects } from "@/lib/projects";
 
 function AsciiRule({ className = "" }: { className?: string }) {
@@ -120,14 +121,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             style={enterStyle({ y: 10, dur: 0.5, delay: 0.45 })}
           >
             <h2 className={`mb-5 ${SECTION_HEADING}`} style={{ fontSize: SECTION_SIZE.sm }}>highlights</h2>
-            <div className="flex flex-col gap-3">
-              {project.highlights.map((h, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <span className="font-mono text-xs text-foreground/28 mt-0.5 shrink-0">·</span>
-                  <p className="font-sans text-sm text-foreground/62 leading-relaxed">{h}</p>
-                </div>
-              ))}
-            </div>
+            <SubWidgets items={project.highlights} />
           </div>
         </div>
       </main>

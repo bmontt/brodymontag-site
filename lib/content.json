@@ -78,14 +78,6 @@
         "value": "east coast"
       }
     ],
-    "paragraphs": [
-      "I grew up in New Jersey splitting time between making things and performing them — two halves that never felt separate. Before I wrote a line of code I was a competitive ice hockey player and a classically trained musician: piano, oboe, viola, drums. What held my attention was always the building, whether the result was a song, a system, or a set.",
-      "I started producing at ten on GarageBand and moved to FL Studio two years later. Early on I made rap and hip-hop beats for local artists; then dance music reorganized how I heard everything. Now I produce and DJ as Monty (US) — warm basslines, crisp percussion, a UK- and minimal-leaning take on house and tech house — and I've opened and closed for artists I grew up listening to across DC, Baltimore, and New York. In 2026 that became a residency at Transmission, a first headline night in Brooklyn, and both ends of the night at Echostage.",
-      "I studied Computer Science at the University of Maryland, where I gravitated toward audio engineering, signal processing, and machine learning — including senior research on auditory signal processing at UMD's Perceptual Interfaces & Reality Lab. Today I'm a full-stack developer in Fiserv's Global Business Solutions group, building an enterprise payments developer portal and the AI tooling behind it. A lot of what I build starts with the music. Most projects I take on solve a problem I have as an artist — a setlist optimizer, audio-analysis pipelines, the tooling that runs my own workflow.",
-      "With two close friends I co-founded [PB&J Sounds](https://pbandjsounds.com), an East Coast collective and label built around underground house, and I hold a residency with [Beatprint](https://www.instagram.com/beatprint__) at Transmission DC. My investment is in the grassroots side of this scene — small rooms, real crowds, music you have to dig for — and in owning the whole stack that supports it, from the label's website to the software that prepares my sets.",
-      "Lately my focus has been making agentic AI trustworthy: at work, a governed multi-agent delivery platform where independent AI review runs before a human sees the code and a human approves every merge; at home, models on my own hardware and small fleets of agents, with the architecture written down before the code. I work for craft, rigor, and ownership — understanding something well enough to build it myself, and building it well enough to trust it on stage or in production.",
-      "Right now, music is the priority. Production is the work that compounds — it drives the long-term growth and the bookings that follow — so most of my creative energy lives in the studio and the next room I'm trying to play. The direction I care most about pulls both halves together: machine learning and signal processing applied to sound — deep learning, on-device and edge models, the territory companies like Dolby, Bose, and Sony work in — aimed at live performance and the tools producers use to make records. I want to build the instruments and systems that change how DJs play and how records get made. The engineering and the music were never two separate careers to me. They're one practice: the code serves the sets, and the sets inform the code."
-    ],
     "photoCaption": "monty (us)",
     "socials": [
       {
@@ -103,6 +95,64 @@
       {
         "label": "github ↗",
         "href": "https://github.com/bmontt"
+      }
+    ],
+    "sections": [
+      {
+        "title": "origins",
+        "body": "I grew up in New Jersey splitting time between making things and performing them — two halves that never felt separate. Before I wrote a line of code I was a competitive ice hockey player and a classically trained musician: piano, oboe, viola, drums. What held my attention was always the building, whether the result was a song, a system, or a set.",
+        "facts": [
+          "new jersey",
+          "competitive ice hockey",
+          "piano · oboe · viola · drums"
+        ]
+      },
+      {
+        "title": "monty (us)",
+        "body": "I started producing at ten on GarageBand and moved to FL Studio two years later. Early on I made rap and hip-hop beats for local artists; then dance music reorganized how I heard everything. Now I produce and DJ as Monty (US) — warm basslines, crisp percussion, a UK- and minimal-leaning take on house and tech house — and I've opened and closed for artists I grew up listening to across DC, Baltimore, and New York. In 2026 that became a residency at Transmission, a first headline night in Brooklyn, and both ends of the night at Echostage.",
+        "facts": [
+          "producing since age 10",
+          "house · tech house",
+          "a residency at transmission",
+          "headlined in brooklyn",
+          "both ends of the night at echostage"
+        ]
+      },
+      {
+        "title": "the work",
+        "body": "I studied Computer Science at the University of Maryland, where I gravitated toward audio engineering, signal processing, and machine learning — including senior research on auditory signal processing at UMD's Perceptual Interfaces & Reality Lab. Today I'm a full-stack developer in Fiserv's Global Business Solutions group, building an enterprise payments developer portal and the AI tooling behind it. A lot of what I build starts with the music. Most projects I take on solve a problem I have as an artist — a setlist optimizer, audio-analysis pipelines, the tooling that runs my own workflow.",
+        "facts": [
+          "cs + ml · university of maryland",
+          "auditory research · pirl",
+          "full-stack · fiserv"
+        ]
+      },
+      {
+        "title": "the collective",
+        "body": "With two close friends I co-founded [PB&J Sounds](https://pbandjsounds.com), an East Coast collective and label built around underground house, and I hold a residency with [Beatprint](https://www.instagram.com/beatprint__) at Transmission DC. My investment is in the grassroots side of this scene — small rooms, real crowds, music you have to dig for — and in owning the whole stack that supports it, from the label's website to the software that prepares my sets.",
+        "facts": [
+          "pb&j sounds · co-founder",
+          "beatprint · resident",
+          "small rooms, real crowds"
+        ]
+      },
+      {
+        "title": "how i build",
+        "body": "Lately my focus has been making agentic AI trustworthy: at work, a governed multi-agent delivery platform where independent AI review runs before a human sees the code and a human approves every merge; at home, models on my own hardware and small fleets of agents, with the architecture written down before the code. I work for craft, rigor, and ownership — understanding something well enough to build it myself, and building it well enough to trust it on stage or in production.",
+        "facts": [
+          "governed multi-agent ai",
+          "local-first models",
+          "architecture before code"
+        ]
+      },
+      {
+        "title": "what's next",
+        "body": "Right now, music is the priority. Production is the work that compounds — it drives the long-term growth and the bookings that follow — so most of my creative energy lives in the studio and the next room I'm trying to play. The direction I care most about pulls both halves together: machine learning and signal processing applied to sound — deep learning, on-device and edge models, the territory companies like Dolby, Bose, and Sony work in — aimed at live performance and the tools producers use to make records. I want to build the instruments and systems that change how DJs play and how records get made. The engineering and the music were never two separate careers to me. They're one practice: the code serves the sets, and the sets inform the code.",
+        "facts": [
+          "music first",
+          "ml + signal processing for sound",
+          "tools for djs and producers"
+        ]
       }
     ]
   },
@@ -137,6 +187,11 @@
             "href": "https://github.com/bmontt/superset"
           },
           {
+            "label": "brodymontag-site",
+            "value": "typescript · three.js · glsl",
+            "href": "https://github.com/bmontt/brodymontag-site"
+          },
+          {
             "label": "roblox_bot",
             "value": "python · claude api · cv",
             "href": "https://github.com/bmontt/roblox_bot"
@@ -145,10 +200,6 @@
             "label": "Peak_Finding_Toolbox",
             "value": "python · eeg · hrtf",
             "href": "https://github.com/bmontt/Peak_Finding_Toolbox"
-          },
-          {
-            "label": "Anvil",
-            "value": "typescript · llm agents · wip"
           }
         ]
       },
@@ -818,6 +869,54 @@
   "code": {
     "projects": [
       {
+        "id": "prism",
+        "slug": "prism",
+        "name": "Prism",
+        "status": "wip",
+        "date": "June 2026",
+        "githubUrl": null,
+        "tags": [
+          "C++",
+          "edge ML",
+          "HTDemucs",
+          "Raspberry Pi"
+        ],
+        "description": "A standalone box that splits a DJ's track into drums, bass, vocals and other while it plays, and routes each stem through the mixer's FX loop. No laptop, no cloud.",
+        "longDescription": "Prism is hardware for the booth. Load a track on a CDJ and it plays as normal; Prism sees the load over Pro DJ Link and starts separating it in the background.\n\nHTDemucs runs quantized to INT4 on a Hailo-10H AI accelerator on a Raspberry Pi 5, working through the track in 10-second chunks at about twelve times real time. A few seconds after the load the stem controls go live, and JACK2 plays the pre-extracted stems in lockstep with the CDJ's playback position. Each stem gets its own encoder on the box, or a DJM-V10 FX knob over MIDI.\n\nThe audio path is balanced XLR in and out at 24-bit/192 kHz, with a 1.9 ms round trip, because extraction never sits in the live signal path.",
+        "highlights": [
+          "HTDemucs (INT4) on a Hailo-10H: stems at ~12× real time",
+          "Live 3–4 s after a track loads, detected over Pro DJ Link",
+          "JACK2 plays stems locked to the CDJ's playhead",
+          "1.9 ms round-trip audio, balanced XLR, 24-bit/192 kHz",
+          "Per-stem encoders, or DJM-V10 FX knobs over MIDI",
+          "About $565 in parts: Raspberry Pi 5 with a PREEMPT_RT kernel"
+        ]
+      },
+      {
+        "id": "venture",
+        "slug": "venture",
+        "name": "venture",
+        "status": "live",
+        "date": "July 2026",
+        "githubUrl": null,
+        "tags": [
+          "Python",
+          "LLM agents",
+          "Claude API",
+          "DeFi"
+        ],
+        "description": "An autonomous capital-allocation agent that runs unattended four times a day across DeFi yield, prediction-market research and paper crypto, with a Claude-led weekly review held to narrow, explicit limits.",
+        "longDescription": "venture is an agent with real stakes: it allocates a small amount of money across several avenues on its own schedule, and the engineering is mostly about keeping that safe.\n\nAn allocator decides where new money goes — stablecoin conversion, gas for the on-chain wallet, topping up a prediction-market account to its target — and anything that would send money off the exchange waits for approval. A weekly review by Claude reads the system's own history and may adjust only the crypto strategy's tunables.\n\nIt's operated from a terminal interface: a live view of every account, money in and out, history charts, open positions, and a setup wizard that walks through each connection in order.",
+        "highlights": [
+          "Runs unattended on a schedule, four cycles a day",
+          "Moves off the exchange wait for human approval",
+          "Weekly LLM review may change only crypto tunables",
+          "Allocator: stablecoin conversion, gas, account top-ups",
+          "Terminal UI: live, money, history and activity views",
+          "Paper trading alongside real accounts"
+        ]
+      },
+      {
         "id": "superset",
         "slug": "superset",
         "name": "superset",
@@ -843,27 +942,99 @@
         ]
       },
       {
-        "id": "roblox_bot",
-        "slug": "roblox-bot",
-        "name": "roblox_bot",
-        "description": "3-tier hierarchical async LLM agent for Roblox FPS. YOLO/OpenCV runs at 60fps for frame-level reactions, Claude Haiku handles tactical intent, Claude Sonnet drives strategic goals — each tier operating at its own cadence.",
+        "id": "realmbot",
+        "slug": "realmbot",
+        "name": "realmbot",
+        "status": "wip",
+        "date": "September 2026",
+        "githubUrl": null,
         "tags": [
           "Python",
-          "Claude API",
-          "YOLO",
-          "OpenCV"
+          "asyncio",
+          "decision models",
+          "evals"
         ],
-        "githubUrl": "https://github.com/bmontt/roblox_bot",
-        "status": "live",
-        "date": "May 2026",
-        "longDescription": "Roblox Bot splits a real-time task across agents with very different latency requirements — a study in hierarchical agency.\n\nThe structure: three independent async tiers, each operating at its own cadence. Tier 1 is YOLOv8/OpenCV running at ~60fps — pure reaction, frame-level detection for movement and targeting. Tier 2 is Claude Haiku receiving state summaries every 1-2 seconds, producing tactical intent (engagement choices, positioning). Tier 3 is Claude Sonnet processing high-level game state on a longer loop, setting strategic objectives and adjusting macro-level goals.\n\nThe tiers don't wait for each other. Lower tiers proceed with the last available signal from higher tiers, which keeps cascading latency from becoming a blocking problem. The pattern is general — it applies to any real-time task that benefits from layered reasoning.",
+        "description": "A headless asyncio game client for a private server, where a decision model only picks a mode and every call falls back to a heuristic policy on timeout, low confidence or an outage.",
+        "longDescription": "realmbot is a study in putting a model in charge of as little as possible. Deterministic code owns safety, movement and every required protocol reply; the decision model (TypeSafe AI's Jev) only chooses a tactical mode.\n\nEvery call degrades to a heuristic policy on a timeout, low confidence or an outage, and an action gate plus a rate and cost governor sit between the model and the game. Thresholds are tuned from reliability sweeps rather than by feel.\n\nIt targets a private server I run for development and testing, and contains no anti-detection work.",
         "highlights": [
-          "YOLOv8/OpenCV reactive layer at ~60fps",
-          "Claude Haiku for tactical decisions at ~1-2 second intervals",
-          "Claude Sonnet for strategic goals at ~5-10 second intervals",
-          "Fully async multi-process architecture — tiers don't block each other",
-          "Custom game state extraction from screen capture",
-          "Prompt engineering optimized for spatial and tactical reasoning"
+          "The model picks a mode; deterministic code does the rest",
+          "Heuristic fallback on timeout, low confidence or outage",
+          "Action gate and a rate/cost governor",
+          "Danger thresholds tuned from reliability sweeps",
+          "Seven rounds of structured code review",
+          "Private test server only; no anti-detection"
+        ]
+      },
+      {
+        "id": "site",
+        "slug": "brodymontag-com",
+        "name": "brodymontag.com",
+        "status": "live",
+        "date": "September 2026",
+        "githubUrl": "https://github.com/bmontt/brodymontag-site",
+        "tags": [
+          "TypeScript",
+          "three.js / R3F",
+          "GLSL",
+          "GSAP"
+        ],
+        "description": "This site: a laser stage rendered as ASCII through a custom GLSL glyph pass over a three.js scene, with a CPU twin in a worker for devices without 3D, and a scroll-driven journey through both halves.",
+        "longDescription": "The background is one persistent stage that survives navigation. On capable devices it's a three.js scene drawn through a custom GLSL pass that turns every 8×22 px cell into a glyph; elsewhere a CPU painter in a Web Worker draws the same figures pixel for pixel.\n\nScroll drives it: GSAP ScrollTrigger is the single writer, so React never re-renders on scroll. Each page has its own composition, and moving between pages morphs the figures instead of cutting them.\n\nIt holds 120 fps on a scripted scroll even with the CPU slowed six times, after a pass that moved the iridescent shimmer onto one shared clock.",
+        "highlights": [
+          "Custom GLSL ASCII pass over a three.js scene",
+          "CPU twin in a Web Worker, matched pixel for pixel",
+          "GSAP as the single scroll writer: no React re-renders",
+          "Figures morph across page changes",
+          "120 fps scrolling at 6× CPU slowdown",
+          "Prerendered pages that re-render hourly"
+        ]
+      },
+      {
+        "id": "kicker",
+        "slug": "here-comes-the-kicker",
+        "name": "here comes the kicker",
+        "status": "wip",
+        "date": "August 2026",
+        "githubUrl": null,
+        "tags": [
+          "JavaScript",
+          "three.js",
+          "C# / Unity",
+          "game design"
+        ],
+        "description": "3D kickball, first in the browser with three.js and no build step, now ported to Unity: pitches that roll and bounce, held-power throws, positional defense with difficulty levels.",
+        "longDescription": "here comes the kicker started as a browser game: three.js, plain script files, no bundler. The work went into feel — pitches that roll and bounce, throws whose power you hold rather than fix, throws that skip in off the dirt, contact you can read, and 80s-style callouts instead of box scores.\n\nIt's now being ported to C# in Unity 6, with a deterministic simulation separated from the view, camera transitions that look ahead of the ball, a crowd and audio that react to play, and a lobby in an elevated press box above the field.",
+        "highlights": [
+          "Browser original: three.js, no build step",
+          "Held-power throws; pitches roll and bounce",
+          "Positional defense with difficulty levels",
+          "Unity 6 port with a deterministic sim",
+          "Camera look-ahead, reactive crowd and audio",
+          "Avatar progression designed for multiple sessions"
+        ]
+      },
+      {
+        "id": "agent_forge",
+        "slug": "agent-forge",
+        "name": "agent-forge",
+        "status": "live",
+        "date": "June 2026",
+        "githubUrl": null,
+        "tags": [
+          "Python",
+          "Claude Code",
+          "multi-agent",
+          "evals"
+        ],
+        "description": "One canonical library of agent prompts, built into variants for Claude Code and VS Code from shared blocks, with an eval and observability layer: the fleet behind most of these projects.",
+        "longDescription": "My agents used to live as drifted copies across repositories. agent-forge keeps one canonical source for each, written platform-neutral and composed from shared blocks: the orchestrator-to-worker brief format, just-in-time stack discovery, dashboard logging.\n\nA stdlib-only build splices the blocks, emits Claude Code and VS Code variants, and fails on any unresolved placeholder. An eval layer checks agents against blueprints, and runs stream into the Subagent Dashboard, a Next.js control plane for watching parallel agents live.\n\nGuardrails are part of the source: the agent that operates venture, for example, has every financial action gated.",
+        "highlights": [
+          "One source per agent, built for two platforms",
+          "Shared blocks: briefs, discovery, logging",
+          "Build fails on unresolved placeholders",
+          "Blueprint evals and an observability rollup",
+          "Live in the Subagent Dashboard (Next.js, SSE)",
+          "Lazy skill pointers: 32% fewer tokens"
         ]
       },
       {
@@ -888,52 +1059,6 @@
           "MNE and BIDS-compatible data format support",
           "Designed for clinical and academic research environments",
           "Accessible API — no signal processing expertise required"
-        ]
-      },
-      {
-        "id": "anvil",
-        "slug": "anvil",
-        "name": "Anvil",
-        "description": "Autonomous self-improvement loop for an LLM agent fleet. Runs daily audits of agent code quality, builds a prioritized work queue, and dispatches specialist subagents to iteratively refine the codebase without human intervention.",
-        "tags": [
-          "TypeScript",
-          "LLM agents",
-          "Claude API"
-        ],
-        "githubUrl": null,
-        "status": "wip",
-        "date": "June 2026",
-        "longDescription": "Anvil puts an AI coding agent to work on the system it runs on.\n\nThe design: a daily audit loop that reads the codebase, identifies technical debt and code quality issues, scores them by estimated impact and effort, and dispatches specialist subagents to fix them — without a human in the loop. Not a CI/CD pipeline, but a reasoning agent that makes editorial decisions about what to improve next and how.\n\nPhase 0 is the audit loop: a single agent that reads, evaluates, and produces a prioritized work queue. Subsequent phases add the dispatcher (load-balancing work across parallel workers) and the specialist fleet (debugger, refiner, test-writer, documentation-architect). The aim is a system that gets measurably better at its own job over time, using Claude Code's agent architecture as the runtime.",
-        "highlights": [
-          "Daily automated codebase audits using reasoning models",
-          "Impact/effort scoring and priority queue generation",
-          "Specialist subagent dispatch — debugger, refiner, test-writer",
-          "Designed for Claude Code's multi-agent architecture",
-          "Self-referential: the agent improves the fleet it belongs to",
-          "Phase 0 in active development"
-        ]
-      },
-      {
-        "id": "subagent_dashboard",
-        "slug": "subagent-dashboard",
-        "name": "Subagent Dashboard",
-        "description": "Next.js dashboard for live-monitoring parallel Claude Code agent sessions. Streams chain-of-thought and output from concurrent subagents into a unified interface — the control plane for multi-agent dev workflows.",
-        "tags": [
-          "TypeScript",
-          "Next.js",
-          "Claude API",
-          "real-time"
-        ],
-        "githubUrl": null,
-        "status": "live",
-        "date": "April 2026",
-        "longDescription": "Running 5-10 parallel Claude Code agents across clusters of the same codebase means tracking all of them at once. The Subagent Dashboard is the control plane for that.\n\nThe dashboard streams chain-of-thought (CoT) and output from concurrent agent sessions into a unified interface. Each agent gets a panel showing its current task, recent tool calls, and running output in real time. Cross-agent dependencies and conflicts surface immediately, rather than after the fact during a coherence review.\n\nBuilt on Next.js with a real-time streaming architecture — the interface that runs the multi-agent development workflow day to day.",
-        "highlights": [
-          "Real-time CoT and output streaming from concurrent Claude Code sessions",
-          "Per-agent panels with task, tool calls, and live output",
-          "Cross-agent dependency and conflict visibility",
-          "Next.js with server-sent events streaming architecture",
-          "Active daily use — core tooling for multi-agent dev workflow"
         ]
       }
     ],

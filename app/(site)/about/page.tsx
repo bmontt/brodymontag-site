@@ -12,6 +12,7 @@ import NextSection from "@/components/journey/next-section";
 import { nowLines } from "@/lib/now";
 import { flag } from "@/lib/flags";
 import { content } from "@/lib/content";
+import { SubWidgets, Widget, WidgetHead } from "@/components/widgets";
 
 // ── /about ────────────────────────────────────────────────────────────────────
 // Where the halves meet: the about text (the two signals orbit inside the
@@ -45,24 +46,24 @@ export default function AboutPage() {
                   ))}
                 </div>
 
-                {/* the paragraphs wrap around the union: a circular float the
-                    two signals orbit inside (lib/director/laser.ts) */}
-                <div className="max-w-2xl [&>p+p]:mt-5">
-                  <div
-                    aria-hidden="true"
-                    data-laser-anchor="union"
-                    className="float-right ml-8 mb-4 hidden aspect-square rounded-full md:block"
-                    style={{ width: "clamp(200px, 22vw, 300px)", shapeOutside: "circle(50%)", shapeMargin: "20px" }}
-                  />
-                  {content.about.paragraphs.map((para, i) => (
-                    <p
-                      key={i}
-                      data-reveal
-                      className="font-sans text-base text-foreground/65 leading-relaxed"
-                    >
-                      {renderInline(para)}
-                    </p>
-                  ))}
+                {/* the sections, with the union beside them: the circle the two
+                    signals orbit inside (lib/director/laser.ts), held in its own
+                    column at reading height so the widgets keep their width */}
+                <div className="md:grid md:grid-cols-[minmax(0,1fr)_clamp(200px,22vw,300px)] md:gap-x-10">
+                  <div className="flex flex-col gap-4">
+                    {content.about.sections.map((sec) => (
+                      <div key={sec.title} data-reveal>
+                        <Widget>
+                          <WidgetHead title={sec.title} />
+                          <p className="font-sans text-[15px] leading-relaxed text-foreground/68">{renderInline(sec.body)}</p>
+                          <SubWidgets items={sec.facts} cols={sec.facts.length > 4 ? 3 : 2} />
+                        </Widget>
+                      </div>
+                    ))}
+                  </div>
+                  <div aria-hidden="true" className="hidden md:block">
+                    <div data-laser-anchor="union" className="sticky top-[28vh] aspect-square w-full rounded-full" />
+                  </div>
                 </div>
 
                 <AsciiRule className="my-10" />

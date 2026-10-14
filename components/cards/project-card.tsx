@@ -1,44 +1,44 @@
-// ── ProjectCard — server card lifted from app/page.tsx (projects .map block) ──
-// IMPORTANT: preserves the stretched-link overlay pattern that fixed a hydration bug.
+// ── ProjectCard ───────────────────────────────────────────────────────────────
+// A project as a widget: name and status, the one-line description, its top
+// three highlights as floating sub-widgets, tags along the foot. The whole card
+// links to the detail page through a stretched-link overlay (no nested anchors:
+// that was a hydration bug); the GitHub link sits above the overlay.
 import Link from "next/link";
 import type { Project } from "@/lib/projects";
+import { SubWidgets, TagRow, Widget, WidgetHead } from "@/components/widgets";
 
 export default function ProjectCard({ project }: { project: Project }) {
   return (
-    <div className="group relative -mx-3 px-3 py-4 hover:bg-white/[0.025] transition-colors duration-150">
-      {/* stretched link — covers the whole row without nesting anchors */}
-      <Link
-        href={`/projects/${project.slug}`}
-        aria-label={project.name}
-        className="absolute inset-0 z-0"
-      />
-      <div className="relative pointer-events-none flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 mb-2.5">
-        <span className="font-mono text-sm text-foreground/90 group-hover:text-foreground/98 transition-colors duration-150">
-          {project.name}
-          <span className="ml-2 text-foreground/28 opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-xs">→</span>
-        </span>
-        <div className="flex flex-wrap items-center gap-5">
-          <span className="font-mono text-xs text-muted-foreground">
-            [{project.tags.join(" · ")}]
-          </span>
-          {project.status === "wip" && (
-            <span className="font-mono text-xs text-accent/80">in progress</span>
-          )}
-          {project.githubUrl && (
-            <a
-              href={project.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-xs text-foreground/45 hover:text-foreground/85 transition-colors relative z-10 pointer-events-auto"
-            >
-              ↗ github
-            </a>
-          )}
-        </div>
+    <Widget link>
+      <Link href={`/projects/${project.slug}`} aria-label={project.name} className="absolute inset-0 z-0 rounded-[18px]" />
+      <div className="pointer-events-none relative">
+        <WidgetHead
+          title={
+            <>
+              {project.name}
+              <span className="ml-2 text-base text-foreground/30 opacity-0 transition-opacity duration-150 group-hover:opacity-100">→</span>
+            </>
+          }
+          right={
+            <>
+              <span className={project.status === "wip" ? "text-accent/85" : "text-foreground/40"}>{project.status === "wip" ? "in progress" : "live"}</span>
+              {project.githubUrl && (
+                <a
+                  href={project.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pointer-events-auto relative z-10 text-foreground/50 transition-colors hover:text-foreground/90"
+                >
+                  ↗ github
+                </a>
+              )}
+            </>
+          }
+        />
+        <p className="font-sans text-sm leading-relaxed text-foreground/65">{project.description}</p>
+        <SubWidgets items={project.highlights.slice(0, 3)} cols={3} />
+        <TagRow tags={project.tags} />
       </div>
-      <p className="relative pointer-events-none font-sans text-sm text-foreground/60 leading-relaxed pl-3 border-l border-white/10">
-        {project.description}
-      </p>
-    </div>
+    </Widget>
   );
 }
