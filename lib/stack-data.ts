@@ -17,6 +17,8 @@ export interface ExperienceEntry {
   href?: string;
   /** a few concrete results (inline markdown links allowed) */
   highlights?: string[];
+  /** a small mark beside the role (public/icons) */
+  icon?: string;
 }
 
 // Copy lives in content.json (code.stack / code.experience).

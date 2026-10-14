@@ -5,7 +5,7 @@
 // that was a hydration bug); the GitHub link sits above the overlay.
 import Link from "next/link";
 import type { Project } from "@/lib/projects";
-import { StatWidgets, SubWidgets, TagRow, Widget, WidgetHead } from "@/components/widgets";
+import { BrandIcon, StatWidgets, SubWidgets, TagRow, Widget, WidgetHead } from "@/components/widgets";
 
 export default function ProjectCard({ project }: { project: Project }) {
   return (
@@ -13,6 +13,7 @@ export default function ProjectCard({ project }: { project: Project }) {
       <Link href={`/projects/${project.slug}`} aria-label={project.name} className="absolute inset-0 z-0 rounded-[18px]" />
       <div className="pointer-events-none relative">
         <WidgetHead
+          icon={<BrandIcon src={project.icon} size={project.id === "prism" ? 26 : 20} round={project.id === "prism"} />}
           title={
             <>
               {project.name}

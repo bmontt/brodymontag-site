@@ -11,11 +11,14 @@ export function Widget({ children, className = "", link = false }: { children: R
 }
 
 /** a widget's title row: a name, then anything aligned to the right */
-export function WidgetHead({ title, right, meta }: { title: ReactNode; right?: ReactNode; meta?: ReactNode }) {
+export function WidgetHead({ title, right, meta, icon }: { title: ReactNode; right?: ReactNode; meta?: ReactNode; icon?: ReactNode }) {
   return (
     <div className="mb-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1">
-        <h4 className="font-sans text-xl font-medium leading-tight tracking-[-0.02em] text-foreground md:text-2xl">{title}</h4>
+        <h4 className="flex items-center gap-2.5 font-sans text-xl font-medium leading-tight tracking-[-0.02em] text-foreground md:text-2xl">
+          {icon}
+          <span>{title}</span>
+        </h4>
         {right && <div className="flex flex-wrap items-center gap-4 font-mono text-xs text-foreground/45">{right}</div>}
       </div>
       {meta && <p className="mt-1.5 font-mono text-xs text-foreground/45">{meta}</p>}
@@ -72,5 +75,22 @@ export function StatWidgets({ stats, cols = 3 }: { stats: { label: string; value
         </li>
       ))}
     </ul>
+  );
+}
+
+/** a small brand or project mark beside a title: decorative (the title names it),
+ *  greyscale until its card or itself is hovered (globals.css .brand-icon) */
+export function BrandIcon({ src, size = 20, round = false }: { src?: string; size?: number; round?: boolean }) {
+  if (!src) return null;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      aria-hidden="true"
+      loading="lazy"
+      className={`brand-icon inline-block shrink-0 align-[-0.15em] ${round ? "rounded-md" : ""}`}
+      style={{ height: size, width: src.includes("fiserv") ? "auto" : size, objectFit: "contain" }}
+    />
   );
 }

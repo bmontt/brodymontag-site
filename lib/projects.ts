@@ -15,6 +15,8 @@ export interface Project {
   highlights: string[];
   /** live figures (a dated snapshot): shown on the card and the detail page */
   stats?: { label: string; value: string; note?: string }[];
+  /** a small mark beside the name (public/icons) */
+  icon?: string;
   statsAsOf?: string;
 }
 

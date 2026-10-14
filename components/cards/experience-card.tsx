@@ -2,12 +2,13 @@
 // A role as a widget: role, org (linked) and period, the one-line description,
 // highlights as floating sub-widgets, tags along the foot.
 import type { ExperienceEntry } from "@/lib/stack-data";
-import { SubWidgets, TagRow, Widget, WidgetHead } from "@/components/widgets";
+import { BrandIcon, SubWidgets, TagRow, Widget, WidgetHead } from "@/components/widgets";
 
 export default function ExperienceCard({ entry }: { entry: ExperienceEntry }) {
   return (
-    <Widget>
+    <Widget className="group">
       <WidgetHead
+        icon={<BrandIcon src={entry.icon} size={entry.icon?.includes("fiserv") ? 14 : 20} />}
         title={entry.role}
         right={<span>{entry.period}</span>}
         meta={

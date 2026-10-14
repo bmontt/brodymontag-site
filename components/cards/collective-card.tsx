@@ -1,8 +1,9 @@
+import { BrandIcon } from "@/components/widgets";
 // ── CollectiveCard — server card lifted from app/page.tsx (music collective tab) ──
 import { content } from "@/lib/content";
 
 type Meta = { label: string; value: string; href?: string };
-type Affiliation = { label: string; value: string; href?: string; note: string };
+type Affiliation = { label: string; value: string; href?: string; note: string; icon?: string };
 
 export default function CollectiveCard() {
   const collective = content.music.collective;
@@ -11,7 +12,10 @@ export default function CollectiveCard() {
     <div className="flex flex-col gap-8">
       {/* PB&J Sounds */}
       <div>
-        <p className="font-mono text-sm text-foreground/85 mb-4">{collective.name}</p>
+        <p className="mb-4 flex items-center gap-2.5 font-mono text-sm text-foreground/85">
+          <BrandIcon src={(collective as { icon?: string }).icon} size={22} round />
+          {collective.name}
+        </p>
         <div className="flex flex-col gap-3 pl-3 border-l border-white/10">
           {(collective.meta as Meta[]).map(({ label, value, href }) => (
             <div key={label} className="grid grid-cols-[7rem_1fr] gap-x-6">
@@ -37,7 +41,10 @@ export default function CollectiveCard() {
       <div className="flex flex-col gap-6">
         {(collective.affiliations as Affiliation[]).map((aff) => (
           <div key={aff.label} className="grid grid-cols-[6.5rem_1fr] gap-x-8">
-            <span className="font-mono text-xs text-foreground/45 pt-0.5">{aff.label}</span>
+            <span className="flex items-start gap-2 pt-0.5 font-mono text-xs text-foreground/45">
+              <BrandIcon src={aff.icon} size={14} />
+              {aff.label}
+            </span>
             <div>
               {aff.href ? (
                 <a

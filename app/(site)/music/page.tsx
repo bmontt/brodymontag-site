@@ -46,10 +46,16 @@ export default function MusicPage() {
               <PromoFilm film={content.music.film} />
               {/* the artists supported: their own heading, then the logos edge to
                   edge like the film above, centered and larger */}
-              <div className="mt-14">
-                <SectionLabel>{content.music.shows.supportedLabel}</SectionLabel>
-                <FullBleed>
-                  <div data-reveal className="flex flex-wrap items-center justify-center gap-x-8 gap-y-7 px-6 [--logo-scale:0.6] md:gap-x-14 md:gap-y-10 md:px-12 md:[--logo-scale:1]">
+              <div className="mt-20">
+                <h3 className="sr-only">{content.music.shows.supportedLabel}</h3>
+                <FullBleed className="relative">
+                  {/* the word stands behind the logos, towering and faint, and
+                      rises into place as they scroll in: backing the artists,
+                      which is what "support" means here (globals.css .backing-word) */}
+                  <span aria-hidden="true" className="backing-word">
+                    {content.music.shows.supportedLabel}
+                  </span>
+                  <div data-reveal className="relative flex flex-wrap items-center justify-center gap-x-8 gap-y-7 px-6 py-[clamp(1.5rem,5vw,4rem)] [--logo-scale:0.6] md:gap-x-14 md:gap-y-10 md:px-12 md:[--logo-scale:1]">
                     {(content.music.shows.supportedArtists as SupportedArtist[]).map((a) =>
                       a.logo && a.w && a.h ? (
                         <Image

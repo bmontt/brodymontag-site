@@ -810,10 +810,12 @@
         {
           "label": "club glow",
           "value": "dj · glow rooms: soundcheck, echostage",
-          "note": "since 2024"
+          "note": "since 2024",
+          "icon": "/icons/glow.webp"
         }
       ],
-      "scene": "dnb in the dmv · no djs left behind · delusionville afters · mirari presents"
+      "scene": "dnb in the dmv · no djs left behind · delusionville afters · mirari presents",
+      "icon": "/icons/pbj.webp"
     }
   },
   "code": {
@@ -840,7 +842,8 @@
           "1.9 ms round-trip audio, balanced XLR, 24-bit/192 kHz",
           "Per-stem encoders, or DJM-V10 FX knobs over MIDI",
           "About $565 in parts: Raspberry Pi 5 with a PREEMPT_RT kernel"
-        ]
+        ],
+        "icon": "/icons/prism.webp"
       },
       {
         "id": "venture",
@@ -864,7 +867,8 @@
           "Paper trading alongside real accounts, to prove changes first",
           "Per-avenue health checks and a degraded mode",
           "Terminal UI and a setup wizard for every connection"
-        ]
+        ],
+        "icon": "/icons/coinbase.svg"
       },
       {
         "id": "superset",
@@ -889,7 +893,8 @@
           "CustomTkinter GUI with real-time library exploration",
           "Genre-specific parameter modes (house, dubstep)",
           "Optimized for Apple Silicon via MLX"
-        ]
+        ],
+        "icon": "/icons/pioneerdj.svg"
       },
       {
         "id": "realmbot",
@@ -913,7 +918,8 @@
           "Danger thresholds tuned from reliability sweeps",
           "Evals: when the model helps, when the fallback wins",
           "Private test server; no anti-detection"
-        ]
+        ],
+        "icon": "/icons/realm.webp"
       },
       {
         "id": "site",
@@ -937,7 +943,8 @@
           "Figures morph across page changes",
           "120 fps scrolling at 6× CPU slowdown",
           "Prerendered pages that re-render hourly"
-        ]
+        ],
+        "icon": "/icons/threedotjs.svg"
       },
       {
         "id": "kicker",
@@ -961,7 +968,8 @@
           "Unity 6 port with a deterministic sim",
           "Camera look-ahead, reactive crowd and audio",
           "Avatar progression designed for multiple sessions"
-        ]
+        ],
+        "icon": "/icons/unity.svg"
       },
       {
         "id": "agent_forge",
@@ -985,7 +993,8 @@
           "Blueprint evals and an observability rollup",
           "Live in the Subagent Dashboard (Next.js, SSE)",
           "Lazy skill pointers: 32% fewer tokens"
-        ]
+        ],
+        "icon": "/icons/claude.svg"
       },
       {
         "id": "peak_finding",
@@ -1009,7 +1018,8 @@
           "MNE and BIDS-compatible data format support",
           "Designed for clinical and academic research environments",
           "Accessible API — no signal processing expertise required"
-        ]
+        ],
+        "icon": "/icons/umd.webp"
       }
     ],
     "stack": [
@@ -1113,7 +1123,8 @@
           "Built a governed multi-agent delivery platform: independent AI review before a human sees the code, every agent run logged, a human approving every merge. Adopted team-wide.",
           "Built safety-gated security remediation that triaged 344 scanner findings in 13 seconds with 100% recall against manual review. Every fix ships with a regression test.",
           "Moved a multi-team platform's authorization out of the browser into fail-closed policy-as-code (OPA) on the backend."
-        ]
+        ],
+        "icon": "/icons/fiserv.svg"
       },
       {
         "id": "pirl",
@@ -1133,7 +1144,8 @@
           "Optimized a differentiable auditory processing model for open-source release.",
           "Built deep-learning pipelines for phoneme recognition and source separation.",
           "Built a multi-modal CRNN to diagnose hearing loss in low-resource environments ([senior research paper](https://docs.google.com/document/d/1YATXYDqKSsFRUAdsngWYRoW_lLQKZk4tKbO5e55yaMw/edit?usp=sharing))."
-        ]
+        ],
+        "icon": "/icons/umd.webp"
       },
       {
         "id": "galago",
@@ -1153,7 +1165,8 @@
           "Led a team-wide AI adoption initiative, with published guidance on use cases, prompting and best practices.",
           "Retrained an R-CNN algae-bloom detection model to 94% accuracy, correctly telling blooms from debris.",
           "Built a Power BI financial dashboard (Azure Functions, Power Automate, HubSpot) with automated ingestion of drone photologs, financial records and CRM data."
-        ]
+        ],
+        "icon": "/icons/bloomoptix.webp"
       },
       {
         "id": "umd",
@@ -1168,7 +1181,8 @@
           "research"
         ],
         "description": "Specialization in machine learning. Senior research in auditory signal processing at PIRL: ABR peak detection and HRTF/SOFA spatial audio (Peak_Finding_Toolbox).",
-        "href": "https://www.cs.umd.edu"
+        "href": "https://www.cs.umd.edu",
+        "icon": "/icons/umd.webp"
       },
       {
         "id": "sigma",
