@@ -19,13 +19,15 @@ import { FLAT, poseAt, resolveTrack, type Pose, type ResolvedTrack } from "@/lib
 import { HOME_TRACK } from "@/lib/director/stations";
 import { createLaserDirector } from "@/lib/director/laser";
 import { makeLaserUniforms } from "@/lib/ascii-engine/gl/laser-shader";
-import { laserFrame } from "@/lib/ascii-engine/laser-cpu";
+import { laserFrame, laserRgb } from "@/lib/ascii-engine/laser-cpu";
+import { readAnchor } from "@/lib/laser-anchors";
 
 const IDS = chapters.map((c) => c.id);
 const CELL_W = 8;
 const CELL_H = 22;
 const FRAME_MS = 33;
-const MASK = "radial-gradient(ellipse 85% 75% at 50% 40%, black 35%, transparent 88%)";
+// a gentle vignette — figures live in the gutters and rise from the floor now
+const MASK = "radial-gradient(ellipse 125% 115% at 50% 45%, black 58%, transparent 100%)";
 
 const h21 = (x: number, y: number) => {
   const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
@@ -47,11 +49,16 @@ export default function Laser2D({ dim = 1 }: { dim?: number }) {
     const pose: Pose = { ...FLAT };
     let track: { bounds: readonly number[] | null; t: ResolvedTrack | null } = { bounds: null, t: null };
     let W = 0, H = 0, cols = 0, rows = 0, family = "monospace";
-    const hues = new Map<number, string>();
-    const hueStyle = (h: number) => {
-      const k = Math.round(h * 64);
-      let s = hues.get(k);
-      if (!s) hues.set(k, (s = `hsl(${(k / 64) * 360} 95% 58%)`));
+    // palette coordinate × brightness → css color (quantized, cached per frame mood)
+    const styles = new Map<number, string>();
+    let brightness = 1;
+    const palStyle = (v: number) => {
+      const k = Math.round(v * 128) * 8 + Math.round(brightness * 6);
+      let s = styles.get(k);
+      if (!s) {
+        const [r, g, b] = laserRgb(Math.round(v * 128) / 128).map((c) => Math.min(255, Math.round(c * brightness)));
+        styles.set(k, (s = `rgb(${r} ${g} ${b})`));
+      }
       return s;
     };
 
@@ -93,11 +100,13 @@ export default function Laser2D({ dim = 1 }: { dim?: number }) {
       const delta = Math.min(0.1, last ? (now - last) / 1000 : 0);
       last = now;
       u.uLaserMix.value = dimRef.current;
-      const glitch = direct(u, {
+      const lo = direct(u, {
         g, ids: IDS, bounds, timelineProgress: reduced ? -1 : st.timelineProgress,
         merge: pose.merge, ring: pose.ring, velocity: reduced ? 0 : st.velocity,
-        time, delta: reduced ? 0 : delta, viewW: W, viewH: H,
+        time, delta: reduced ? 0 : delta, viewW: W, viewH: H, anchor: readAnchor,
       });
+      const glitch = lo.glitch;
+      brightness = Math.round(lo.brightness * 6) / 6;
       if (reduced) u.uJitter.value.set(0, 0);
 
       ctx.clearRect(0, 0, W, H);
@@ -116,7 +125,7 @@ export default function Laser2D({ dim = 1 }: { dim?: number }) {
       laserFrame(u, cols, rows, CELL_W, CELL_H, (col, row, c) => {
         if (row !== tearRow) { tearRow = row; shift = tear(row); }
         ctx.globalAlpha = Math.min(1, c.alpha);
-        ctx.fillStyle = hueStyle(c.hue);
+        ctx.fillStyle = palStyle(c.pal);
         ctx.fillText(c.ch, col * CELL_W + shift, row * CELL_H);
       }, calm);
       ctx.globalAlpha = 1;

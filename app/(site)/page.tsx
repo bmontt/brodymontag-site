@@ -70,8 +70,8 @@ export default function Home() {
         <HeroChapter />
 
         {/* ── code · work · CS ─────────────────────────────────────── */}
-        <Chapter {...ch("code")}>
-          <div className="mx-auto flex max-w-5xl flex-col gap-16">
+        <Chapter {...ch("code")} figure>
+          <div className="flex flex-col gap-16">
             <div>
               <SectionLabel>projects</SectionLabel>
               <div className="flex flex-col gap-2">
@@ -102,8 +102,8 @@ export default function Home() {
         </Chapter>
 
         {/* ── music ─────────────────────────────────────────────────── */}
-        <Chapter {...ch("music")}>
-          <div className="mx-auto flex max-w-5xl flex-col gap-16">
+        <Chapter {...ch("music")} figure>
+          <div className="flex flex-col gap-16">
             {upcomingShows.length > 0 && (
               <div data-reveal>
                 <SectionLabel>next up</SectionLabel>
@@ -210,7 +210,15 @@ export default function Home() {
                   ))}
                 </div>
 
-                <div className="flex max-w-xl flex-col gap-5">
+                {/* the paragraphs wrap around the union: a circular float the
+                    two signals orbit inside (lib/director/laser.ts) */}
+                <div className="max-w-2xl [&>p+p]:mt-5">
+                  <div
+                    aria-hidden="true"
+                    data-laser-anchor="union"
+                    className="float-right ml-8 mb-4 hidden aspect-square rounded-full md:block"
+                    style={{ width: "clamp(200px, 22vw, 300px)", shapeOutside: "circle(50%)", shapeMargin: "20px" }}
+                  />
                   {content.about.paragraphs.map((para, i) => (
                     <p
                       key={i}

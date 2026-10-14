@@ -16,7 +16,24 @@ export const LASER_DOT = "·";
 export interface LaserCell {
   ch: string;
   alpha: number;
-  hue: number; // 0–1
+  /** palette coordinate: [0,0.5) tech greys, [0.5,1) sound reds (laserRgb) */
+  pal: number;
+}
+
+/** palette coordinate → [r, g, b] 0–255; mirrors laserColor in ascii-shaders.ts */
+export function laserRgb(v: number): [number, number, number] {
+  const sm = (a: number, b: number, x: number) => {
+    const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  };
+  if (v < 0.5) {
+    const l = 0.16 + (1 - 0.16) * v * 2;
+    return [l * 255, l * 255, l * 255];
+  }
+  const t = (v - 0.5) * 2;
+  const k = sm(0, 0.7, t), hot = sm(0.8, 1, t);
+  const r = 0.22 + (0.95 - 0.22) * k, g = 0.06 * k, b = 0.01 + 0.04 * k;
+  return [(r + (1 - r) * hot) * 255, (g + (0.82 - g) * hot) * 255, (b + (0.78 - b) * hot) * 255];
 }
 
 const TAU = Math.PI * 2;
@@ -51,23 +68,22 @@ export function laserFrame(
   const mix = u.uLaserMix.value;
   if (mix < 0.002) return;
 
-  const scope = u.uScope.value, scopeB = u.uScopeB.value;
+  const scope = u.uScope.value, scopeB = u.uScopeB.value, scopeC = u.uScopeC.value;
   const liss = u.uLiss.value, lissB = u.uLissB.value, lissC = u.uLissC.value;
-  const fan = u.uFan.value, fanB = u.uFanB.value;
-  const gridL = u.uGridL.value, gridB = u.uGridB.value;
+  const fan = u.uFan.value, fanB = u.uFanB.value, fanC = u.uFanC.value;
+  const gridL = u.uGridL.value, gridB = u.uGridB.value, rails = u.uRails.value;
   const orbit = u.uOrbit.value, orbitB = u.uOrbitB.value, ringL = u.uRingL.value;
   const H = u.uView.value.y;
 
   // ── per-frame precompute ──────────────────────────────────────────────────
-  const scopeF = (x: number) => {
-    const k = (TAU * scope.z) / W;
-    const ph = scope.w;
-    return scope.y * (Math.sin(x * k + ph) * 0.62
+  const scopeF = (x: number, ph: number, fr: number, amp: number) => {
+    const k = (TAU * scope.z * fr) / W;
+    return scope.y * amp * (Math.sin(x * k + ph) * 0.62
       + Math.sin(x * k * 2.31 - ph * 1.37) * 0.28 * scopeB.z
       + Math.sin(x * k * 5.7 + ph * 2.1) * 0.1 * scopeB.z);
   };
   const SEG = 72;
-  const lx = new Float32Array(SEG + 1), ly = new Float32Array(SEG + 1);
+  const lx = new Float32Array(SEG + 1), ly = new Float32Array(SEG + 1), lz = new Float32Array(SEG + 1);
   const lissOn = liss.x >= 0.002 && lissB.y >= 1;
   if (lissOn) {
     const cs = Math.cos(lissB.x), sn = Math.sin(lissB.x), ct = Math.cos(lissB.w), st = Math.sin(lissB.w);
@@ -80,6 +96,7 @@ export function laserFrame(
       const pr = 2.6 / (2.6 + tz);
       lx[i] = lissC.x + qx * lissB.y * pr;
       ly[i] = lissC.y + ty * lissB.y * pr;
+      lz[i] = tz;
     }
   }
   const nFan = fan.x >= 0.002 ? Math.round(fan.y) : 0;
@@ -93,6 +110,7 @@ export function laserFrame(
   const ox = Math.cos(orbit.z) * orbit.y, oy = Math.sin(orbit.z) * 0.42 * orbit.y;
 
   const b: Best = { score: 1e9, d: 1e9, nx: 0, ny: 1, hue: 0, w: 0 };
+  const fanLo = fanB.z < 0.5 ? 0 : 0.5;
   const take = (dpx: number, nx: number, ny: number, hue: number, w: number) => {
     if (w < 0.002) return;
     const dc = dpx * Math.hypot(nx / cw, ny / ch);
@@ -100,14 +118,16 @@ export function laserFrame(
     if (score < b.score) { b.score = score; b.d = dc; b.nx = nx; b.ny = ny; b.hue = hue; b.w = w; }
   };
   // nearest point on a segment, folded into a running best (px + normal)
-  let segBest = 1e9, segNx = 0, segNy = 1;
+  let segBest = 1e9, segNx = 0, segNy = 1, segIdx = 0, segCount = 0;
   const seg = (px: number, py: number, ax: number, ay: number, bx: number, by: number) => {
+    segCount++;
     const abx = bx - ax, aby = by - ay;
     const t = Math.min(1, Math.max(0, ((px - ax) * abx + (py - ay) * aby) / Math.max(abx * abx + aby * aby, 1e-4)));
     const dx = px - (ax + abx * t), dy = py - (ay + aby * t);
     const d = Math.hypot(dx, dy);
     if (d < segBest) {
       segBest = d;
+      segIdx = segCount - 1;
       if (d > 1e-3) { segNx = dx / d; segNy = dy / d; }
       else { const L = Math.hypot(abx, aby) || 1; segNx = -aby / L; segNy = abx / L; }
     }
@@ -123,20 +143,24 @@ export function laserFrame(
       const px = (col + 0.5) * cw + jx, py = (row + 0.5) * ch + jy;
       b.score = 1e9; b.w = 0;
 
-      if (scope.x >= 0.002) {
-        const f = scopeF(px), df = (scopeF(px + 1) - scopeF(px - 1)) * 0.5;
+      const trace = (ph: number, fr: number, amp: number, pal: number, w: number) => {
+        const f = scopeF(px, ph, fr, amp), df = (scopeF(px + 1, ph, fr, amp) - scopeF(px - 1, ph, fr, amp)) * 0.5;
         const L = Math.hypot(df, 1);
-        take(Math.abs(py - (scopeB.x + f)) / L, -df / L, 1 / L, scopeB.y, scope.x);
-      }
+        take(Math.abs(py - (scopeB.x + f)) / L, -df / L, 1 / L, pal, w);
+      };
+      if (scope.x >= 0.002) trace(scope.w, 1, 1, scopeB.y, scope.x);
+      if (scopeC.x >= 0.002) trace(scope.w + scopeC.y, scopeC.z, scopeC.w, scopeB.w, scopeC.x);
       if (lissOn && Math.hypot(px - lissC.x, py - lissC.y) <= lissB.y * 1.9 + 80) {
-        segBest = 1e9;
+        segBest = 1e9; segCount = 0;
         for (let i = 0; i < SEG; i++) seg(px, py, lx[i], ly[i], lx[i + 1], ly[i + 1]);
-        take(segBest, segNx, segNy, lissB.z, liss.x);
+        // far strands sink toward black within the knot's scale
+        take(segBest, segNx, segNy, lissB.z * (1 - 0.6 * (lz[segIdx] + 1) * 0.5), liss.x);
       }
       if (nFan > 0) {
-        segBest = 1e9;
+        segBest = 1e9; segCount = 0;
         for (let i = 0; i < nFan; i++) seg(px, py, fanB.x, fanB.y, fx[i], fy[i]);
-        take(segBest, segNx, segNy, fanB.z, fan.x);
+        const k = nFan > 1 ? segIdx / (nFan - 1) - 0.5 : 0;
+        take(segBest, segNx, segNy, Math.min(fanLo + 0.499, Math.max(fanLo, fanB.z + k * fanC.x)), fan.x);
       }
       if (gridL.x >= 0.002) {
         const hy = gridL.y, below = py - hy;
@@ -152,6 +176,13 @@ export function laserFrame(
           const dl = Math.hypot(ri * gridB.y, depth), dxn = (ri * gridB.y) / dl, dyn = depth / dl;
           const rx = px - gridB.x, ry = py - hy;
           take(Math.abs(rx * dyn - ry * dxn), dyn, -dxn, gridL.w, fade);
+          if (rails.x >= 0.002) {
+            for (let k = 0; k < 2; k++) {
+              const side = k === 0 ? -1 : 1;
+              const rl = Math.hypot(side * rails.y, depth), ax = (side * rails.y) / rl, ay = depth / rl;
+              take(Math.abs(rx * ay - ry * ax), ay, -ax, k === 0 ? rails.z : rails.w, rails.x);
+            }
+          }
         }
       }
       if (orbit.x >= 0.002) {
@@ -170,12 +201,12 @@ export function laserFrame(
         let ang = Math.atan2(ty, tx);
         if (ang < 0) ang += Math.PI;
         const s = ang < 0.3927 || ang > 2.7489 ? 0 : ang < 1.1781 ? 2 : ang < 1.9635 ? 1 : 3;
-        emit(col, row, { ch: LASER_STROKES[s], alpha: core * b.w * k, hue: b.hue });
+        emit(col, row, { ch: LASER_STROKES[s], alpha: core * b.w * k, pal: b.hue });
         continue;
       }
       const t1 = Math.min(1, Math.max(0, (b.d - 0.82) / 1.58));
       const haze = (1 - t1 * t1 * (3 - 2 * t1)) * 0.38 * b.w;
-      if (haze > 0.03 && hash(col + flick, row + flick) < 0.5) emit(col, row, { ch: LASER_DOT, alpha: haze * k, hue: b.hue });
+      if (haze > 0.03 && hash(col + flick, row + flick) < 0.5) emit(col, row, { ch: LASER_DOT, alpha: haze * k, pal: b.hue });
     }
   }
 }

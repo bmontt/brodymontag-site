@@ -41,6 +41,7 @@ import WorldlineScene, { WORLDLINE_X } from "@/components/stage/scenes/worldline
 import TitlesScene from "@/components/stage/scenes/titles";
 import DustScene from "@/components/stage/scenes/dust";
 import { createLaserDirector } from "@/lib/director/laser";
+import { readAnchor } from "@/lib/laser-anchors";
 
 const TWO_PI = Math.PI * 2;
 const N_FRAMES = MathUtils.clamp(Math.round(TWO_PI / asciiConfig.dt), 180, 480);
@@ -411,10 +412,22 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
       const L = ascii.laser;
       // detail pages keep the figure where the journey left it, quieter
       L.uLaserMix.value = MathUtils.damp(L.uLaserMix.value, routeKind === "home" ? 1 : 0.45, 4, delta);
-      ascii.frame.uGlitch.value = laserDirector(L, {
+      const lo = laserDirector(L, {
         g: p, ids: CHAPTER_IDS, bounds: st.bounds, timelineProgress: st.timelineProgress,
         merge, ring, velocity: st.velocity, time: now / 1000, delta, viewW: size.width, viewH: size.height,
+        anchor: readAnchor,
+        hover: st.focus.hover,
+        // the burst plays on the way out of the journey only (the stage keeps
+        // focus.fly while parked on the detail page)
+        fly: st.focus.fly && routeKind === "home" ? { kind: st.focus.fly.kind === "show" ? "show" : "project", t: (now - st.focus.fly.start) / FLY_MS } : null,
       });
+      ascii.frame.uGlitch.value = lo.glitch;
+      ascii.frame.uLaserTone.value.set(lo.brightness, lo.hot);
+      // the merger flash follows the laser story (anchored to the about text)
+      ascii.frame.uFlash.value = routeKind === "home" ? lo.burst : 0;
+      ascii.frame.uFlashSlot.value = MERGER_SLOT;
+      // scene objects keep a monochrome glyph light under the two-scale palette
+      ascii.skin.uSat.value = 0;
     } else {
       ascii.laser.uLaserMix.value = 0;
       ascii.frame.uGlitch.value = 0;
@@ -470,10 +483,15 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
       </mesh>
       {mode === "journey" && (
         <>
-          <BuildScene shared={solidShared} />
-          <MontyScene shared={solidShared} />
-          <WorldlineScene shared={solidShared} />
-          <TitlesScene shared={solidShared} />
+          {/* the wave-field journey's objects; the laser story tells it alone */}
+          {waveBg && (
+            <>
+              <BuildScene shared={solidShared} />
+              <MontyScene shared={solidShared} />
+              <WorldlineScene shared={solidShared} />
+              <TitlesScene shared={solidShared} />
+            </>
+          )}
           <DustScene rig={rig} />
         </>
       )}

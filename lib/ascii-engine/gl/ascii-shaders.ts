@@ -112,7 +112,8 @@ void main() {
   if (outv.x < 0.5 && uLaserMix > 0.001) {
     vec2 ctr = (cell + 0.5) * uCell;
     vec3 l = laserCell(cell, ctr);
-    float a = l.y * uLaserMix * carveAt(ctr) * (1.0 - suppression(ctr));
+    // beams live beside the text now; the reading column calms them only a little
+    float a = l.y * uLaserMix * mix(1.0, carveAt(ctr), 0.4) * (1.0 - suppression(ctr));
     if (l.x > 0.5 && a > 0.004) outv = vec4(l.x, -1.0, a, l.z);
   }
   gl_FragColor = outv;
@@ -137,6 +138,7 @@ uniform float uFlashSlot;
 uniform float uTime;               // seconds
 uniform float uGradientMix;        // 1 = moving gradient light, 0 = the 2D vessel's per-cell hue cycle
 uniform float uGlitch;             // 0–1 analog glitch: row tears, RGB split, flicker (laser mode)
+uniform vec2  uLaserTone;          // laser brightness, white-hot amount — the story's emotional temperature
 
 const float STEPS = 90.0;
 
@@ -166,6 +168,14 @@ vec3 hsl2rgb(float h, float s, float l) {
   return l - a * max(min(min(k - 3.0, 9.0 - k), 1.0), -1.0);
 }
 
+// laser palette coordinate → color: [0,0.5) tech greys, [0.5,1) sound reds
+vec3 laserColor(float v) {
+  if (v < 0.5) return vec3(mix(0.16, 1.0, v * 2.0));
+  float t = (v - 0.5) * 2.0;
+  vec3 red = mix(vec3(0.22, 0.0, 0.01), vec3(0.95, 0.06, 0.05), smoothstep(0.0, 0.7, t));
+  return mix(red, vec3(1.0, 0.82, 0.78), smoothstep(0.8, 1.0, t));   // white-hot crest
+}
+
 // off = css px from the cell's top-left; slots are wider than cells
 float glyphAt(float slot, vec2 off) {
   if (off.x < 0.0 || off.x >= uSlotW || off.y < 0.0 || off.y >= uCell.y) return 0.0;
@@ -182,9 +192,9 @@ void shade(vec2 cell, vec2 off, inout vec3 col) {
     float lg = glyphAt(slot, off);
     float bloom = glyphAt(slot, off + vec2(1.0, 0.0)) + glyphAt(slot, off - vec2(1.0, 0.0))
                 + glyphAt(slot, off + vec2(0.0, 1.0)) + glyphAt(slot, off - vec2(0.0, 1.0));
-    vec3 lc = hsl2rgb(c.w * 360.0, 0.95, 0.56);
+    vec3 lc = laserColor(c.w) * uLaserTone.x;
     col += lc * (lg * c.z + bloom * 0.07 * c.z);
-    col = mix(col, vec3(1.0), lg * c.z * c.z * 0.22);               // white-hot where the beam is strongest
+    col = mix(col, laserColor(c.w < 0.5 ? 0.499 : 0.999), lg * c.z * c.z * uLaserTone.y);  // hot core
     return;
   }
   float baseAlpha = c.z;
@@ -240,18 +250,16 @@ void main() {
     gl_FragColor = vec4(field(px), 1.0);
     return;
   }
-  // analog glitch — bands of three rows tear sideways for a tick (14/s), the
-  // torn band splits into RGB; faint scanlines and a brightness flicker
+  // analog glitch — bands of three rows tear sideways for a tick (14/s) and
+  // leave a dim ghost echo (monochrome — no RGB fringes in a two-scale
+  // palette); faint scanlines and a brightness flicker
   float tick = floor(uTime * 14.0);
   float band = floor(px.y / (uCell.y * 3.0));
   float roll = h21(vec2(band, tick));
   float tear = step(1.0 - uGlitch * 0.35, roll);
   px.x += tear * (h21(vec2(roll * 91.7, tick)) - 0.5) * (14.0 + 90.0 * uGlitch);
   vec3 col = field(px);
-  if (tear > 0.0) {
-    float sp = 2.0 + 5.0 * uGlitch;
-    col = vec3(field(px + vec2(sp, 0.0)).r, col.g, field(px - vec2(sp, 0.0)).b);
-  }
+  if (tear > 0.0) col = max(col, field(px + vec2(6.0 + 14.0 * uGlitch, 0.0)) * 0.45);
   col *= 1.0 - 0.06 * step(0.5, fract(px.y * 0.5));                  // scanlines
   col *= 1.0 - 0.08 * uGlitch * h21(vec2(tick, 9.1));               // flicker
   gl_FragColor = vec4(min(col, vec3(1.0)), 1.0);

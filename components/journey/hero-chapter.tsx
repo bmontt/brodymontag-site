@@ -60,6 +60,9 @@ export default function HeroChapter() {
           />
         </h1>
 
+        {/* the rule under the name is where the two signals first appear —
+            the laser layer draws its traces along this line */}
+        <div data-laser-anchor="hero">
         <motion.div
           className="my-6 font-mono text-xs text-foreground/20 overflow-hidden whitespace-nowrap"
           initial={{ width: "0%" }}
@@ -68,6 +71,7 @@ export default function HeroChapter() {
         >
           {"─".repeat(300)}
         </motion.div>
+        </div>
 
         <motion.div
           className="flex items-center gap-2"
@@ -79,8 +83,8 @@ export default function HeroChapter() {
             className="font-mono text-sm"
             animate={
               typingComplete
-                ? { color: ["#d4a500", "#c9a800", "#d4a500"] }
-                : { color: "#d4a50099" }
+                ? { color: ["#e2302a", "#b3201c", "#e2302a"] }  // the sound signal's red
+                : { color: "#e2302a99" }
             }
             transition={{ duration: 2.5, repeat: typingComplete ? Infinity : 0, ease: "easeInOut" }}
           >

@@ -29,7 +29,7 @@ export default function ShowPage() {
   const images = event.media.filter((m) => m.type === "image");
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="theme-sound relative min-h-screen bg-background">
       {/* background: the persistent stage in app/(site)/layout.tsx */}
       <Nav />
 

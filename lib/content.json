@@ -23,35 +23,35 @@
         "icon": "soundcloud",
         "label": "soundcloud",
         "href": "https://soundcloud.com/brodymontag",
-        "glowRgb": "255, 85, 0"
+        "glowRgb": "226, 48, 40"
       },
       {
         "id": "gh",
         "icon": "github",
         "label": "github",
         "href": "https://github.com/bmontt",
-        "glowRgb": "210, 210, 210"
+        "glowRgb": "232, 232, 232"
       },
       {
         "id": "sp",
         "icon": "spotify",
         "label": "spotify",
         "href": "https://open.spotify.com/artist/3uIzwP6Ab6TgP61naHtDMO",
-        "glowRgb": "29, 185, 84"
+        "glowRgb": "226, 48, 40"
       },
       {
         "id": "ig",
         "icon": "instagram",
         "label": "instagram",
         "href": "https://www.instagram.com/brodymontag",
-        "glowRgb": "193, 53, 132"
+        "glowRgb": "190, 36, 36"
       },
       {
         "id": "li",
         "icon": "linkedin",
         "label": "linkedin",
         "href": "https://www.linkedin.com/in/brody-montag",
-        "glowRgb": "0, 119, 181"
+        "glowRgb": "200, 200, 200"
       }
     ]
   },
@@ -129,7 +129,7 @@
         "handle": "bmontt",
         "href": "https://github.com/bmontt",
         "icon": "github",
-        "glowRgb": "210, 210, 210",
+        "glowRgb": "232, 232, 232",
         "details": [
           {
             "label": "superset",
@@ -158,7 +158,7 @@
         "handle": "brodymontag",
         "href": "https://soundcloud.com/brodymontag",
         "icon": "soundcloud",
-        "glowRgb": "255, 85, 0",
+        "glowRgb": "226, 48, 40",
         "stat": {
           "label": "tracks",
           "value": "34"
@@ -189,7 +189,7 @@
         "handle": "MONTY US",
         "href": "https://open.spotify.com/artist/3uIzwP6Ab6TgP61naHtDMO",
         "icon": "spotify",
-        "glowRgb": "29, 185, 84",
+        "glowRgb": "226, 48, 40",
         "details": [
           {
             "label": "artist",
@@ -213,7 +213,7 @@
         "handle": "@brodymontag",
         "href": "https://www.instagram.com/brodymontag",
         "icon": "instagram",
-        "glowRgb": "193, 53, 132",
+        "glowRgb": "190, 36, 36",
         "stat": {
           "label": "followers",
           "value": "2.4k"
@@ -245,7 +245,7 @@
         "handle": "brody-montag",
         "href": "https://www.linkedin.com/in/brody-montag",
         "icon": "linkedin",
-        "glowRgb": "0, 119, 181",
+        "glowRgb": "200, 200, 200",
         "details": [
           {
             "label": "role",

@@ -146,3 +146,21 @@ test("a lost WebGL context drops back to the 2D tier, never a blank stage", asyn
   await expect.poll(() => tier(page)).toBe("2d");
   await expect(page.locator("canvas")).not.toHaveCount(0);
 });
+
+test("a WebGL context that fails to create falls back to 2D (probe passed, canvas didn't)", async ({ page }) => {
+  // the tier probe gets its context; every later WebGL context fails, the way a
+  // disabled or crashed GPU process behaves
+  await page.addInitScript(() => {
+    const orig = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...rest: unknown[]) {
+      const attrs = rest[0] as { failIfMajorPerformanceCaveat?: boolean } | undefined;
+      const probe = attrs?.failIfMajorPerformanceCaveat === true; // stage-root's tier probe
+      if ((type === "webgl2" || type === "webgl") && !probe) return null;
+      return (orig as (...a: unknown[]) => unknown).call(this, type, ...rest);
+    } as typeof orig;
+  });
+  await page.goto("/?debug");
+  await expect.poll(() => tier(page)).toBe("2d");
+  expect(await page.evaluate(() => document.documentElement.dataset.stageReason)).toBe("context-failed");
+  await expect(page.locator("h1")).toBeVisible();
+});

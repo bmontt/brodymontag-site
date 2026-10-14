@@ -2,7 +2,8 @@
 // Server component — no client hooks needed. Renders the structural frame for
 // each scrollytelling chapter: a tall section that the controller attaches
 // ScrollTriggers to, and a flowing z-20 reading layer that opens with the
-// chapter's oversized heading.
+// chapter's oversized heading. `figure` splits the reading layer into text +
+// a gutter the chapter's laser figure lives in (lib/laser-anchors.ts).
 //
 // data-chapter: selector the controller uses to find all chapter sections.
 // id="${id}-heading": focused by TimelineNav click (tabIndex={-1} makes it
@@ -14,6 +15,8 @@ interface ChapterProps {
   heading: string;
   yearLabel: string;
   heightVh: number;
+  /** reserve a right-hand gutter for the chapter's laser figure (desktop) */
+  figure?: boolean;
   children?: React.ReactNode;
 }
 
@@ -26,6 +29,7 @@ export default function Chapter({
   heading,
   yearLabel,
   heightVh,
+  figure = false,
   children,
 }: ChapterProps) {
   // backdrop numeral — the era's year, drifting behind the vessel (z-0)
@@ -79,7 +83,18 @@ export default function Chapter({
             {displayLine(heading)}
           </span>
         </h2>
-        {children}
+        {figure ? (
+          // text on the left, the figure's gutter on the right: the laser
+          // director holds the chapter's figure inside [data-laser-anchor]
+          // (sticky within it), so beams and text share the page instead of
+          // stacking. Phones get one column; the figure floats free there.
+          <div className="mx-auto max-w-6xl md:grid md:grid-cols-[minmax(0,1fr)_clamp(220px,30vw,440px)] md:gap-x-12">
+            <div className="min-w-0">{children}</div>
+            <div aria-hidden="true" data-laser-anchor={id} className="hidden md:block" />
+          </div>
+        ) : (
+          children
+        )}
       </div>
     </section>
   );

@@ -132,3 +132,45 @@ as the signature moment, and fold **#4–#6** into Phase 6 hardening.
   chapter's `h2`.
 - **Artist logos:** each logo is cropped to its content and sized to equal visual
   area. noizu and rivo show as wordmarks until logo files exist.
+
+## Round 2: story, palette, layout (2026-10-14)
+
+- **The background tells a story with two signals.**
+  - **Tech** is the white-grey-black scale; **sound** is the red scale (black,
+    then deep red, then white-hot).
+  - **Hero (apart):** a grey trace and a deep-red trace run along the rule
+    under the name, out of phase.
+  - **Code (clarity):** a white knot, shaded by depth, sits beside the
+    projects, with red murmuring along the floor.
+  - **Music (heat):** red fans pulse at 124 bpm beside the gigs, and the glitch
+    hits on the kick.
+  - **Timeline (memory):** a grey floor carries a white rail and a red rail
+    that converge over the years.
+  - **Epilogue (union):** white and red rings orbit inside the circle the about
+    text wraps around. They fuse white-hot (a one-shot flash), ring down
+    through cooling reds, and resolve into one calm trace.
+  - Mood (brightness, white-hot core, glitch) is set per chapter in
+    `lib/director/laser.ts`.
+- **Figures live in the layout.** `figure` chapters (code, music) split into a
+  text column and a figure gutter, `[data-laser-anchor]`, where the figure is
+  sticky inside its gutter.
+  - The about paragraphs wrap a `shape-outside: circle()` float.
+  - The hero traces ride the name rule.
+  - Reveals in figure chapters slide out of the figure's side and resolve from
+    a blur.
+  - Phones keep one column, and the figures float free there.
+- **Interaction:** hovering a project heats and spins the knot, and hovering a
+  show drives the fans harder. A click bursts the figure, with a glitch surge,
+  while the page changes.
+- **In laser mode the old 3D objects are gone** (monoliths, photo panels,
+  year gates, glyph titles). `?bg=wave` still restores them along with the
+  wave field.
+- **Site palette:** the accent and the old iridescent classes are now
+  monochrome "sheen" (a lightness breath) via `--sheen-*` and `--accent`.
+  `#music` and `.theme-sound` (show pages) switch to the red scale. Platform
+  glows follow the same rule: tech platforms white, music platforms red.
+- **Robustness:**
+  - A WebGL context that fails to create, even though the probe passed, now
+    falls back to the 2D laser (`StageBoundary`). This had crashed the stage
+    in a real browser.
+  - The 2D tier draws the same story on the CPU (`laser-cpu.ts`).

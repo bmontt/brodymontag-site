@@ -4,13 +4,18 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.14 0.006 235);   /* dark steel */
+  /* two scales (docs/design-inspiration.md): tech is white-grey-black, sound
+     is red. The default accent is tech-white; #music and .theme-sound swap
+     in the red one. --sheen-* drive the shimmer classes below. */
+  --background: oklch(0.13 0 0);
   --foreground: oklch(0.90 0 0);
-  --accent: oklch(0.85 0.08 100);
+  --accent: oklch(0.93 0 0);
+  --sheen-c: 0;
+  --sheen-h: 27;
   --accent-foreground: oklch(0.10 0 0);
   --card: oklch(0.18 0.004 235);
   --card-foreground: oklch(0.90 0 0);
-  --primary: oklch(0.85 0.08 100);
+  --primary: oklch(0.93 0 0);
   --primary-foreground: oklch(0.10 0 0);
   --secondary: oklch(0.21 0.002 235);
   --secondary-foreground: oklch(0.90 0 0);
@@ -18,8 +23,15 @@
   --muted-foreground: oklch(0.60 0 0);
   --border: oklch(0.24 0 0);
   --input: oklch(0.18 0.004 235);
-  --ring: oklch(0.85 0.08 100);
+  --ring: oklch(0.93 0 0);
   --radius: 0.25rem;
+}
+
+/* the sound scale: the music chapter and show pages speak in red */
+#music,
+.theme-sound {
+  --accent: oklch(0.63 0.21 27);
+  --sheen-c: 0.15;
 }
 
 @theme inline {
@@ -63,10 +75,10 @@
   animation: blink 1.1s step-end infinite;
 }
 
-/* Subtitle pulse — cycles muted → accent yellow → muted */
+/* Subtitle pulse — cycles muted → white → muted (the tech scale) */
 @keyframes subtitle-pulse {
   0%, 100% { color: oklch(0.58 0 0); }
-  50%       { color: oklch(0.85 0.08 100); }
+  50%       { color: oklch(0.94 0 0); }
 }
 .subtitle-pulse {
   animation: subtitle-pulse 3s ease-in-out infinite;
@@ -109,71 +121,50 @@ html, body { overflow-x: clip; }
   height: 100%;
 }
 
-/* Iridescent pill — border + soft shadow cycle through the same pastel
-   band as the background's stochastic light, slow ambient circling */
-@property --pill-hue {
-  syntax: "<angle>";
-  initial-value: 0deg;
+/* Sheen — the old iridescent classes, now monochrome: a slow lightness
+   breath on the tech scale (grey ↔ white), or on the red scale inside #music /
+   .theme-sound (--sheen-c). Class names kept so markup didn't churn. */
+@property --sheen-l {
+  syntax: "<number>";
+  initial-value: 0.8;
   inherits: false;
 }
+@keyframes sheen {
+  0%, 100% { --sheen-l: 0.7; }
+  50%      { --sheen-l: 0.9; }
+}
 .pill-iridescent {
-  border-color: oklch(0.78 0.055 var(--pill-hue) / 0.32) !important;
+  border-color: oklch(var(--sheen-l) var(--sheen-c) var(--sheen-h) / 0.3) !important;
   box-shadow:
-    0 0 9px -2px oklch(0.80 0.06 var(--pill-hue) / 0.22),
-    inset 0 0 6px -3px oklch(0.80 0.06 var(--pill-hue) / 0.14);
-  animation: pill-hue-cycle 4.2s linear infinite;
+    0 0 9px -2px oklch(var(--sheen-l) var(--sheen-c) var(--sheen-h) / 0.18),
+    inset 0 0 6px -3px oklch(var(--sheen-l) var(--sheen-c) var(--sheen-h) / 0.12);
+  animation: sheen 4.2s ease-in-out infinite;
 }
-@keyframes pill-hue-cycle {
-  to { --pill-hue: 360deg; }
-}
-
-/* Iridescent text outline — a fine pastel stroke that circles the same hue
-   band as the pills; fill paints on top (paint-order) so only the rim shows.
-   Used on the hero name and section headings to make the theme the through-line. */
 .text-iridescent-stroke {
   -webkit-text-stroke-width: 1.1px;
-  -webkit-text-stroke-color: oklch(0.83 0.075 var(--pill-hue) / 0.5);
+  -webkit-text-stroke-color: oklch(var(--sheen-l) var(--sheen-c) var(--sheen-h) / 0.4);
   paint-order: stroke fill;
-  animation: pill-hue-cycle 4.2s linear infinite;
+  animation: sheen 4.2s ease-in-out infinite;
 }
-
-/* Iridescent text fill — the live effect, as a slow hue drift through the
-   pastel band. Reserved for labels, titles, and sub-info. Much quieter than
-   the retired sweep: small mono text reads it as a faint sheen, not motion.
-   `-dim` is the dimmed variant for low-emphasis labels / sub-info. */
 .text-iridescent {
-  color: oklch(0.80 0.052 var(--pill-hue));
-  animation: pill-hue-cycle 4.2s linear infinite;
+  color: oklch(var(--sheen-l) var(--sheen-c) var(--sheen-h));
+  animation: sheen 4.2s ease-in-out infinite;
 }
 .text-iridescent-dim {
-  color: oklch(0.74 0.045 var(--pill-hue) / 0.6);
-  animation: pill-hue-cycle 4.2s linear infinite;
+  color: oklch(calc(var(--sheen-l) - 0.08) var(--sheen-c) var(--sheen-h) / 0.6);
+  animation: sheen 4.2s ease-in-out infinite;
 }
-
-/* Iridescent line — hue-drifting fill for thin rules (the active-tab underline). */
 .bg-iridescent {
-  background-color: oklch(0.78 0.06 var(--pill-hue) / 0.7);
-  animation: pill-hue-cycle 4.2s linear infinite;
+  background-color: oklch(var(--sheen-l) var(--sheen-c) var(--sheen-h) / 0.7);
+  animation: sheen 4.2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pill-iridescent {
-    animation: none;
-  }
-  .text-iridescent-stroke {
-    animation: none;
-  }
-  /* Freeze the drift on a fixed pastel rather than the hue-0 initial (pink). */
-  .text-iridescent {
-    animation: none;
-    color: oklch(0.80 0.050 95);
-  }
-  .text-iridescent-dim {
-    animation: none;
-    color: oklch(0.74 0.045 95 / 0.6);
-  }
+  .pill-iridescent,
+  .text-iridescent-stroke,
+  .text-iridescent,
+  .text-iridescent-dim,
   .bg-iridescent {
-    animation: none;
-    background-color: oklch(0.78 0.06 95 / 0.7);
+    animation: none; /* --sheen-l rests at its initial 0.8 */
   }
 }

@@ -206,9 +206,26 @@ export default function JourneyController() {
           );
         });
 
-        // 3. content — alternating directional slide + rise + micro-rotation
+        // 3. content — in a chapter with a laser figure, blocks are emitted by
+        //    the figure: they slide out from its side and resolve from a blur,
+        //    each as it scrolls in (the figure's gutter is on the right).
+        //    Elsewhere: alternating directional slide + rise + micro-rotation.
         const reveals = gsap.utils.toArray<HTMLElement>(section.querySelectorAll("[data-reveal]"));
-        if (reveals.length > 0) {
+        const hasFigure = !!section.querySelector("[data-laser-anchor]");
+        if (reveals.length > 0 && hasFigure) {
+          reveals.forEach((el) => {
+            const t = gsap.from(el, {
+              autoAlpha: 0,
+              x: 48,
+              filter: "blur(6px)",
+              duration: 0.8,
+              ease: "power3.out",
+              clearProps: "filter",
+              scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none none" },
+            });
+            cleanup.push(() => t.scrollTrigger?.kill());
+          });
+        } else if (reveals.length > 0) {
           entrance.from(
             reveals,
             {

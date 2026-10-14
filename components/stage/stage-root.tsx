@@ -9,7 +9,8 @@
 // (Laser2D), dimmer on detail pages. When the device qualifies for the 3D tier, the stage
 // chunk loads lazily and crossfades in on its first real frame; the 2D canvas
 // then unmounts so its rAF loop stops. A lost WebGL context drops straight back
-// to 2D — never a blank background.
+// to 2D — never a blank background — and so does a context that fails to
+// create at all (StageBoundary).
 //
 // Tier decision (first match wins):
 //   ?tier=2d|3d override → reduced motion → Save-Data → low memory/cores →
@@ -21,7 +22,7 @@
 // object; clicking a project/show link on the journey flies the camera to that
 // object (FLY_MS) before navigating — the stage then stays parked beside it.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import Laser2D from "@/components/stage/laser-2d";
@@ -31,8 +32,30 @@ import { FLY_MS, panelIndexBySlug, pillarIndexBySlug } from "@/lib/director/layo
 const StageCanvas = dynamic(() => import("@/components/stage/stage-canvas"), { ssr: false });
 
 type Tier = "2d" | "3d";
+type LostReason = "context-lost" | "slow" | "context-failed";
 
-const MASK = "radial-gradient(ellipse 85% 75% at 50% 40%, black 35%, transparent 88%)";
+/**
+ * The capability probe can pass while the real context still fails (GPU
+ * process disabled or crashed, context limit reached) — three.js then throws
+ * during <Canvas> creation. Catch it and hand back to the 2D tier instead of
+ * leaving a crashed stage.
+ */
+class StageBoundary extends Component<{ onError: () => void; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error: unknown) {
+    console.warn("[stage] 3D stage failed, falling back to 2D:", error);
+    this.props.onError();
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+// a gentle vignette — figures live in the gutters and rise from the floor now
+const MASK = "radial-gradient(ellipse 125% 115% at 50% 45%, black 58%, transparent 100%)";
 const CROSSFADE_MS = 800;
 const CELL = { w: 8, h: 22 };
 
@@ -146,7 +169,7 @@ export default function StageRoot() {
   }, [tier, stageReady, isHome, router]);
 
   const onFirstFrame = useCallback(() => setStageReady(true), []);
-  const onLost = useCallback((why: "context-lost" | "slow") => {
+  const onLost = useCallback((why: LostReason) => {
     setTier("2d");
     setReason(why);
     setStageReady(false);
@@ -171,7 +194,9 @@ export default function StageRoot() {
             WebkitMaskImage: MASK,
           }}
         >
-          <StageCanvas cell={CELL} mode="journey" onFirstFrame={onFirstFrame} onLost={onLost} />
+          <StageBoundary onError={() => onLost("context-failed")}>
+            <StageCanvas cell={CELL} mode="journey" onFirstFrame={onFirstFrame} onLost={onLost} />
+          </StageBoundary>
         </div>
       )}
     </>
