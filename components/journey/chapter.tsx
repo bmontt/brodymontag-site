@@ -10,7 +10,7 @@
 //   programmatically focusable without adding it to the tab order).
 // heightVh: expressed as `dvh` so iOS viewport shrink doesn't create dead scroll.
 
-import { ViewTransition } from "react";
+import { Morph } from "@/components/morph";
 
 /** a section page's opening screen (the chapter starts with it) */
 export interface Opener {
@@ -90,14 +90,14 @@ export default function Chapter({
             <p className="mb-6 font-mono text-xs text-foreground/40">
               {opener.index} <span className="text-foreground/20">/</span> {opener.title}
             </p>
-            <ViewTransition name={`title-${id}`} share="morph" default="none">
+            <Morph name={`title-${id}`}>
               <h1
                 className={`inline-block font-sans font-medium leading-[0.88] tracking-[-0.05em] ${opener.tone}`}
                 style={{ fontSize: "clamp(3.5rem, 13vw, 12rem)" }}
               >
                 {opener.title}
               </h1>
-            </ViewTransition>
+            </Morph>
             <h2
               id={`${id}-heading`}
               tabIndex={-1}

@@ -1,6 +1,9 @@
 /* ─── ASCII engine (GL) — laser layer ───────────────────────────────────────── */
 
-import { Vector2, Vector4 } from "three";
+import { DataTexture, Vector2, Vector4, type Texture } from "three";
+
+/** max projected room segments per frame (lib/director/room.ts) */
+export const ROOM_SEGS = 32;
 
 /**
  * The journey's background as an analog laser show written in glyphs: thin
@@ -47,6 +50,17 @@ export interface LaserUniforms {
   uOrbit: { value: Vector4 };
   uOrbitB: { value: Vector4 };
   uRingL: { value: Vector4 };
+  /** the 3D room: projected segments (a.xy, b.xy px) + (palette, weight at a, weight at b, —) */
+  uSegs: { value: Vector4[] };
+  uSegsB: { value: Vector4[] };
+  uSegN: { value: number };
+  /** shader transition: origin px (xy), radius px, ragged band px · (alpha, palette, —, —) */
+  uWipe: { value: Vector4 };
+  uWipeB: { value: Vector4 };
+  /** 3D title: mask texture · center px (xy), width px, alpha · (palette, mask h/w, rotation, —) */
+  uTitleTex: { value: Texture };
+  uTitle: { value: Vector4 };
+  uTitleB: { value: Vector4 };
 }
 
 export function makeLaserUniforms(): LaserUniforms {
@@ -73,7 +87,21 @@ export function makeLaserUniforms(): LaserUniforms {
     uOrbit: { value: new Vector4() },
     uOrbitB: { value: new Vector4() },
     uRingL: { value: new Vector4() },
+    uSegs: { value: Array.from({ length: ROOM_SEGS }, () => new Vector4()) },
+    uSegsB: { value: Array.from({ length: ROOM_SEGS }, () => new Vector4()) },
+    uSegN: { value: 0 },
+    uWipe: { value: new Vector4() },
+    uWipeB: { value: new Vector4() },
+    uTitleTex: { value: blank() },
+    uTitle: { value: new Vector4() },
+    uTitleB: { value: new Vector4(0, 0.25, 0, 0) },
   };
+}
+
+function blank(): Texture {
+  const t = new DataTexture(new Uint8Array(4), 1, 1);
+  t.needsUpdate = true;
+  return t;
 }
 
 export const laserChunk = /* glsl */ `
@@ -99,6 +127,14 @@ uniform vec4  uRails;              // two lit rails to the vanishing point: weig
 uniform vec4  uOrbit;              // weight, separation px, phase rad, ring radius px
 uniform vec4  uOrbitB;             // center px (xy), hue A, hue B
 uniform vec4  uRingL;              // weight, radius px, hue, —
+uniform vec4  uSegs[${ROOM_SEGS}];    // the room: projected segments a.xy, b.xy (px)
+uniform vec4  uSegsB[${ROOM_SEGS}];   // palette, weight at a, weight at b (depth fog), —
+uniform float uSegN;
+uniform vec4  uWipe;               // transition: origin px (xy), radius px, ragged band px
+uniform vec4  uWipeB;              // alpha, palette
+uniform sampler2D uTitleTex;       // the page title as a mask (white on black)
+uniform vec4  uTitle;              // center px (xy), width px, alpha
+uniform vec4  uTitleB;             // palette, mask h/w, rotation rad
 
 struct Hit { float score; float d; vec2 n; float hue; float w; };
 
@@ -232,6 +268,59 @@ void orbitL(inout Hit h, vec2 p) {
   if (uRingL.x >= 0.002) circleL(h, p, uOrbitB.xy, uRingL.y, uRingL.z, uRingL.x);
 }
 
+// the room: segments projected from 3D on the CPU each frame (perspective,
+// parallax, depth fog in the per-end weights)
+void roomL(inout Hit h, vec2 p) {
+  int n = int(uSegN + 0.5);
+  for (int i = 0; i < ${ROOM_SEGS}; i++) {
+    if (i >= n) break;
+    vec4 sg = uSegs[i];
+    vec4 sb = uSegsB[i];
+    vec2 ab = sg.zw - sg.xy;
+    float t = clamp(dot(p - sg.xy, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
+    vec2 dv = p - (sg.xy + ab * t);
+    float d = length(dv);
+    if (d > 70.0) continue;
+    take(h, d, d > 1e-3 ? dv / d : normalize(vec2(-ab.y, ab.x) + 1e-5), sb.x, mix(sb.y, sb.z, t));
+  }
+}
+
+// shader transition: a ragged shockwave ring of strokes from the click, sparse
+// static inside it
+void wipeL(inout Hit h, vec2 p, vec2 cell) {
+  if (uWipeB.x < 0.002) return;
+  vec2 rel = p - uWipe.xy;
+  float n = hash(cell * 0.37 + 11.0);
+  float d = length(rel) + (n - 0.5) * uWipe.w;
+  float ring = abs(d - uWipe.z);
+  vec2 rd = rel / max(length(rel), 1e-3);
+  take(h, ring, rd, uWipeB.y, uWipeB.x);
+  if (d < uWipe.z - uWipe.w && hash(cell + floor(uLaserTime * 12.0)) < 0.07)
+    take(h, uCell.y * 0.95, vec2(0.0, 1.0), uWipeB.y, uWipeB.x * 0.7);
+}
+
+// 3D title: the page's word as a mask; its outline becomes strokes along the
+// edge (the mask gradient picks the direction), a sparse fill inside
+float titleMask(vec2 uv) {
+  if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return 0.0;
+  return texture2D(uTitleTex, vec2(uv.x, 1.0 - uv.y)).r;
+}
+void titleL(inout Hit h, vec2 p, vec2 cell) {
+  if (uTitle.w < 0.002 || uTitle.z < 1.0) return;
+  vec2 q = p - uTitle.xy;
+  float c = cos(uTitleB.z), s = sin(uTitleB.z);
+  q = vec2(c * q.x + s * q.y, -s * q.x + c * q.y);
+  vec2 size = vec2(uTitle.z, uTitle.z * uTitleB.y);
+  vec2 uv = q / size + 0.5;
+  if (uv.x < -0.05 || uv.x > 1.05 || uv.y < -0.05 || uv.y > 1.05) return;
+  vec2 e = uCell / size;
+  float gx = titleMask(uv + vec2(e.x, 0.0)) - titleMask(uv - vec2(e.x, 0.0));
+  float gy = titleMask(uv + vec2(0.0, e.y)) - titleMask(uv - vec2(0.0, e.y));
+  float g = length(vec2(gx, gy));
+  if (g > 0.3) take(h, 0.0, vec2(gx, gy) / g, uTitleB.x, uTitle.w * min(g, 1.0));
+  else if (titleMask(uv) > 0.5 && hash(cell + 3.1) < 0.1) take(h, uCell.y * 0.95, vec2(0.0, 1.0), uTitleB.x, uTitle.w * 0.6);
+}
+
 // → (slot, alpha, hue); slot 0 = nothing here
 vec3 laserCell(vec2 cell, vec2 ctr) {
   vec2 p = ctr + uJitter;
@@ -241,6 +330,9 @@ vec3 laserCell(vec2 cell, vec2 ctr) {
   fanL(h, p);
   gridL(h, p);
   orbitL(h, p);
+  roomL(h, p);
+  titleL(h, p, cell);
+  wipeL(h, p, cell);
   if (h.w < 0.002) return vec3(0.0);
   float core = 1.0 - smoothstep(0.38, 0.82, h.d);
   if (core > 0.05) {

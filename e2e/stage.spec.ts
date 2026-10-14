@@ -187,3 +187,16 @@ test("a WebGL context that fails to create falls back to 2D (probe passed, canva
   expect(await page.evaluate(() => document.documentElement.dataset.stageReason)).toBe("context-failed");
   await expect(page.locator("h1")).toBeVisible();
 });
+
+test("runtime feature flags: ?ff= toggles, persists, and resets", async ({ page }) => {
+  const flags = () =>
+    page.evaluate(() => (window as unknown as { __flags?: Record<string, boolean> }).__flags ?? null);
+  await page.goto("/?tier=3d&ff=-room,-titles");
+  await expect.poll(async () => (await flags())?.room).toBe(false);
+  expect((await flags())?.titles).toBe(false);
+  expect((await flags())?.wipe).toBe(true);
+  await page.goto("/software?tier=3d"); // remembered
+  await expect.poll(async () => (await flags())?.room).toBe(false);
+  await page.goto("/?tier=3d&ff=reset");
+  await expect.poll(async () => (await flags())?.room).toBe(true);
+});

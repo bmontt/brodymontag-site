@@ -5,7 +5,7 @@
 // place; the laser layer starts drawing the next page's figure here as you
 // approach ([data-laser-anchor="next-<id>"]).
 
-import { ViewTransition } from "react";
+import { Morph } from "@/components/morph";
 import Link from "next/link";
 
 export default function NextSection({
@@ -32,14 +32,14 @@ export default function NextSection({
           data-laser-anchor={`next-${id}`}
           className="group inline-block outline-none"
         >
-          <ViewTransition name={`title-${id}`} share="morph" default="none">
+          <Morph name={`title-${id}`}>
             <span
               className={`inline-block font-sans font-medium leading-[0.88] tracking-[-0.05em] transition-[letter-spacing] duration-500 group-hover:tracking-[-0.035em] ${tone}`}
               style={{ fontSize: "clamp(3rem, 11vw, 10rem)" }}
             >
               {word} <span className="inline-block transition-transform duration-500 group-hover:translate-x-3">→</span>
             </span>
-          </ViewTransition>
+          </Morph>
           <span className="mt-4 block font-mono text-xs text-foreground/40 group-hover:text-foreground/70">{caption}</span>
         </Link>
       </div>

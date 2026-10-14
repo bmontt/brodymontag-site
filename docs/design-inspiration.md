@@ -213,3 +213,34 @@ as the signature moment, and fold **#4–#6** into Phase 6 hardening.
   - Pages get a minimal site nav (`components/nav.tsx`).
   - The proxy covers the new routes.
   - The hero, timeline-nav, vessel and ascii-bg components are retired.
+
+## Round 4: flow, 3D and flags (2026-10-14)
+
+- **Page flow:**
+  - **Section openers:** each section page opens with the index, the title
+    as h1, the heading line and a "now" line.
+  - **Title morph:** the word you pick morphs into the page title (React
+    `<ViewTransition>`), and pages leave and arrive with a blur.
+  - **Next-section links:** software → music → about → start over, and the
+    next page's figure starts drawing as you approach the link.
+  - **Landing:** now lines under each choice, plus the S / M / A keys.
+- **3D:**
+  - **The laser room** (`lib/director/room.ts`): a corridor of floor and
+    ceiling rails and rungs, with four ceiling emitters sweeping beams at the
+    page's figure. It's projected from world space each frame, so it
+    parallaxes with the cursor, dollies with scroll and fades into fog. It is
+    split white and pearl on the landing.
+  - **Drag the knot** (`lib/stage-input.ts`): grab it with the mouse, fling it
+    and it coasts, and its tilt eases back.
+  - **Shader transitions:** a ragged glyph shockwave from the click, and
+    another from the new page's title as it lands.
+  - **3D titles:** the page word as laser outlines (the gradient of the mask
+    picks the strokes), huge and faint behind the opener. It flies past the
+    camera as you scroll out.
+- **Flags** (`lib/flags.ts`):
+  - **Build flags** (`openers`, `morph`, `next`, `now`): set with
+    `NEXT_PUBLIC_FLAGS`, e.g. `-morph`. They change markup, so they're fixed
+    per deploy.
+  - **Runtime flags** (`room`, `drag`, `wipe`, `titles`): also settable live
+    with `?ff=-room,titles`, remembered in localStorage until `?ff=reset`.
+    `window.__flags` shows the resolved set.

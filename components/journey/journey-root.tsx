@@ -12,7 +12,8 @@
 
 "use client";
 
-import { Profiler, ViewTransition, useEffect } from "react";
+import { Profiler, useEffect } from "react";
+import { PageTransition } from "@/components/morph";
 import JourneyController from "@/components/journey/journey-controller";
 
 interface JourneyRootProps {
@@ -34,7 +35,7 @@ export default function JourneyRoot({ children }: JourneyRootProps) {
   return (
     // the page enters/exits as a whole on navigation (globals.css: page-enter /
     // page-exit); named titles inside morph across instead
-    <ViewTransition enter="page-enter" exit="page-exit" default="none">
+    <PageTransition>
     <Profiler id="journey" onRender={onCommit}>
       <div className="relative min-h-screen bg-background">
         {/* mounts all ScrollTriggers — renders null */}
@@ -43,6 +44,6 @@ export default function JourneyRoot({ children }: JourneyRootProps) {
         {children}
       </div>
     </Profiler>
-    </ViewTransition>
+    </PageTransition>
   );
 }

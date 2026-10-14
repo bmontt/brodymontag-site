@@ -81,6 +81,8 @@ export function laserFrame(
   ch: number,
   emit: (col: number, row: number, cell: LaserCell) => void,
   calm: (x: number) => number = () => 1,
+  /** the 3D title's mask pixels (white on black, RGBA) */
+  title?: { data: Uint8ClampedArray; w: number; h: number } | null,
 ): void {
   const W = u.uView.value.x;
   const jx = u.uJitter.value.x, jy = u.uJitter.value.y;
@@ -128,6 +130,16 @@ export function laserFrame(
     fy[i] = fanB.y + Math.sin(ang) * fanB.w;
   }
   const ox = Math.cos(orbit.z) * orbit.y, oy = Math.sin(orbit.z) * 0.42 * orbit.y;
+  const nSeg = Math.round(u.uSegN.value);
+  const segs = u.uSegs.value, segsB = u.uSegsB.value;
+  const wipe = u.uWipe.value, wipeB = u.uWipeB.value;
+  const tt = u.uTitle.value, tb = u.uTitleB.value;
+  const titleOn = !!title && tt.w >= 0.002 && tt.z >= 1;
+  const tCos = Math.cos(tb.z), tSin = Math.sin(tb.z);
+  const mask = (ux: number, uy: number) => {
+    if (!title || ux < 0 || ux > 1 || uy < 0 || uy > 1) return 0;
+    return title.data[(Math.min(title.h - 1, Math.floor(uy * title.h)) * title.w + Math.min(title.w - 1, Math.floor(ux * title.w))) * 4] / 255;
+  };
 
   const b: Best = { score: 1e9, d: 1e9, nx: 0, ny: 1, hue: 0, w: 0 };
   const fanLo = fanB.z < 0.5 ? 0 : 0.5;
@@ -216,6 +228,37 @@ export function laserFrame(
         circle(px, py, orbitB.x - ox, orbitB.y - oy, orbit.w, orbitB.w, orbit.x);
       }
       if (ringL.x >= 0.002) circle(px, py, orbitB.x, orbitB.y, ringL.y, ringL.z, ringL.x);
+      // the room: projected segments (lib/director/room.ts)
+      for (let i = 0; i < nSeg; i++) {
+        const sg = segs[i], sb = segsB[i];
+        const abx = sg.z - sg.x, aby = sg.w - sg.y;
+        const t = Math.min(1, Math.max(0, ((px - sg.x) * abx + (py - sg.y) * aby) / Math.max(abx * abx + aby * aby, 1e-4)));
+        const dx = px - (sg.x + abx * t), dy = py - (sg.y + aby * t), d = Math.hypot(dx, dy);
+        if (d > 70) continue;
+        const L = Math.hypot(abx, aby) || 1;
+        take(d, d > 1e-3 ? dx / d : -aby / L, d > 1e-3 ? dy / d : abx / L, sb.x, sb.y + (sb.z - sb.y) * t);
+      }
+      // the 3D title: outline strokes from the mask gradient, sparse fill
+      if (titleOn) {
+        const qx = px - tt.x, qy = py - tt.y;
+        const rx = tCos * qx + tSin * qy, ry = -tSin * qx + tCos * qy;
+        const sw = tt.z, sh = tt.z * tb.y;
+        const ux = rx / sw + 0.5, uy = ry / sh + 0.5;
+        if (ux > -0.05 && ux < 1.05 && uy > -0.05 && uy < 1.05) {
+          const ex = cw / sw, ey = ch / sh;
+          const gx = mask(ux + ex, uy) - mask(ux - ex, uy), gy = mask(ux, uy + ey) - mask(ux, uy - ey);
+          const g = Math.hypot(gx, gy);
+          if (g > 0.3) take(0, gx / g, gy / g, tb.x, tt.w * Math.min(g, 1));
+          else if (mask(ux, uy) > 0.5 && hash(col + 3.1, row + 3.1) < 0.1) take(ch * 0.95, 0, 1, tb.x, tt.w * 0.6);
+        }
+      }
+      // the transition wave
+      if (wipeB.x >= 0.002) {
+        const rx = px - wipe.x, ry = py - wipe.y, rl = Math.hypot(rx, ry) || 1e-3;
+        const d = rl + (hash(col * 0.37 + 11, row * 0.37 + 11) - 0.5) * wipe.w;
+        take(Math.abs(d - wipe.z), rx / rl, ry / rl, wipeB.y, wipeB.x);
+        if (d < wipe.z - wipe.w && hash(col + flick, row - flick) < 0.07) take(ch * 0.95, 0, 1, wipeB.y, wipeB.x * 0.7);
+      }
       if (b.w < 0.002) continue;
 
       const k = calm(px) * mix;

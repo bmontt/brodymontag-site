@@ -5,7 +5,8 @@
 
 import Landing from "@/components/landing";
 import { nowLines } from "@/lib/now";
+import { flag } from "@/lib/flags";
 
 export default function Home() {
-  return <Landing now={nowLines()} />;
+  return <Landing now={flag("now") ? nowLines() : null} />;
 }

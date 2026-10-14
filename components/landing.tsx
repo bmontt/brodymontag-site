@@ -16,7 +16,8 @@ import TypedHeading from "@/components/typed-heading";
 import { ICONS } from "@/lib/platform-data";
 import { content } from "@/lib/content";
 import { glow } from "@/lib/glow";
-import { ViewTransition, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Morph, PageTransition } from "@/components/morph";
 
 const j = content.journey as Record<string, { heading: string }>;
 const caption = (id: string) => j[id].heading.split(" — ").pop()!.replace(/\.$/, "");
@@ -32,7 +33,7 @@ const OPTIONS = [
     place: "md:col-span-2 md:justify-self-center md:text-center", size: "clamp(2.6rem, 7.5vw, 6.75rem)" },
 ] as const;
 
-export default function Landing({ now }: { now: NowLines }) {
+export default function Landing({ now }: { now: NowLines | null }) {
   const reduced = useReducedMotion();
   const [hoverLink, setHoverLink] = useState<string | null>(null);
 
@@ -58,12 +59,12 @@ export default function Landing({ now }: { now: NowLines }) {
         };
 
   return (
-    <ViewTransition enter="page-enter" exit="page-exit" default="none">
+    <PageTransition>
     <main
       id="landing"
       className="relative z-20 flex min-h-dvh flex-col items-center justify-center px-6 py-24 md:px-12"
     >
-      <ViewTransition name="title-home" share="morph" default="none">
+      <Morph name="title-home">
       <h1
         className="text-iridescent-stroke text-center font-sans font-light text-foreground"
         style={{ fontSize: "clamp(2.6rem, 7vw, 6.5rem)", lineHeight: 1.05, letterSpacing: "-0.02em" }}
@@ -77,7 +78,7 @@ export default function Landing({ now }: { now: NowLines }) {
           startDelay={150}
         />
       </h1>
-      </ViewTransition>
+      </Morph>
 
       {/* the split rule — the laser layer draws the two signals here */}
       <div aria-hidden="true" data-laser-anchor="rule" className="my-8 h-8 w-full max-w-6xl md:my-12" />
@@ -91,22 +92,22 @@ export default function Landing({ now }: { now: NowLines }) {
               data-laser-anchor={`opt-${o.id}`}
               className="group inline-block outline-none"
             >
-              <ViewTransition name={`title-${o.vt}`} share="morph" default="none">
+              <Morph name={`title-${o.vt}`}>
                 <span
                   className={`inline-block font-sans font-medium leading-[0.9] tracking-[-0.045em] transition-[letter-spacing] duration-500 group-hover:tracking-[-0.03em] group-focus-visible:tracking-[-0.03em] ${o.tone}`}
                   style={{ fontSize: o.size }}
                 >
                   {o.label}
                 </span>
-              </ViewTransition>
+              </Morph>
               <span className="mt-3 block font-mono text-xs text-foreground/35 transition-colors duration-300 group-hover:text-foreground/70">
                 {o.caption}
                 <kbd className="ml-3 hidden rounded-sm border border-white/10 px-1 text-[10px] text-foreground/30 md:inline">{o.key}</kbd>
               </span>
-              <span className="mt-1.5 block font-mono text-xs text-foreground/50">
+              {now && <span className="mt-1.5 block font-mono text-xs text-foreground/50">
                 <span className={`mr-2 inline-block h-1.5 w-1.5 rounded-full align-middle ${o.id === "software" ? "bg-foreground/70" : o.id === "music" ? "bg-iridescent" : "bg-foreground/40"} now-pulse`} />
                 {now[o.id as keyof NowLines]}
-              </span>
+              </span>}
             </Link>
           </motion.div>
         ))}
@@ -137,6 +138,6 @@ export default function Landing({ now }: { now: NowLines }) {
         ))}
       </motion.div>
     </main>
-    </ViewTransition>
+    </PageTransition>
   );
 }

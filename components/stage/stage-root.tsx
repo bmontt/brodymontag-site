@@ -31,6 +31,8 @@ import Laser2D from "@/components/stage/laser-2d";
 import { journey, type StageRouteKind } from "@/lib/journey-store";
 import { panelIndexBySlug, pillarIndexBySlug } from "@/lib/director/layouts";
 import { TRANSITION_MS } from "@/lib/director/laser";
+import { installStageInput } from "@/lib/stage-input";
+import { flag } from "@/lib/flags";
 
 const StageCanvas = dynamic(() => import("@/components/stage/stage-canvas"), { ssr: false });
 
@@ -173,12 +175,21 @@ export default function StageRoot() {
       e.preventDefault();
       e.stopPropagation(); // keep the Link from navigating before the beat lands
       flying.current = true;
-      journey.setFly(r.kind, r.index);
+      // the transition's wave starts where you clicked (keyboard: the link itself)
+      const box = a.getBoundingClientRect();
+      const origin = e.detail === 0 ? { x: box.left + box.width / 2, y: box.top + box.height / 2 } : { x: e.clientX, y: e.clientY };
+      journey.setFly(r.kind, r.index, origin);
       window.setTimeout(() => router.push(url.pathname + url.search + url.hash), TRANSITION_MS);
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
   }, [tier, router]);
+
+  // pointer + grabbing the knot (flag: drag) — both tiers draw the laser layer
+  useEffect(() => {
+    if (!tier) return;
+    return installStageInput({ drag: flag("drag") && !window.matchMedia("(prefers-reduced-motion: reduce)").matches });
+  }, [tier]);
 
   const onFirstFrame = useCallback(() => setStageReady(true), []);
   const onLost = useCallback((why: LostReason) => {

@@ -36,6 +36,10 @@
 import type { LaserUniforms } from "@/lib/ascii-engine/gl/laser-shader";
 import type { AnchorRect } from "@/lib/laser-anchors";
 import type { StageRouteKind } from "@/lib/journey-store";
+import { buildRoom } from "./room";
+import { drag, knot, pointer, stepDrag } from "@/lib/stage-input";
+import { flag } from "@/lib/flags";
+import { ROOM_SEGS } from "@/lib/ascii-engine/gl/laser-shader";
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const smooth = (a: number, b: number, x: number) => {
@@ -68,11 +72,21 @@ export interface LaserInput {
   anchor: (id: string) => AnchorRect | null;
   /** hovered entry ("nav:software", "project:<id>", "show:<id>"), if any */
   hover?: string | null;
-  /** a page transition in flight: where to, and how far along (0–1) */
-  fly?: { kind: StageRouteKind; t: number } | null;
+  /** a page transition in flight: where to, how far along (0–1), where it was clicked */
+  fly?: { kind: StageRouteKind; t: number; origin?: { x: number; y: number } } | null;
+  /** cursor, −1…1 (room parallax, title tilt) */
+  pointer?: { x: number; y: number };
+  /** the knot, grabbed and spun (radians added to its own spin/tilt) */
+  drag?: { spin: number; tilt: number };
+  /** runtime feature flags (lib/flags.ts) */
+  features?: { room: boolean; wipe: boolean; titles: boolean };
 }
 
 export interface LaserOutput {
+  /** where the knot is on screen (for grabbing it) */
+  knot: { x: number; y: number; r: number; w: number };
+  /** whether a 3D title is showing (the caller supplies its mask) */
+  title: boolean;
   glitch: number; // 0–1
   burst: number; // 0–1 white flash at the merger
   brightness: number;
@@ -121,7 +135,9 @@ export function createLaserDirector() {
   let fuseAt = -1e9;
   let page: StageRouteKind | null = null;
   let pageAt = 0;
-  const out: LaserOutput = { glitch: 0, burst: 0, brightness: 1, hot: 0.2 };
+  const out: LaserOutput = { knot: { x: 0, y: 0, r: 0, w: 0 }, title: false, glitch: 0, burst: 0, brightness: 1, hot: 0.2 };
+  const segs = new Float32Array(ROOM_SEGS * 4);
+  const segsB = new Float32Array(ROOM_SEGS * 4);
 
   return function update(u: LaserUniforms, x: LaserInput): LaserOutput {
     const { time, viewW: W, viewH: H, p } = x;
@@ -298,7 +314,8 @@ export function createLaserDirector() {
     const spinUp = x.hover?.startsWith("project:") || x.hover === "nav:software" ? 1 : 0;
     lissSpin += dt * (0.3 + 0.9 * spinUp + 4 * flyKnot + Math.min(Math.abs(x.velocity) / 2500, 1.5));
     u.uLiss.value.set(c.kW * 0.95, 3, 2, time * 0.22 + p * 6);
-    u.uLissB.value.set(lissSpin, c.kR, c.kPal, c.kTilt + 0.2 * Math.sin(time * 0.2));
+    u.uLissB.value.set(lissSpin + (x.drag?.spin ?? 0), c.kR, c.kPal, c.kTilt + 0.2 * Math.sin(time * 0.2) + (x.drag?.tilt ?? 0));
+    out.knot.x = c.kX; out.knot.y = c.kY; out.knot.r = c.kR; out.knot.w = c.kW;
     u.uLissC.value.set(c.kX, c.kY);
 
     u.uFan.value.set(c.fW, Math.round(c.fCount), c.fSpread, 0.36 * Math.sin(time * 0.55 + p * 7));
@@ -315,6 +332,53 @@ export function createLaserDirector() {
     u.uGridB.value.set(W * (0.5 + 0.18 * (0.5 - tp)), W * 0.085, 1.1, 0);
     u.uRails.value.set(c.gRails, c.gGap, TECH(0.95), SOUND(0.8));
 
+    const feat = x.features ?? { room: false, wipe: false, titles: false };
+    const ptr = x.pointer ?? { x: 0, y: 0 };
+    const tone = (k: StageRouteKind, t: number) =>
+      k === "music" || k === "show" || k === "about" ? SOUND(t) : TECH(t);
+
+    // ── the 3D room: beams converge on the page's figure ───────────────
+    const focus =
+      c.kW > 0.3 ? { x: c.kX, y: c.kY }
+      : c.fW > 0.3 ? { x: c.fX, y: c.fY - H * 0.45 }
+      : c.oW > 0.3 ? { x: c.oX, y: c.oY }
+      : { x: W / 2, y: H * 0.45 };
+    const roomW = !feat.room ? 0
+      : (x.page === "home" ? 0.45 : x.page === "project" || x.page === "show" ? 0.25 : 0.4) * (1 - c.gW) * (still ? 0.8 : smooth(0, 0.8, since));
+    const nSeg = buildRoom({ page: x.page, W, H, p, time, pointer: ptr, focus, tech: TECH, sound: SOUND, weight: roomW }, segs, segsB);
+    for (let i = 0; i < nSeg; i++) {
+      u.uSegs.value[i].fromArray(segs, i * 4);
+      u.uSegsB.value[i].fromArray(segsB, i * 4);
+    }
+    u.uSegN.value = nSeg;
+
+    // ── shader transitions: a glyph shockwave out of the click, and another
+    //    out of the new page's title as it lands ───────────────────────────
+    const maxR = Math.hypot(W, H);
+    const op2 = x.anchor("opener");
+    if (feat.wipe && !still && x.fly && flyT > 0) {
+      const o = x.fly.origin ?? { x: W / 2, y: H / 2 };
+      u.uWipe.value.set(o.x, o.y, maxR * 0.75 * smooth(0, 1, flyT), H * 0.08);
+      u.uWipeB.value.set(0.9, tone(x.fly.kind, 0.85), 0, 0);
+    } else if (feat.wipe && !still && since < 0.95) {
+      const a = smooth(0, 0.95, since);
+      const o = op2 ? { x: op2.x + Math.min(op2.w * 0.25, 360), y: op2.y + op2.h * 0.45 } : { x: W / 2, y: H * 0.45 };
+      u.uWipe.value.set(o.x, o.y, maxR * (0.1 + 0.9 * (1 - (1 - a) * (1 - a))), H * 0.12);
+      u.uWipeB.value.set(0.75 * (1 - a), tone(x.page, 0.8), 0, 0);
+    } else u.uWipeB.value.x = 0;
+
+    // ── 3D titles: the page's word, huge and faint behind the opener, flying
+    //    at the camera as you scroll out of it ─────────────────────────────
+    const titled = feat.titles && !!op2 && (x.page === "software" || x.page === "music" || x.page === "about");
+    out.title = titled;
+    if (titled) {
+      const s = 1 - inOpener;
+      const fade = still ? 1 : smooth(0.25, 1.2, since);
+      u.uTitle.value.set(W * 0.5 + ptr.x * 24, H * 0.44 + ptr.y * 14 - s * H * 0.1, W * (0.92 + 3.6 * Math.pow(s, 1.6)), 0.34 * fade * (1 - smooth(0.5, 0.95, s)));
+      u.uTitleB.value.x = tone(x.page, 0.7);
+      u.uTitleB.value.z = ptr.x * 0.05 + s * 0.08;
+    } else u.uTitle.value.w = 0;
+
     // ── mood + glitch ───────────────────────────────────────────────────
     const speed = Math.min(Math.abs(x.velocity) / 3000, 1);
     const rare = hash(Math.floor(time * 4)) > 0.975 ? 0.4 : 0;
@@ -328,13 +392,17 @@ export function createLaserDirector() {
   };
 }
 
-/** The director's inputs from the journey store (shared by the 3D and 2D tiers). */
+/** The director's inputs from the journey store, pointer and flags (shared by the 3D and 2D tiers). */
 export function laserInputFrom(
   st: {
     globalProgress: number;
     timelineProgress: number;
     velocity: number;
-    focus: { route: { kind: StageRouteKind }; hover: string | null; fly: { kind: StageRouteKind; start: number } | null };
+    focus: {
+      route: { kind: StageRouteKind };
+      hover: string | null;
+      fly: { kind: StageRouteKind; start: number; origin?: { x: number; y: number } } | null;
+    };
   },
   now: number,
   delta: number,
@@ -344,6 +412,7 @@ export function laserInputFrom(
   flyMs: number,
 ): LaserInput {
   const { route, hover, fly } = st.focus;
+  stepDrag(delta);
   return {
     page: route.kind,
     p: st.globalProgress,
@@ -355,6 +424,14 @@ export function laserInputFrom(
     viewH,
     anchor,
     hover,
-    fly: fly ? { kind: fly.kind, t: (now - fly.start) / flyMs } : null,
+    fly: fly ? { kind: fly.kind, t: (now - fly.start) / flyMs, origin: fly.origin } : null,
+    pointer,
+    drag,
+    features: { room: flag("room"), wipe: flag("wipe"), titles: flag("titles") },
   };
+}
+
+/** After a frame: remember where the knot is, so the mouse can grab it. */
+export function noteKnot(o: LaserOutput) {
+  Object.assign(knot, o.knot);
 }

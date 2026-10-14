@@ -14,7 +14,8 @@
 
 import { useEffect, useRef } from "react";
 import { journey } from "@/lib/journey-store";
-import { createLaserDirector, laserInputFrom, TRANSITION_MS } from "@/lib/director/laser";
+import { createLaserDirector, laserInputFrom, noteKnot, TRANSITION_MS } from "@/lib/director/laser";
+import { TITLE_ASPECT, TITLE_TEXT, titleCanvas } from "@/lib/ascii-engine/title-mask";
 import { makeLaserUniforms } from "@/lib/ascii-engine/gl/laser-shader";
 import { laserFrame, laserRgb, shimmerHue } from "@/lib/ascii-engine/laser-cpu";
 import { readAnchor } from "@/lib/laser-anchors";
@@ -43,6 +44,7 @@ export default function Laser2D() {
     let W = 0, H = 0, cols = 0, rows = 0, family = "monospace";
     // palette coordinate × hue × brightness → css color (quantized + cached;
     // the hue only varies on the sound scale — the shimmer)
+    let title: { text: string; data: Uint8ClampedArray; w: number; h: number } = { text: "", data: new Uint8ClampedArray(4), w: 1, h: 1 };
     const styles = new Map<number, string>();
     let brightness = 1;
     const palStyle = (v: number, hue: number) => {
@@ -87,6 +89,13 @@ export default function Laser2D() {
       last = now;
       u.uLaserMix.value = 1;
       const lo = direct(u, laserInputFrom(st, reduced ? 0 : now, delta, W, H, readAnchor, TRANSITION_MS));
+      noteKnot(lo);
+      const text = lo.title ? TITLE_TEXT[st.focus.route.kind] : undefined;
+      if (text && title.text !== text) {
+        const c = titleCanvas(text);
+        title = { text, data: c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data, w: c.width, h: c.height };
+        u.uTitleB.value.y = TITLE_ASPECT;
+      }
       const glitch = lo.glitch;
       brightness = Math.round(lo.brightness * 6) / 6;
       if (reduced) u.uJitter.value.set(0, 0);
@@ -109,7 +118,7 @@ export default function Laser2D() {
         ctx.globalAlpha = Math.min(1, c.alpha);
         ctx.fillStyle = palStyle(c.pal, shimmerHue(time, col, row));
         ctx.fillText(c.ch, col * CELL_W + shift, row * CELL_H);
-      }, calm);
+      }, calm, lo.title ? title : null);
       ctx.globalAlpha = 1;
     };
 

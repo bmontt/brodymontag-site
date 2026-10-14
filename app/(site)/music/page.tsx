@@ -10,6 +10,7 @@ import { SectionLabel, SiteFooter, logoHeight, type SupportedArtist } from "@/co
 import { getChapter } from "@/lib/chapters";
 import NextSection from "@/components/journey/next-section";
 import { nowLines } from "@/lib/now";
+import { flag } from "@/lib/flags";
 import { getAllEntries, isFuture } from "@/lib/timeline";
 import { releases } from "@/lib/releases-data";
 import { content } from "@/lib/content";
@@ -34,7 +35,7 @@ export default function MusicPage() {
       <SiteNav />
       <main id="journey">
         {/* ── music ─────────────────────────────────────────────────── */}
-        <Chapter {...ch} figure opener={{ index: "02", title: "music", tone: "text-shimmer", now: nowLines().music }}>
+        <Chapter {...ch} figure opener={flag("openers") ? { index: "02", title: "music", tone: "text-shimmer", now: flag("now") ? nowLines().music : undefined } : undefined}>
           <div className="flex flex-col gap-16">
             {upcomingShows.length > 0 && (
               <div data-reveal>
@@ -123,7 +124,7 @@ export default function MusicPage() {
             </div>
           </div>
         </Chapter>
-        <NextSection href="/about" id="epilogue" word="about me" tone="text-blend" caption="background, contact, the timeline" />
+        {flag("next") && <NextSection href="/about" id="epilogue" word="about me" tone="text-blend" caption="background, contact, the timeline" />}
       </main>
       <SiteFooter />
     </JourneyRoot>

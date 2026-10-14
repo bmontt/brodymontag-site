@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
+  CanvasTexture,
   DoubleSide,
   MathUtils,
   Plane,
@@ -40,7 +41,8 @@ import MontyScene from "@/components/stage/scenes/monty";
 import WorldlineScene, { WORLDLINE_X } from "@/components/stage/scenes/worldline";
 import TitlesScene from "@/components/stage/scenes/titles";
 import DustScene from "@/components/stage/scenes/dust";
-import { createLaserDirector, laserInputFrom, TRANSITION_MS } from "@/lib/director/laser";
+import { createLaserDirector, laserInputFrom, noteKnot, TRANSITION_MS } from "@/lib/director/laser";
+import { TITLE_ASPECT, TITLE_TEXT, titleCanvas } from "@/lib/ascii-engine/title-mask";
 import { readAnchor } from "@/lib/laser-anchors";
 
 const TWO_PI = Math.PI * 2;
@@ -235,6 +237,7 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
   const rig = useRef({ ...FLAT, dist: 0, lookX: 0, lookY: 0 });
   const sheet = useRef<Mesh>(null);
   const laserDirector = useMemo(createLaserDirector, []);
+  const titleTex = useRef<{ text: string; tex: CanvasTexture | null }>({ text: "", tex: null });
   const target = useRef<Pose>({ ...FLAT });
   const track = useRef<{ bounds: number[] | null; t: ResolvedTrack | null }>({ bounds: null, t: null });
   const firstFrame = useRef(false);
@@ -418,6 +421,16 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
       const L = ascii.laser;
       L.uLaserMix.value = 1; // per-page intensity lives in the director
       const lo = laserDirector(L, laserInputFrom(st, now, delta, size.width, size.height, readAnchor, TRANSITION_MS));
+      noteKnot(lo);
+      // the 3D title's mask follows the page (rebuilt when the page changes)
+      const text = lo.title ? TITLE_TEXT[routeKind] : undefined;
+      if (text && titleTex.current.text !== text) {
+        titleTex.current.tex?.dispose();
+        const t = new CanvasTexture(titleCanvas(text));
+        titleTex.current = { text, tex: t };
+        L.uTitleTex.value = t;
+        L.uTitleB.value.y = TITLE_ASPECT;
+      }
       ascii.frame.uGlitch.value = lo.glitch;
       ascii.frame.uLaserTone.value.set(lo.brightness, lo.hot);
       // the merger flash follows the laser story (anchored to the about text)

@@ -55,7 +55,7 @@ interface JourneyState {
     /** data-stage-id of the hovered/focused entry ("project:<id>", "show:<id>") */
     hover: string | null;
     /** a page transition in flight: destination + start time (performance.now) */
-    fly: { kind: StageRouteKind; index: number; start: number } | null;
+    fly: { kind: StageRouteKind; index: number; start: number; origin?: { x: number; y: number } } | null;
   };
   /** 3D stage scene parameters — lab overrides; the home director derives its own */
   stage: {
@@ -146,8 +146,8 @@ export const journey = {
     state.focus.hover = id;
   },
 
-  setFly(kind: StageRouteKind, index: number) {
-    state.focus.fly = { kind, index, start: performance.now() };
+  setFly(kind: StageRouteKind, index: number, origin?: { x: number; y: number }) {
+    state.focus.fly = { kind, index, start: performance.now(), origin };
   },
 
   /** Per-frame 3D stage parameters. No notify. */
