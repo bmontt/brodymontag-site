@@ -92,6 +92,9 @@
 
 /* No horizontal pan — clip (not hidden) so position: sticky still works */
 html, body { overflow-x: clip; }
+/* phones inflate text by their own heuristics (iOS Safari, Android Chrome's
+   font boosting) unless told not to: keep every size exactly as authored */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* ── Horizontal timeline section ──────────────────────────────────────────────
    Vertical-stack by default (accessible / reduced-motion / no-JS): the year
@@ -218,20 +221,9 @@ html, body { overflow-x: clip; }
   animation: pill-hue-cycle 6s ease-in-out infinite, sheen 4.2s ease-in-out infinite;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .pill-iridescent,
-  .text-iridescent-stroke,
-  .text-iridescent,
-  .text-iridescent-dim,
-  .bg-iridescent,
-  .text-shimmer,
-  .text-blend,
-  .iri-cycle,
-  :is(#music, .theme-sound) :is(.pill-iridescent, .text-iridescent-stroke, .text-iridescent, .text-iridescent-dim, .bg-iridescent) {
-    animation: none; /* --sheen-l rests at 0.8; hues rest on their initial angle */
-  }
-  .text-shimmer { color: oklch(0.84 0.09 265); }
-}
+/* Reduced motion keeps the shimmer: it changes color, not position, which
+   motion-sensitive readers aren't asked to give up (the stage, entrances and
+   parallax are what stop). components/shimmer-clock.tsx steps it gently. */
 
 /* ── page transitions (React <ViewTransition> on the View Transitions API) ──
    The picked word morphs into the next page's title (.morph); the rest of the

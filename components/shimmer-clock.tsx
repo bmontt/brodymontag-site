@@ -14,7 +14,7 @@
 // colors steps by well under a percent of its range per tick, so it reads the
 // same as 120 Hz, and style work drops ~95%.
 //
-// Under reduced motion globals.css already sets these to `animation: none`.
+// Reduced motion keeps them too: they change color, not position.
 
 import { useEffect } from "react";
 

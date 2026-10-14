@@ -7,10 +7,12 @@
 // While it's on screen a veil fades in over the stage (above the laser layer at
 // z-10, below the reading layer at z-20), so the beams recede and the film holds
 // the room. The clip is fetched once the film is within a screen and a half.
-// Reduced motion gets the first frame and no playback.
+// When it can't autoplay — reduced motion, or a phone in Low Power Mode,
+// where iOS refuses autoplay — it shows its first frame and a play button:
+// playback the visitor starts is allowed in both cases.
 
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import Link from "next/link";
 
 interface Film {
@@ -35,6 +37,10 @@ export default function PromoFilm({ film }: { film: Film }) {
   const video = useRef<HTMLVideoElement>(null);
   const veil = useRef<HTMLDivElement>(null);
   const [load, setLoad] = useState(false);
+  // autoplay isn't available (reduced motion, or the browser refused): offer a button
+  const [needsTap, setNeedsTap] = useState(false);
+  // the visitor started it by hand: from then on it plays whenever on screen
+  const started = useRef(false);
   const [mounted, setMounted] = useState(false);
 
   // edge to edge: pull the film out of its column to the viewport's edges
@@ -60,10 +66,28 @@ export default function PromoFilm({ film }: { film: Film }) {
     const s = slot.current;
     const v = video.current;
     if (!s || !v) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // iOS only autoplays a video it sees as muted and inline: set both as
+    // properties and attributes (React doesn't render `muted` to the markup)
+    v.muted = true;
+    v.defaultMuted = true;
+    v.setAttribute("muted", "");
+    v.setAttribute("playsinline", "");
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) setNeedsTap(true);
+    const auto = () => !reduce || started.current;
+    let onScreen = false;
+    const tryPlay = () => {
+      if (!auto() || !onScreen || !v.paused || !v.currentSrc) return;
+      // refused (Low Power Mode, or a browser policy): fall back to the button
+      v.play().then(() => setNeedsTap(false), () => setNeedsTap(true));
+    };
+    // the clip can arrive after the film is already on screen (phones: it sits
+    // right under the opener): start it once it can play, not only on scroll
+    v.addEventListener("canplay", tryPlay);
+    v.addEventListener("loadeddata", tryPlay);
     const near = new IntersectionObserver(
       (es) => {
-        if (es.some((e) => e.isIntersecting)) {
+        if (es.some((e) => e.isIntersecting) && !reduce) {
           setLoad(true);
           near.disconnect();
         }
@@ -73,7 +97,8 @@ export default function PromoFilm({ film }: { film: Film }) {
     const vis = new IntersectionObserver(
       (es) => {
         for (const e of es) {
-          if (e.isIntersecting) v.play().catch(() => {});
+          onScreen = e.isIntersecting;
+          if (onScreen) tryPlay();
           else v.pause();
         }
       },
@@ -84,6 +109,8 @@ export default function PromoFilm({ film }: { film: Film }) {
     return () => {
       near.disconnect();
       vis.disconnect();
+      v.removeEventListener("canplay", tryPlay);
+      v.removeEventListener("loadeddata", tryPlay);
     };
   }, []);
 
@@ -117,9 +144,32 @@ export default function PromoFilm({ film }: { film: Film }) {
     };
   }, [mounted]);
 
+  // a tap is a user gesture, so play() is allowed even where autoplay isn't —
+  // but only inside the handler itself: commit the source synchronously (a
+  // later render re-applying it would restart loading and abort the play)
+  const playByHand = () => {
+    const v = video.current;
+    if (!v) return;
+    started.current = true;
+    flushSync(() => setLoad(true));
+    v.play().then(() => setNeedsTap(false), () => setNeedsTap(true));
+  };
+
   return (
     <figure ref={slot}>
       <div ref={bleed} className="relative" style={{ height: "min(56.25vw, 88svh)" }}>
+        {needsTap && (
+          <button
+            type="button"
+            onClick={playByHand}
+            aria-label={`play the film: ${film.caption}`}
+            className="absolute inset-0 z-10 flex items-center justify-center"
+          >
+            <span className="flex items-center gap-3 rounded-full border border-white/25 bg-black/40 px-5 py-2.5 font-mono text-xs text-foreground/80 backdrop-blur-sm transition-colors hover:border-white/50 hover:text-foreground">
+              <span aria-hidden="true">▶</span> play film
+            </span>
+          </button>
+        )}
         <video
           ref={video}
           className="h-full w-full object-cover"
