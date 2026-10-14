@@ -269,35 +269,57 @@
       "supportedArtists": [
         {
           "name": "ian asher",
-          "logo": "ian_asher_logo"
+          "logo": "ian_asher_logo",
+          "w": 706,
+          "h": 97
         },
         {
           "name": "biscits",
-          "logo": "biscits_logo"
+          "logo": "biscits_logo",
+          "w": 596,
+          "h": 169
         },
         {
           "name": "martin ikin",
-          "logo": "martin_ikin_logo"
+          "logo": "martin_ikin_logo",
+          "w": 800,
+          "h": 174
         },
         {
           "name": "ownboss",
-          "logo": "ownboss_logo"
+          "logo": "ownboss_logo",
+          "w": 314,
+          "h": 106
         },
         {
           "name": "veggi",
-          "logo": "veggi"
+          "logo": "veggi",
+          "w": 800,
+          "h": 268
         },
         {
           "name": "side quest",
-          "logo": "sidequest_logo"
+          "logo": "sidequest_logo",
+          "w": 800,
+          "h": 261
         },
         {
           "name": "jake shore",
-          "logo": "jake_shore"
+          "logo": "jake_shore",
+          "w": 800,
+          "h": 518
         },
         {
           "name": "madds",
-          "logo": "madds_logo"
+          "logo": "madds_logo",
+          "w": 784,
+          "h": 496
+        },
+        {
+          "name": "noizu"
+        },
+        {
+          "name": "rivo"
         }
       ],
       "events": [

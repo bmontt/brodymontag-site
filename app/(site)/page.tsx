@@ -34,6 +34,12 @@ import { renderInline } from "@/components/rich-text";
 
 const ch = (id: string) => getChapter(id)!;
 
+type SupportedArtist = { name: string; logo?: string; w?: number; h?: number };
+// logos are trimmed to their ink (no padding), then sized to equal visual area
+// rather than equal height — a 7:1 wordmark and a 1.5:1 mark read as the same
+// weight. 30px tall at 3:1; clamped so extremes stay legible.
+const logoHeight = (ratio: number) => Math.round(Math.min(46, Math.max(18, 30 * Math.sqrt(3 / ratio))));
+
 function AsciiRule({ className = "" }: { className?: string }) {
   return (
     <div
@@ -126,19 +132,31 @@ export default function Home() {
                 <span className="font-mono text-xs text-foreground/25 shrink-0">
                   {content.music.shows.supportedLabel}
                 </span>
-                {content.music.shows.supportedArtists.map(({ name, logo }) => (
-                  <Image
-                    key={logo}
-                    src={`/artistLogos/${logo}.webp`}
-                    alt={name}
-                    title={name}
-                    width={140}
-                    height={48}
-                    loading="lazy"
-                    className="h-8 w-auto object-contain opacity-50 hover:opacity-95 transition-opacity duration-200"
-                    sizes="140px"
-                  />
-                ))}
+                {(content.music.shows.supportedArtists as SupportedArtist[]).map((a) =>
+                  a.logo && a.w && a.h ? (
+                    <Image
+                      key={a.name}
+                      src={`/artistLogos/${a.logo}.webp`}
+                      alt={a.name}
+                      title={a.name}
+                      width={a.w}
+                      height={a.h}
+                      loading="lazy"
+                      className="w-auto object-contain opacity-50 transition-opacity duration-200 hover:opacity-95"
+                      style={{ height: logoHeight(a.w / a.h) }}
+                      sizes="160px"
+                    />
+                  ) : (
+                    // no logo file yet: a plain wordmark at the strip's cap height
+                    <span
+                      key={a.name}
+                      title={a.name}
+                      className="font-sans text-xl font-medium uppercase leading-none tracking-[0.08em] text-foreground/50 transition-opacity duration-200 hover:text-foreground/95"
+                    >
+                      {a.name}
+                    </span>
+                  ),
+                )}
               </div>
             </div>
 
