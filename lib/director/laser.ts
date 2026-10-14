@@ -63,6 +63,10 @@ export const TRANSITION_MS = 280;
 
 /** the transition waves stay local: their reach is a fraction of the shorter
  *  screen side, clamped, and they fade out as they reach it */
+/** phone widths: the laser layer's brightness over content, and over the road */
+const PHONE_DIM = 0.38;
+const PHONE_DIM_ROAD = 0.6;
+
 /** the timeline road's half-width at the bottom edge. A share of the width on
  *  wide screens; on tall ones (phones) it follows the road's depth instead, so
  *  the rails meet the horizon at the same angle rather than in a sharp point */
@@ -346,6 +350,16 @@ export function createLaserDirector() {
     tgt.oW = Math.min(1.2, tgt.oW + flyOrbit);
     tgt.oSep *= 1 - 0.8 * flyOrbit;
     tgt.sAmp *= 1 + 2 * flyHome;
+
+    // ── phones: no gutter, so the figures run under the text. Past each
+    //    page's opening screen the layer dims well down (the road on about
+    //    less so: it's a scene, but the year cards still sit over it); the
+    //    landing and the openers keep it at full strength. Damped like any
+    //    mood, so it fades rather than snaps.
+    if (W < 768 && x.page !== "home") {
+      const road = x.page === "about" && (x.timelineProgress >= 0 || pastTimeline);
+      tgt.bright *= lerp(road ? PHONE_DIM_ROAD : PHONE_DIM, 1, inOpener);
+    }
 
     // ── damp toward the page's targets ─────────────────────────────────
     const dt = Math.min(x.delta, 0.1);
