@@ -1,6 +1,6 @@
 // ── journey-root ──────────────────────────────────────────────────────────────
-// "use client" shell that mounts the journey's client singletons (TimelineNav,
-// JourneyController) and passes server-rendered chapter children through
+// "use client" shell that mounts the journey's client singleton
+// (JourneyController) for a section page and passes server-rendered chapter children through
 // untouched. The background stage lives in app/(site)/layout.tsx so it
 // persists across navigation. Uses the Next 16 client-shell-with-server-children slot
 // pattern: children arrive as React.ReactNode from the server; this component
@@ -13,7 +13,6 @@
 "use client";
 
 import { Profiler, useEffect } from "react";
-import TimelineNav from "@/components/journey/timeline-nav";
 import JourneyController from "@/components/journey/journey-controller";
 
 interface JourneyRootProps {
@@ -35,8 +34,6 @@ export default function JourneyRoot({ children }: JourneyRootProps) {
   return (
     <Profiler id="journey" onRender={onCommit}>
       <div className="relative min-h-screen bg-background">
-        {/* fixed right-edge timeline nav — z-50 */}
-        <TimelineNav />
         {/* mounts all ScrollTriggers — renders null */}
         <JourneyController />
         {/* server-rendered chapters flow here */}

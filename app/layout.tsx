@@ -17,7 +17,7 @@ const neueHaas = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Brody Montag",
+  title: { default: "Brody Montag", template: "%s — Brody Montag" },
   description:
     "Full Stack Developer & DJ/Producer. Fiserv ML/AI team. Monty (US). Based in NY/DC.",
   metadataBase: new URL("https://brodymontag.com"),

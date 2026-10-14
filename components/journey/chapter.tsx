@@ -6,7 +6,7 @@
 // a gutter the chapter's laser figure lives in (lib/laser-anchors.ts).
 //
 // data-chapter: selector the controller uses to find all chapter sections.
-// id="${id}-heading": focused by TimelineNav click (tabIndex={-1} makes it
+// id="${id}-heading": a focus target for in-page links (tabIndex={-1} makes it
 //   programmatically focusable without adding it to the tab order).
 // heightVh: expressed as `dvh` so iOS viewport shrink doesn't create dead scroll.
 
@@ -83,6 +83,8 @@ export default function Chapter({
             {displayLine(heading)}
           </span>
         </h2>
+        {/* the page's own signal — a trace the laser layer draws under the heading */}
+        {figure && <div aria-hidden="true" data-laser-anchor={`${id}-rule`} className="mx-auto -mt-8 mb-14 h-8 max-w-6xl md:-mt-14 md:mb-20" />}
         {figure ? (
           // text on the left, the figure's gutter on the right: the laser
           // director holds the chapter's figure inside [data-laser-anchor]

@@ -1,36 +1,50 @@
 import { expect, test } from "@playwright/test";
 import { scrollThrough, stageDebug, tier, trackErrors, waitForStage } from "./helpers";
 
-// The stage gate: tier selection, the single-writer scroll contract, chapter
-// bounds, click-to-fly, detail pages in both tiers, and the 2D↔GPU parity.
+// The stage gate: the landing and its section pages, tier selection, the
+// single-writer scroll contract, page transitions, detail pages in both tiers,
+// the 2D laser, fallbacks, and the 2D↔GPU parity.
 
-test("3D tier: full scroll keeps React out of the frame loop", async ({ page }) => {
+test("landing: the name, then software · music · about me", async ({ page }) => {
   const errors = trackErrors(page);
-  await page.goto("/?tier=3d&debug");
+  await page.goto("/?tier=2d");
+  await expect(page.locator("h1")).toBeVisible();
+  const opts = page.locator('nav[aria-label="sections"] a');
+  await expect(opts).toHaveCount(3);
+  expect(await opts.evaluateAll((as) => as.map((a) => a.getAttribute("href")))).toEqual(["/software", "/music", "/about"]);
+  await opts.nth(1).click();
+  await expect(page).toHaveURL(/\/music$/);
+  await expect(page.locator("#music h2")).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("3D tier: a full scroll of a section page keeps React out of the frame loop", async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto("/about?tier=3d&debug");
   await waitForStage(page);
   const commits = () =>
     page.evaluate(() => (window as unknown as { __journeyCommits?: number }).__journeyCommits ?? 0);
-  // let the hero typewriter finish — it commits per character, scrolling must not
+  // let any mount-time commits settle — scrolling must not add per-frame ones
   let before = -1;
   for (let now = await commits(); now !== before; now = await commits()) {
     before = now;
     await page.waitForTimeout(1500);
   }
   await scrollThrough(page);
-  // one commit per chapter change (the nav) at most; per-frame progress never commits
-  expect((await commits()) - before).toBeLessThanOrEqual(6);
+  expect((await commits()) - before).toBeLessThanOrEqual(4);
   const d = await stageDebug(page);
   expect(d.g).toBeGreaterThan(0.98);
   expect(errors).toEqual([]);
 });
 
-test("chapter bounds are monotone and the epilogue starts before the end", async ({ page }) => {
-  await page.goto("/?tier=3d&debug");
+test("section bounds are measured from the chapters on the page", async ({ page }) => {
+  await page.goto("/about?tier=3d&debug");
   await waitForStage(page);
+  // epilogue, then the timeline coda (the debug snapshot refreshes every 500ms)
+  await expect.poll(async () => (await stageDebug(page)).bounds.length).toBe(2);
   const { bounds } = await stageDebug(page);
-  expect(bounds.length).toBeGreaterThan(3);
-  for (let i = 1; i < bounds.length; i++) expect(bounds[i]).toBeGreaterThan(bounds[i - 1]);
-  expect(bounds[bounds.length - 1]).toBeLessThan(0.99);
+  expect(bounds[1]).toBeGreaterThan(bounds[0]);
+  expect(bounds[1]).toBeLessThan(0.99);
 });
 
 test("reduced motion gets the 2D tier", async ({ browser }) => {
@@ -42,7 +56,7 @@ test("reduced motion gets the 2D tier", async ({ browser }) => {
   await ctx.close();
 });
 
-// the 2D tier draws the same laser piece (CPU), not the retired wave field
+// the 2D tier draws the same laser piece (CPU)
 const litPixels = (page: import("@playwright/test").Page) =>
   page.evaluate(() => {
     const c = document.querySelector<HTMLCanvasElement>("[aria-hidden] canvas");
@@ -59,16 +73,16 @@ test("2D tier draws the laser layer, with motion and without", async ({ browser 
     const ctx = await browser.newContext({ reducedMotion });
     const page = await ctx.newPage();
     await page.goto("/?tier=2d");
-    await expect.poll(() => litPixels(page)).toBeGreaterThan(200);
-    // scroll into the code chapter: the knot appears
-    await page.evaluate(() => document.getElementById("code")?.scrollIntoView());
-    await expect.poll(() => litPixels(page)).toBeGreaterThan(200);
+    await expect.poll(() => litPixels(page)).toBeGreaterThan(200); // the split rule
+    await page.goto("/software?tier=2d");
+    await page.evaluate(() => window.scrollTo(0, 600));
+    await expect.poll(() => litPixels(page)).toBeGreaterThan(200); // the knot
     await ctx.close();
   }
 });
 
 test("2D tier: project links navigate normally", async ({ page }) => {
-  await page.goto("/?tier=2d");
+  await page.goto("/software?tier=2d");
   await expect.poll(() => tier(page)).toBe("2d");
   const link = page.locator('[data-stage-id^="project:"] a[href^="/projects/"]').first();
   const href = await link.getAttribute("href");
@@ -78,10 +92,16 @@ test("2D tier: project links navigate normally", async ({ page }) => {
   await expect(page.locator("h1")).toBeVisible();
 });
 
-test("3D tier: click-to-fly parks the stage at the project", async ({ page }) => {
+test("3D tier: picking a section bursts its figure, then the page changes", async ({ page }) => {
   const errors = trackErrors(page);
   await page.goto("/?tier=3d&debug");
   await waitForStage(page);
+  await page.locator('[data-stage-id="nav:software"]').click();
+  // the beat: still on the landing, transition in flight
+  await expect.poll(async () => (await stageDebug(page)).focus.fly, { timeout: 2000 }).toBe(true);
+  await expect(page).toHaveURL(/\/software$/);
+  await expect.poll(async () => (await stageDebug(page)).focus.route).toBe("software:-1");
+  // and on into a project
   const link = page.locator('[data-stage-id^="project:"] a[href^="/projects/"]').first();
   const href = await link.getAttribute("href");
   await link.scrollIntoViewIfNeeded();
@@ -96,11 +116,12 @@ test("3D tier: click-to-fly parks the stage at the project", async ({ page }) =>
 for (const t of ["2d", "3d"] as const) {
   test(`detail pages render in the ${t} tier`, async ({ page }) => {
     const errors = trackErrors(page);
-    await page.goto(`/?tier=${t}`);
+    await page.goto(`/music?tier=${t}`);
     const show = await page.locator('[data-stage-id^="show:"] a[href^="/shows/"]').first().getAttribute("href");
     await page.goto(`${show}?tier=${t}`);
     await expect(page.locator("h1")).toBeVisible();
     await expect.poll(() => tier(page)).toBe(t);
+    await expect(page.locator('header nav a[aria-current="page"]')).toHaveText("music");
     expect(errors).toEqual([]);
   });
 }
@@ -127,10 +148,9 @@ test("adaptive quality: sustained slow frames step dpr down, then fall back to 2
   await waitForStage(page);
   const quality = () => page.evaluate(() => document.documentElement.dataset.stageQuality);
   expect(await quality()).toBe("2");
-  const cdp = await ctx.newCDPSession(page);
-  // ~8fps with steady frames: slow, but not the >250ms gaps the governor
-  // reads as browser throttling (40× produced those)
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 20 });
+  // a steady 70ms per frame (~14fps): slow, without the >250ms gaps the
+  // governor reads as browser throttling
+  await page.evaluate(() => ((window as unknown as { __stageBurnMs: number }).__stageBurnMs = 70));
   await expect.poll(quality, { timeout: 30_000 }).not.toBe("2"); // 1.5, or already 1 between polls
   await expect.poll(() => tier(page), { timeout: 45_000 }).toBe("2d");
   await ctx.close();

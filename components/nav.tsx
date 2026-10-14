@@ -1,68 +1,48 @@
 "use client";
 
-import { useEffect, useState } from "react";
+// ── site nav ──────────────────────────────────────────────────────────────────
+// The section pages' top bar: the name home on the left, the three sections on
+// the right — each in its own scale (software white, music the pearlescent
+// shimmer, about the blend of both). The landing page has no nav; it *is* the
+// nav.
 
-const NAV_LINKS = [
-  { label: "music", href: "#music" },
-  { label: "code", href: "#code" },
-  { label: "about", href: "#about" },
-  { label: "contact", href: "#contact" },
-];
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-const SECTIONS = ["music", "code", "about", "contact"];
+const LINKS = [
+  { href: "/software", label: "software", tone: "" },
+  { href: "/music", label: "music", tone: "text-shimmer" },
+  { href: "/about", label: "about", tone: "text-blend" },
+] as const;
 
-export default function Nav() {
-  const [active, setActive] = useState<string>("");
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    const observers: IntersectionObserver[] = [];
-    SECTIONS.forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActive(id); },
-        { rootMargin: "-40% 0px -50% 0px" }
-      );
-      obs.observe(el);
-      observers.push(obs);
-    });
-    return () => observers.forEach((o) => o.disconnect());
-  }, []);
+export default function SiteNav() {
+  const path = usePathname();
+  const active = (href: string) =>
+    path === href ||
+    (href === "/software" && path.startsWith("/projects/")) ||
+    (href === "/music" && path.startsWith("/shows/"));
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-background/95 border-b border-white/8"
-          : "bg-transparent border-b border-transparent"
-      }`}
-    >
-      <div className="mx-auto flex max-w-5xl items-center justify-end px-6 py-5">
-        <nav className="flex items-center gap-8">
-          {NAV_LINKS.map(({ label, href }) => {
-            const id = href.replace("#", "");
-            const isActive = active === id;
-            return (
-              <a
-                key={href}
-                href={href}
-                className={`font-mono text-xs tracking-widest transition-colors duration-200 ${
-                  isActive ? "text-accent/80" : "text-foreground/30 hover:text-foreground/70"
-                }`}
-              >
-                {label}
-              </a>
-            );
-          })}
-        </nav>
-      </div>
+    <header className="fixed inset-x-0 top-0 z-50 px-6 py-5 md:px-12">
+      <nav aria-label="site" className="mx-auto flex max-w-6xl items-baseline justify-between font-mono text-xs">
+        <Link href="/" className="text-foreground/55 transition-colors hover:text-foreground">
+          brody montag
+        </Link>
+        <div className="flex items-baseline gap-6">
+          {LINKS.map(({ href, label, tone }) => (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active(href) ? "page" : undefined}
+              className={`transition-opacity duration-200 ${tone} ${
+                active(href) ? "opacity-100 underline decoration-white/25 underline-offset-[6px]" : "opacity-45 hover:opacity-90"
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+      </nav>
     </header>
   );
 }

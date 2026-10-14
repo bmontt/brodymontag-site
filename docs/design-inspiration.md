@@ -181,3 +181,35 @@ as the signature moment, and fold **#4–#6** into Phase 6 hardening.
   CPU), `#music`/`.theme-sound` (shimmering sheen classes and a pastel accent),
   the hero `>` (`.text-shimmer`), and music-platform glows (`"iridescent"` →
   `lib/glow.ts`, animated by `.iri-cycle`).
+
+## Round 3: the split site (2026-10-14)
+
+- **The site is a landing page plus three section pages.** The single long scroll
+  is gone.
+  - **`/`** shows the name typing in over a split rule: a white trace on the
+    left half and a pearl trace on the right, flattening to meet in the
+    middle. Below it are **software** (left, white), **music** (right,
+    shimmer) and **about me** (centered below, a white-to-pearl blend).
+  - Each choice has its figure asleep behind it: the knot, the fans and the
+    rings. Hover wakes it, and picking it bursts it.
+- **`/software`:** projects, experience and stack. A white trace under the
+  heading and a white knot in the gutter that tilts as you read. Almost no
+  glitch.
+- **`/music`:** shows, artists, releases and the collective. A pearl trace
+  pulsing on the kick, shimmering fans in the gutter, and glitch on the kick.
+- **`/about`:** the about text (the union orbit, a timed fusion and ringdown,
+  then one calm trace), presence and contact, then the timeline coda. The calm
+  trace becomes the floor's horizon, with converging white and pearl rails.
+- **Transitions:** internal links burst the picked figure for 420ms, then
+  navigate. The stage persists, and the director damps every figure
+  parameter toward the new page's targets, so the background morphs between
+  pages.
+- **Plumbing:**
+  - `lib/director/laser.ts` is now page-based: compositions plus damping,
+    with `laserInputFrom()` shared by both tiers.
+  - The scroll controller measures only the chapters on the current page, in
+    document order.
+  - Route kinds are home, software, music, about, project and show.
+  - Pages get a minimal site nav (`components/nav.tsx`).
+  - The proxy covers the new routes.
+  - The hero, timeline-nav, vessel and ascii-bg components are retired.

@@ -3,7 +3,7 @@
 import { notFound, useParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import Nav from "@/components/nav";
+import SiteNav from "@/components/nav";
 import BackLink from "@/components/back-link";
 import { events } from "@/lib/brody-events";
 
@@ -31,11 +31,11 @@ export default function ShowPage() {
   return (
     <div className="theme-sound relative min-h-screen bg-background">
       {/* background: the persistent stage in app/(site)/layout.tsx */}
-      <Nav />
+      <SiteNav />
 
       <main className="relative z-10 pt-32 px-6 md:px-12 pb-32">
         <div className="mx-auto max-w-3xl">
-          <BackLink href="/#music" />
+          <BackLink href="/music" />
 
           {/* section header */}
           <motion.div

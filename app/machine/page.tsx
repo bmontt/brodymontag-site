@@ -8,7 +8,7 @@ import Link from "next/link";
 import { machineText } from "@/lib/machine";
 
 export const metadata: Metadata = {
-  title: "Brody Montag :: machine",
+  title: { absolute: "Brody Montag :: machine" },
   description: "Plain-text, machine-readable mirror of brodymontag.com.",
   alternates: { canonical: "/machine", types: { "text/plain": "/llms.txt" } },
 };

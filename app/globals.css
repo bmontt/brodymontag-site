@@ -152,6 +152,19 @@ html, body { overflow-x: clip; }
   color: oklch(0.84 0.09 var(--pill-hue));
   animation: pill-hue-cycle 6s ease-in-out infinite;
 }
+/* both scales at once — white bleeding into the shimmer ("about": where the
+   halves meet) */
+.text-blend {
+  background-image: linear-gradient(90deg, oklch(0.95 0 0) 20%, oklch(0.84 0.09 var(--pill-hue)) 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: pill-hue-cycle 6s ease-in-out infinite;
+}
+
+/* landing: a choice in focus quiets the others */
+.landing-opt { transition: opacity 0.4s ease; }
+.landing-opts:has(a:hover, a:focus-visible) .landing-opt:not(:has(a:hover, a:focus-visible)) { opacity: 0.32; }
 
 /* Sheen — the iridescent classes on the tech scale: a slow lightness breath
    (grey ↔ white). Inside #music / .theme-sound they shimmer instead (below).
@@ -203,6 +216,7 @@ html, body { overflow-x: clip; }
   .text-iridescent-dim,
   .bg-iridescent,
   .text-shimmer,
+  .text-blend,
   .iri-cycle,
   :is(#music, .theme-sound) :is(.pill-iridescent, .text-iridescent-stroke, .text-iridescent, .text-iridescent-dim, .bg-iridescent) {
     animation: none; /* --sheen-l rests at 0.8; hues rest on their initial angle */

@@ -18,16 +18,19 @@
 // The chosen tier and why are mirrored to <html data-stage-tier/-reason> and
 // logged once to the console.
 //
-// Interaction (3D tier): hovering/focusing a [data-stage-id] entry lights its
-// object; clicking a project/show link on the journey flies the camera to that
-// object (FLY_MS) before navigating — the stage then stays parked beside it.
+// Pages: the landing (/), the sections (/software, /music, /about) and the
+// detail pages. Following an internal link to another page bursts the picked
+// figure for TRANSITION_MS, then navigates; the persistent stage morphs into
+// the new page's composition (lib/director/laser.ts). Hovering or focusing a
+// [data-stage-id] entry stirs its figure.
 
-import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Component, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import Laser2D from "@/components/stage/laser-2d";
 import { journey, type StageRouteKind } from "@/lib/journey-store";
-import { FLY_MS, panelIndexBySlug, pillarIndexBySlug } from "@/lib/director/layouts";
+import { panelIndexBySlug, pillarIndexBySlug } from "@/lib/director/layouts";
+import { TRANSITION_MS } from "@/lib/director/laser";
 
 const StageCanvas = dynamic(() => import("@/components/stage/stage-canvas"), { ssr: false });
 
@@ -77,10 +80,14 @@ function detectTier(): [Tier, string] {
   return ["3d", "capable"];
 }
 
-/** "/projects/<slug>" → { kind: "project", index } etc. */
-function routeOf(pathname: string): { kind: StageRouteKind; index: number } {
+const SECTIONS: Record<string, StageRouteKind> = { "/": "home", "/software": "software", "/music": "music", "/about": "about" };
+
+/** pathname → which page the stage is on ("/projects/<slug>" → project + index, …) */
+function routeOf(pathname: string): { kind: StageRouteKind; index: number } | null {
+  const section = SECTIONS[pathname.replace(/\/$/, "") || "/"];
+  if (section) return { kind: section, index: -1 };
   const m = /^\/(projects|shows)\/([^/?#]+)/.exec(pathname);
-  if (!m) return { kind: "home", index: -1 };
+  if (!m) return null;
   const slug = decodeURIComponent(m[2]);
   return m[1] === "projects"
     ? { kind: "project", index: pillarIndexBySlug(slug) }
@@ -90,7 +97,6 @@ function routeOf(pathname: string): { kind: StageRouteKind; index: number } {
 export default function StageRoot() {
   const pathname = usePathname();
   const router = useRouter();
-  const isHome = routeOf(pathname).kind === "home";
   const [tier, setTier] = useState<Tier | null>(null);
   const [reason, setReason] = useState("pending");
   const [stageReady, setStageReady] = useState(false);
@@ -110,9 +116,11 @@ export default function StageRoot() {
     if (tier) console.info(`[stage] ${tier} tier (${reason})`);
   }, [tier, reason]);
 
-  // the stage follows the route: journey on home, parked beside the object on details
-  useEffect(() => {
-    const r = routeOf(pathname);
+  // the stage follows the route. A layout effect, and it sits before the page
+  // in the tree: the reset lands before the new page's controller (useGSAP is
+  // a layout effect too) reports its chapters
+  useLayoutEffect(() => {
+    const r = routeOf(pathname) ?? { kind: "home" as const, index: -1 };
     journey.setRoute(r.kind, r.index);
     journey.setHover(null);
     flying.current = false;
@@ -125,9 +133,10 @@ export default function StageRoot() {
     return () => clearTimeout(t);
   }, [stageReady]);
 
-  // hover/focus an entry → light its 3D object (delegated; no React state)
+  // hover/focus an entry → stir its figure (delegated; no React state) — both
+  // tiers draw the laser layer, so both listen
   useEffect(() => {
-    if (tier !== "3d") return;
+    if (!tier) return;
     const idOf = (t: EventTarget | null) =>
       (t instanceof Element ? t.closest<HTMLElement>("[data-stage-id]")?.dataset.stageId : undefined) ?? null;
     const enter = (e: Event) => journey.setHover(idOf(e.target));
@@ -147,26 +156,29 @@ export default function StageRoot() {
     };
   }, [tier]);
 
-  // click a project/show on the journey → fly to its object, then navigate
+  // follow an internal link to another page → the picked figure bursts for a
+  // beat, then the route changes (the stage persists and morphs into the new
+  // page). Skipped under reduced motion and until a stage is drawing.
   useEffect(() => {
-    if (tier !== "3d" || !stageReady || !isHome) return;
+    if (!tier) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const a = (e.target as Element | null)?.closest?.<HTMLAnchorElement>("a[href]");
-      if (!a || a.target === "_blank") return;
+      if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
       const url = new URL(a.href, window.location.href);
-      if (url.origin !== window.location.origin) return;
+      if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
       const r = routeOf(url.pathname);
-      if (r.kind === "home" || flying.current) return;
+      if (!r || flying.current) return;
       e.preventDefault();
-      e.stopPropagation(); // keep the Link from navigating before the flight lands
+      e.stopPropagation(); // keep the Link from navigating before the beat lands
       flying.current = true;
       journey.setFly(r.kind, r.index);
-      window.setTimeout(() => router.push(url.pathname + url.search + url.hash), FLY_MS);
+      window.setTimeout(() => router.push(url.pathname + url.search + url.hash), TRANSITION_MS);
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
-  }, [tier, stageReady, isHome, router]);
+  }, [tier, router]);
 
   const onFirstFrame = useCallback(() => setStageReady(true), []);
   const onLost = useCallback((why: LostReason) => {
@@ -180,7 +192,7 @@ export default function StageRoot() {
     <>
       {!canvas2dGone && (
         <div style={{ opacity: stageReady ? 0 : 1, transition: `opacity ${CROSSFADE_MS}ms ease` }}>
-          <Laser2D dim={isHome ? 1 : 0.45} />
+          <Laser2D />
         </div>
       )}
       {tier === "3d" && (

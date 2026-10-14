@@ -40,7 +40,7 @@ import MontyScene from "@/components/stage/scenes/monty";
 import WorldlineScene, { WORLDLINE_X } from "@/components/stage/scenes/worldline";
 import TitlesScene from "@/components/stage/scenes/titles";
 import DustScene from "@/components/stage/scenes/dust";
-import { createLaserDirector } from "@/lib/director/laser";
+import { createLaserDirector, laserInputFrom, TRANSITION_MS } from "@/lib/director/laser";
 import { readAnchor } from "@/lib/laser-anchors";
 
 const TWO_PI = Math.PI * 2;
@@ -185,6 +185,11 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     document.documentElement.dataset.stageQuality = String(dpr);
   }, [dpr]);
   useFrame(() => {
+    // tests: ?debug + window.__stageBurnMs adds a fixed cost to every frame
+    if (debugOn) {
+      const burn = (window as unknown as { __stageBurnMs?: number }).__stageBurnMs ?? 0;
+      for (const until = performance.now() + burn; performance.now() < until; );
+    }
     const q = governor.current;
     const now = performance.now();
     const gap = now - q.last;
@@ -253,14 +258,15 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     const tk = track.current;
     if (!tk.t || tk.bounds !== st.bounds) {
       tk.bounds = st.bounds;
-      tk.t = resolveTrack(mode === "lab" ? LAB_TRACK : HOME_TRACK, CHAPTER_IDS, st.bounds);
+      tk.t = resolveTrack(mode === "lab" ? LAB_TRACK : HOME_TRACK, mode === "lab" || !st.ids.length ? CHAPTER_IDS : st.ids, st.bounds);
     }
     const T = parity ? Object.assign(target.current, FLAT, { dist: (H / 2) / Math.tan((4 * DEG) / 2) })
       : poseAt(tk.t, p, H, target.current);
     const routeKind = st.focus.route.kind;
     if (mode === "journey" && !parity) {
       const { route, fly } = st.focus;
-      if (route.kind !== "home") {
+      const detail = (k: string): k is "project" | "show" => k === "project" || k === "show";
+      if (detail(route.kind)) {
         // detail page: parked beside its object (the persistent stage keeps the
         // camera where a click-to-fly left it)
         Object.assign(T, FLAT, presetPose(route.kind, route.index));
@@ -269,7 +275,7 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
         const tp = st.timelineProgress;
         if (tp >= 0) T.tx = MathUtils.lerp(WORLDLINE_X[0], WORLDLINE_X[1], tp);
         // click-to-fly: blend from the journey pose into the destination preset
-        if (fly) blendPose(T, presetPose(fly.kind, fly.index), easeInOut((now - fly.start) / FLY_MS));
+        if (fly && detail(fly.kind)) blendPose(T, presetPose(fly.kind, fly.index), easeInOut((now - fly.start) / FLY_MS));
       }
       // compositions are authored at 1440px wide: scale targets with the layout,
       // and pull back on narrow aspects (phones) so the scene still fits
@@ -410,21 +416,12 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     if (sheet.current) sheet.current.visible = !laserOn;
     if (laserOn) {
       const L = ascii.laser;
-      // detail pages keep the figure where the journey left it, quieter
-      L.uLaserMix.value = MathUtils.damp(L.uLaserMix.value, routeKind === "home" ? 1 : 0.45, 4, delta);
-      const lo = laserDirector(L, {
-        g: p, ids: CHAPTER_IDS, bounds: st.bounds, timelineProgress: st.timelineProgress,
-        merge, ring, velocity: st.velocity, time: now / 1000, delta, viewW: size.width, viewH: size.height,
-        anchor: readAnchor,
-        hover: st.focus.hover,
-        // the burst plays on the way out of the journey only (the stage keeps
-        // focus.fly while parked on the detail page)
-        fly: st.focus.fly && routeKind === "home" ? { kind: st.focus.fly.kind === "show" ? "show" : "project", t: (now - st.focus.fly.start) / FLY_MS } : null,
-      });
+      L.uLaserMix.value = 1; // per-page intensity lives in the director
+      const lo = laserDirector(L, laserInputFrom(st, now, delta, size.width, size.height, readAnchor, TRANSITION_MS));
       ascii.frame.uGlitch.value = lo.glitch;
       ascii.frame.uLaserTone.value.set(lo.brightness, lo.hot);
       // the merger flash follows the laser story (anchored to the about text)
-      ascii.frame.uFlash.value = routeKind === "home" ? lo.burst : 0;
+      ascii.frame.uFlash.value = lo.burst;
       ascii.frame.uFlashSlot.value = MERGER_SLOT;
       // scene objects keep a monochrome glyph light under the two-scale palette
       ascii.skin.uSat.value = 0;

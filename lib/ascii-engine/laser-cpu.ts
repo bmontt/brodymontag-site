@@ -88,7 +88,7 @@ export function laserFrame(
   const mix = u.uLaserMix.value;
   if (mix < 0.002) return;
 
-  const scope = u.uScope.value, scopeB = u.uScopeB.value, scopeC = u.uScopeC.value;
+  const scope = u.uScope.value, scopeB = u.uScopeB.value, scopeC = u.uScopeC.value, scopeD = u.uScopeD.value;
   const liss = u.uLiss.value, lissB = u.uLissB.value, lissC = u.uLissC.value;
   const fan = u.uFan.value, fanB = u.uFanB.value, fanC = u.uFanC.value;
   const gridL = u.uGridL.value, gridB = u.uGridB.value, rails = u.uRails.value;
@@ -163,13 +163,19 @@ export function laserFrame(
       const px = (col + 0.5) * cw + jx, py = (row + 0.5) * ch + jy;
       b.score = 1e9; b.w = 0;
 
-      const trace = (ph: number, fr: number, amp: number, pal: number, w: number) => {
+      const trace = (ph: number, fr: number, amp: number, pal: number, w: number, side: number) => {
+        if (scopeD.x >= 0) {
+          // split: each trace keeps to its half and flattens as it meets the other
+          if (side * (px - scopeD.x) < 0) return;
+          const t = Math.min(1, Math.abs(px - scopeD.x) / scopeD.y);
+          amp *= t * t * (3 - 2 * t);
+        }
         const f = scopeF(px, ph, fr, amp), df = (scopeF(px + 1, ph, fr, amp) - scopeF(px - 1, ph, fr, amp)) * 0.5;
         const L = Math.hypot(df, 1);
         take(Math.abs(py - (scopeB.x + f)) / L, -df / L, 1 / L, pal, w);
       };
-      if (scope.x >= 0.002) trace(scope.w, 1, 1, scopeB.y, scope.x);
-      if (scopeC.x >= 0.002) trace(scope.w + scopeC.y, scopeC.z, scopeC.w, scopeB.w, scopeC.x);
+      if (scope.x >= 0.002) trace(scope.w, 1, 1, scopeB.y, scope.x, -1);
+      if (scopeC.x >= 0.002) trace(scope.w + scopeC.y, scopeC.z, scopeC.w, scopeB.w, scopeC.x, 1);
       if (lissOn && Math.hypot(px - lissC.x, py - lissC.y) <= lissB.y * 1.9 + 80) {
         segBest = 1e9; segCount = 0;
         for (let i = 0; i < SEG; i++) seg(px, py, lx[i], ly[i], lx[i + 1], ly[i + 1]);

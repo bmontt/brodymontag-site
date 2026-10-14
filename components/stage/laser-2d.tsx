@@ -8,21 +8,17 @@
 // motion, low-end and lost-WebGL visitors keep.
 //
 //   motion OK      → ~30fps, scroll-driven like the 3D layer, row-tear glitch
-//   reduced motion → no clock, no glitch: one still frame per chapter, redrawn
-//                    only when the chapter changes (the controller registers no
-//                    ScrollTriggers then, so chapters come from its observer)
+//   reduced motion → no clock, no glitch, no glides: still frames, redrawn only
+//                    when the layout the figures sit in moves (scroll, route,
+//                    hover, resize)
 
 import { useEffect, useRef } from "react";
 import { journey } from "@/lib/journey-store";
-import { chapters } from "@/lib/chapters";
-import { FLAT, poseAt, resolveTrack, type Pose, type ResolvedTrack } from "@/lib/director/rig";
-import { HOME_TRACK } from "@/lib/director/stations";
-import { createLaserDirector } from "@/lib/director/laser";
+import { createLaserDirector, laserInputFrom, TRANSITION_MS } from "@/lib/director/laser";
 import { makeLaserUniforms } from "@/lib/ascii-engine/gl/laser-shader";
 import { laserFrame, laserRgb, shimmerHue } from "@/lib/ascii-engine/laser-cpu";
 import { readAnchor } from "@/lib/laser-anchors";
 
-const IDS = chapters.map((c) => c.id);
 const CELL_W = 8;
 const CELL_H = 22;
 const FRAME_MS = 33;
@@ -34,10 +30,8 @@ const h21 = (x: number, y: number) => {
   return s - Math.floor(s);
 };
 
-export default function Laser2D({ dim = 1 }: { dim?: number }) {
+export default function Laser2D() {
   const ref = useRef<HTMLCanvasElement>(null);
-  const dimRef = useRef(dim);
-  dimRef.current = dim;
 
   useEffect(() => {
     const canvas = ref.current;
@@ -46,8 +40,6 @@ export default function Laser2D({ dim = 1 }: { dim?: number }) {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const u = makeLaserUniforms();
     const direct = createLaserDirector();
-    const pose: Pose = { ...FLAT };
-    let track: { bounds: readonly number[] | null; t: ResolvedTrack | null } = { bounds: null, t: null };
     let W = 0, H = 0, cols = 0, rows = 0, family = "monospace";
     // palette coordinate × hue × brightness → css color (quantized + cached;
     // the hue only varies on the sound scale — the shimmer)
@@ -90,24 +82,11 @@ export default function Laser2D({ dim = 1 }: { dim?: number }) {
     let last = 0;
     const draw = (now: number) => {
       const st = journey.state;
-      let g = st.globalProgress;
-      let bounds: readonly number[] = st.bounds;
-      if (bounds.length !== IDS.length) {
-        // reduced motion (no ScrollTriggers): even bounds, sit mid-chapter
-        bounds = IDS.map((_, i) => i / IDS.length);
-        g = (st.chapterIndex + 0.5) / IDS.length;
-      }
-      if (track.bounds !== bounds) track = { bounds, t: resolveTrack(HOME_TRACK, IDS, bounds) };
-      poseAt(track.t!, g, H, pose);
       const time = reduced ? 0 : now / 1000;
-      const delta = Math.min(0.1, last ? (now - last) / 1000 : 0);
+      const delta = reduced ? 0 : Math.min(0.1, last ? (now - last) / 1000 : 0);
       last = now;
-      u.uLaserMix.value = dimRef.current;
-      const lo = direct(u, {
-        g, ids: IDS, bounds, timelineProgress: reduced ? -1 : st.timelineProgress,
-        merge: pose.merge, ring: pose.ring, velocity: reduced ? 0 : st.velocity,
-        time, delta: reduced ? 0 : delta, viewW: W, viewH: H, anchor: readAnchor,
-      });
+      u.uLaserMix.value = 1;
+      const lo = direct(u, laserInputFrom(st, reduced ? 0 : now, delta, W, H, readAnchor, TRANSITION_MS));
       const glitch = lo.glitch;
       brightness = Math.round(lo.brightness * 6) / 6;
       if (reduced) u.uJitter.value.set(0, 0);
@@ -135,31 +114,30 @@ export default function Laser2D({ dim = 1 }: { dim?: number }) {
     };
 
     resize();
+    // motion: ~30fps. reduced motion: no clock — redraw only when something the
+    // figures depend on changes (scroll moves their anchors, route, hover, size)
     let raf = 0;
-    let unsub: (() => void) | undefined;
+    let sig = "";
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
-      if (document.hidden || now - last < FRAME_MS) return;
+      if (document.hidden) return;
+      if (reduced) {
+        const st = journey.state;
+        const next = `${Math.round(window.scrollY)}|${st.focus.route.kind}|${st.focus.hover}|${W}x${H}|${st.timelineProgress}`;
+        if (next === sig) return;
+        sig = next;
+      } else if (now - last < FRAME_MS) return;
       draw(now);
     };
     const onResize = () => {
       resize();
-      if (reduced) draw(performance.now());
+      sig = "";
     };
     window.addEventListener("resize", onResize);
-    document.fonts.ready.then(() => {
-      resize();
-      if (reduced) draw(performance.now());
-    });
-    if (reduced) {
-      draw(performance.now());
-      unsub = journey.subscribe(() => draw(performance.now()));
-    } else {
-      raf = requestAnimationFrame(loop);
-    }
+    document.fonts.ready.then(onResize);
+    raf = requestAnimationFrame(loop);
     return () => {
       cancelAnimationFrame(raf);
-      unsub?.();
       window.removeEventListener("resize", onResize);
     };
   }, []);

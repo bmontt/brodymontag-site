@@ -34,6 +34,7 @@ export interface LaserUniforms {
   uScope: { value: Vector4 };
   uScopeB: { value: Vector4 };
   uScopeC: { value: Vector4 };
+  uScopeD: { value: Vector4 };
   uLiss: { value: Vector4 };
   uLissB: { value: Vector4 };
   uLissC: { value: Vector2 };
@@ -59,6 +60,7 @@ export function makeLaserUniforms(): LaserUniforms {
     uScope: { value: new Vector4() },
     uScopeB: { value: new Vector4() },
     uScopeC: { value: new Vector4() },
+    uScopeD: { value: new Vector4(-1, 1, 0, 0) },
     uLiss: { value: new Vector4() },
     uLissB: { value: new Vector4() },
     uLissC: { value: new Vector2() },
@@ -84,6 +86,7 @@ uniform float uLaserDot;           // atlas slot: ·
 uniform vec4  uScope;              // weight, amplitude px, cycles across the view, phase
 uniform vec4  uScopeB;             // baseline y px, hue 0–1, harmonics 0–1, hue of the second trace
 uniform vec4  uScopeC;             // second trace: weight, phase offset, frequency ratio, amplitude ratio
+uniform vec4  uScopeD;             // split x px (< 0 = none: both traces span the view), flatten width px
 uniform vec4  uLiss;               // weight, a, b, phase
 uniform vec4  uLissB;              // spin rad, radius px, hue, tilt rad
 uniform vec2  uLissC;              // center px
@@ -124,7 +127,13 @@ float scopeF(float x, float ph, float fr, float amp) {
     + sin(x * k * 5.7 + ph * 2.1) * 0.1 * uScopeB.z);
 }
 
-void traceL(inout Hit h, vec2 p, float ph, float fr, float amp, float hue, float w) {
+// side: -1 = only left of the split, 1 = only right of it, 0 = everywhere.
+// With a split, both traces flatten as they reach it — two signals meeting.
+void traceL(inout Hit h, vec2 p, float ph, float fr, float amp, float hue, float w, float side) {
+  if (uScopeD.x >= 0.0) {
+    if (side * (p.x - uScopeD.x) < 0.0) return;
+    amp *= smoothstep(0.0, uScopeD.y, abs(p.x - uScopeD.x));
+  }
   float f = scopeF(p.x, ph, fr, amp);
   float df = (scopeF(p.x + 1.0, ph, fr, amp) - scopeF(p.x - 1.0, ph, fr, amp)) * 0.5;
   float dy = p.y - (uScopeB.x + f);
@@ -134,8 +143,8 @@ void traceL(inout Hit h, vec2 p, float ph, float fr, float amp, float hue, float
 // one or two traces on a shared baseline (the two signals)
 void scopeL(inout Hit h, vec2 p) {
   if (uScope.x < 0.002 && uScopeC.x < 0.002) return;
-  if (uScope.x > 0.002) traceL(h, p, uScope.w, 1.0, 1.0, uScopeB.y, uScope.x);
-  if (uScopeC.x > 0.002) traceL(h, p, uScope.w + uScopeC.y, uScopeC.z, uScopeC.w, uScopeB.w, uScopeC.x);
+  if (uScope.x > 0.002) traceL(h, p, uScope.w, 1.0, 1.0, uScopeB.y, uScope.x, -1.0);
+  if (uScopeC.x > 0.002) traceL(h, p, uScope.w + uScopeC.y, uScopeC.z, uScopeC.w, uScopeB.w, uScopeC.x, 1.0);
 }
 
 vec3 lissPt(float t) {

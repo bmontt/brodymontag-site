@@ -38,7 +38,7 @@ export function sceneWeight(
   st: {
     globalProgress: number;
     bounds: number[];
-    focus: { route: { kind: "home" | "project" | "show" } };
+    focus: { route: { kind: string } };
   },
   chapterIds: readonly string[],
   lead?: number,

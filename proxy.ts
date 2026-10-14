@@ -23,5 +23,5 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // the human pages only (the (site) route group); everything else is untouched
-  matcher: ["/", "/projects/:slug", "/shows/:slug"],
+  matcher: ["/", "/software", "/music", "/about", "/projects/:slug", "/shows/:slug"],
 };

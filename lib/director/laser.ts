@@ -1,35 +1,41 @@
 // ── director / laser ──────────────────────────────────────────────────────────
-// Drives the laser layer (lib/ascii-engine/gl/laser-shader.ts) as one
-// continuous piece across the whole scroll — a story told by two signals:
+// Drives the laser layer (lib/ascii-engine/gl/laser-shader.ts) — the site's
+// background is a story told by two signals:
 //
-//   TECH  — the white-grey-black scale (code, systems, structure)
-//   SOUND — the iridescent shimmer, dark → luminous → white-hot (music, heat,
-//           release) — the same pearlescent sweep as the site's pills
+//   TECH  — the white-grey-black scale (software: systems, structure, clarity)
+//   SOUND — the pearlescent shimmer, dark → luminous → white-hot (music: rooms,
+//           heat, release) — the same sweep as the site's pills
 //
-//   hero      apart     two faint traces share the rule under the name — a grey
-//                       one and a dim shimmering one, out of phase, barely alive. They
-//                       quicken as you read, then twist into the knot on the dive.
-//   code      clarity   TECH builds structure: a white Lissajous knot, shaded by
-//                       depth, held in the gutter beside the projects. SOUND
-//                       persists as a low shimmering murmur along the floor.
-//   music     heat      SOUND takes the room: shimmering club fans, kicking on
-//                       a 124 bpm pulse (the glitch hits on the kick). TECH is a
-//                       thin grey line on the floor.
-//   timeline  memory    a dim grey floor runs with the year track; one white and
-//                       one shimmering rail converge on the vanishing point as the
-//                       years pass. Tape-worn glitch.
-//   epilogue  union     beside the about text the two signals orbit as rings,
-//                       white and shimmer, spiralling in as you read — they merge
-//                       white-hot, ring down as a fading shimmer, and resolve
-//                       into one calm trace at the end. No glitch left.
+// Each page has its own composition, in the same language:
 //
-// Figures sit inside layout anchors (lib/laser-anchors.ts) when they exist —
-// the text wraps around them — and fall back to free positions on phones.
-// Everything is a function of scroll plus a slow clock, so it never freezes.
+//   home      the split  the rule under the name carries both signals — white
+//                        on the left half, pearl on the right — flattening to
+//                        meet in the middle. Each choice has its figure asleep
+//                        behind it (the knot behind software, fans rising
+//                        under music, two rings flanking "about me"); hovering
+//                        a choice wakes it, picking one bursts it.
+//   software  clarity    a white trace under the heading; a white knot held in
+//                        the gutter beside the projects, shaded by depth,
+//                        tilting as you read down. Clean — almost no glitch.
+//   music     heat       a pearl trace pulsing on a 124 bpm kick under the
+//                        heading; shimmering fans rising in the gutter, and the
+//                        glitch hits on the kick.
+//   about     union      the two signals orbit as rings inside the circle the
+//                        about text wraps, spiral in as you read, fuse white-hot
+//                        (a one-shot flash), ring down over a couple of seconds,
+//                        and lie down as one calm trace — the horizon of the timeline
+//                        floor, where a white and a pearl rail converge.
+//   detail    an echo    a project page keeps a faint knot, a show page faint fans.
+//
+// Every figure parameter is damped toward its page's target, so moving between
+// pages morphs the background (the knot behind "software" glides into the
+// software page's gutter) instead of cutting it. Figures sit in layout anchors
+// (lib/laser-anchors.ts) — the text wraps around them — with free fallbacks on
+// phones. Everything is a function of scroll, anchors and a slow clock.
 
 import type { LaserUniforms } from "@/lib/ascii-engine/gl/laser-shader";
 import type { AnchorRect } from "@/lib/laser-anchors";
-import { chapterWeight } from "./weights";
+import type { StageRouteKind } from "@/lib/journey-store";
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const smooth = (a: number, b: number, x: number) => {
@@ -42,27 +48,28 @@ const hash = (n: number) => {
   return x - Math.floor(x);
 };
 
+/** the exit beat: how long a picked figure bursts before the page changes */
+export const TRANSITION_MS = 420;
+
 /** palette coordinates on the two scales (t: 0 dark → 1 brightest) */
 export const TECH = (t: number) => clamp01(t) * 0.499;
 export const SOUND = (t: number) => 0.5 + clamp01(t) * 0.499;
 
 export interface LaserInput {
-  g: number;
-  ids: readonly string[];
-  bounds: readonly number[];
+  page: StageRouteKind;
+  /** scroll progress through the page, 0–1 */
+  p: number;
   timelineProgress: number; // -1 when the year track isn't pinned
-  merge: number; // fallback merger drive (the camera track) when no anchor
-  ring: number;
   velocity: number; // px/s
   time: number; // s
-  delta: number; // s
+  delta: number; // s (0 = reduced motion: no glide, a still frame)
   viewW: number;
   viewH: number;
   anchor: (id: string) => AnchorRect | null;
-  /** hovered entry ("project:<id>" / "show:<id>"), if any */
+  /** hovered entry ("nav:software", "project:<id>", "show:<id>"), if any */
   hover?: string | null;
-  /** click-to-fly in progress: what was clicked and how far along (0–1) */
-  fly?: { kind: "project" | "show"; t: number } | null;
+  /** a page transition in flight: where to, and how far along (0–1) */
+  fly?: { kind: StageRouteKind; t: number } | null;
 }
 
 export interface LaserOutput {
@@ -72,183 +79,245 @@ export interface LaserOutput {
   hot: number; // white-hot core amount
 }
 
-// per-chapter mood: [brightness, white-hot, base glitch]
-const MOOD: Record<string, [number, number, number]> = {
-  hero: [0.72, 0.05, 0.015],
-  code: [1.0, 0.18, 0.02],
-  music: [1.05, 0.22, 0.05],
-  timeline: [0.82, 0.08, 0.06],
-  epilogue: [0.95, 0.2, 0.015],
-};
-
-interface ScopeReq {
-  w: number; // first trace weight
-  wb: number; // second trace weight
-  base: number;
-  amp: number;
-  cyc: number;
-  harm: number;
-  a: number; // palette coordinate, first trace
-  b: number; // palette coordinate, second trace
-  ratio: number; // second trace frequency ratio
+/** every figure parameter the pages compose — damped as a whole */
+interface Frame {
+  // scope: up to two traces on one baseline; split ≥ 0 puts A left of it, B right
+  sW: number; sWB: number; sBase: number; sAmp: number; sCyc: number; sHarm: number; sA: number; sB: number; sSplit: number;
+  // knot
+  kW: number; kX: number; kY: number; kR: number; kPal: number; kTilt: number;
+  // fans
+  fW: number; fX: number; fY: number; fSpread: number; fLen: number; fPal: number; fCount: number;
+  // orbit + ring
+  oW: number; oX: number; oY: number; oSep: number; oR: number; oA: number; oB: number;
+  rW: number; rR: number; rPal: number;
+  // floor
+  gW: number; gRails: number; gGap: number;
+  // mood
+  bright: number; hot: number; glitch: number;
 }
 
-/** stateful only for accumulated phases (so speed changes never jump) */
+const ZERO: Frame = {
+  sW: 0, sWB: 0, sBase: 0, sAmp: 0, sCyc: 3, sHarm: 0, sA: 0, sB: 0.5, sSplit: -1,
+  kW: 0, kX: 0, kY: 0, kR: 1, kPal: 0.45, kTilt: 0.35,
+  fW: 0, fX: 0, fY: 0, fSpread: 0.8, fLen: 1, fPal: 0.8, fCount: 6,
+  oW: 0, oX: 0, oY: 0, oSep: 0, oR: 1, oA: 0.47, oB: 0.8,
+  rW: 0, rR: 0, rPal: 0.9,
+  gW: 0, gRails: 0, gGap: 0,
+  bright: 1, hot: 0.15, glitch: 0.02,
+};
+const KEYS = Object.keys(ZERO) as (keyof Frame)[];
+// weights and moods ease; geometry follows anchors closely (but glides on arrival)
+const SLOW = new Set<keyof Frame>(["sW", "sWB", "kW", "fW", "oW", "rW", "gW", "gRails", "bright", "hot", "glitch"]);
+const WEIGHT_OF: Partial<Record<keyof Frame, keyof Frame>> = {};
+for (const k of KEYS) if (!SLOW.has(k)) WEIGHT_OF[k] = k[0] === "k" ? "kW" : k[0] === "f" ? "fW" : k[0] === "o" ? "oW" : undefined;
+
+/** stateful: damped figure state + accumulated phases (speed changes never jump) */
 export function createLaserDirector() {
+  let cur: Frame | null = null;
+  const tgt: Frame = { ...ZERO };
   let orbitPhase = 0;
   let lissSpin = 0;
   let lastMerge = 0;
-  let fuseAt = -1e9; // when the two signals last fused (the flash is a moment, not a place)
+  let fuseAt = -1e9;
+  let page: StageRouteKind | null = null;
+  let pageAt = 0;
   const out: LaserOutput = { glitch: 0, burst: 0, brightness: 1, hot: 0.2 };
 
   return function update(u: LaserUniforms, x: LaserInput): LaserOutput {
-    const { g, ids, bounds, time, viewW: W, viewH: H } = x;
+    const { time, viewW: W, viewH: H, p } = x;
     const M = Math.min(W, H);
-    const w = (id: string, lead = 0.35, tail = 0.35) => chapterWeight(id, g, ids, bounds, lead, tail);
-    const local = (id: string) => {
-      const i = ids.indexOf(id);
-      if (i < 0 || bounds.length !== ids.length) return 0;
-      const s = bounds[i];
-      const e = i + 1 < bounds.length ? bounds[i + 1] : 1;
-      return clamp01((g - s) / Math.max(e - s, 1e-4));
-    };
-    const hi = ids.indexOf("hero");
-    const heroEnd = hi >= 0 && hi + 1 < bounds.length ? bounds[hi + 1] : 0.1;
-
-    const wh = 1 - smooth(heroEnd - 0.02, heroEnd + 0.06, g); // on stage from the very top
-    const wc = w("code", 0.5, 0.4);
-    const wm = w("music", 0.45, 0.35);
-    const wt = w("timeline", 0.15, 0.08);
-    const we = w("epilogue", 0.45, 0);
-    const lh = local("hero"), lc = local("code"), lm = local("music");
-    const beat = Math.pow(1 - ((time * 124) / 60) % 1, 3); // 124 bpm kick, decaying
-    // interaction: hovering an entry stirs its signal; clicking one sends it
-    // through the figure (a burst while the page changes)
-    const hoverTech = x.hover?.startsWith("project:") ? 1 : 0;
-    const hoverSound = x.hover?.startsWith("show:") ? 1 : 0;
-    const flyT = x.fly ? smooth(0, 1, x.fly.t) : 0;
-    const flyTech = x.fly?.kind === "project" ? flyT : 0;
-    const flySound = x.fly?.kind === "show" ? flyT : 0;
-
-    // ── epilogue: union (computed first — the end trace shares the scope) ──
-    const ua = x.anchor("union");
-    let merge: number, ring: number, ucx: number, ucy: number, ur: number;
-    if (ua) {
-      const cy = ua.y + ua.h / 2;
-      // spiral in while the about text crosses the screen, merge as it reaches
-      // the upper third, ring down as you read on past it
-      const read = clamp01((H * 0.95 - cy) / (H * 0.7));
-      merge = smooth(0.05, 0.92, read);
-      ring = clamp01((H * 0.25 - cy) / H);
-      ucx = ua.x + ua.w / 2;
-      ucy = lerp(Math.max(cy, H * 0.25), H * 0.45, smooth(0, 0.5, ring));
-      ur = Math.min(ua.w, ua.h) / 2;
-    } else {
-      merge = clamp01(x.merge);
-      ring = clamp01(x.ring);
-      ucx = W * 0.5;
-      ucy = H * 0.5;
-      ur = M * 0.22;
+    if (x.page !== page) {
+      page = x.page;
+      pageAt = time;
+      lastMerge = 0; // a fresh visit to about plays the fusion again
     }
-    orbitPhase += x.delta * (0.6 + 7 * merge * merge);
-    const fused = smooth(0.88, 1, merge);
-    u.uOrbit.value.set(
-      we * (1 - fused * smooth(0, 0.12, ring)),
-      lerp(ur * 0.56, 0, Math.pow(merge, 1.3)), // stays inside the circle the text wraps
-      orbitPhase,
-      ur * lerp(0.36, 0.5, merge),
-    );
-    u.uOrbitB.value.set(ucx, ucy, TECH(0.95), SOUND(lerp(0.62, 0.9, merge)));
-    // ringdown: white-hot → a fading shimmer as it spreads
-    u.uRingL.value.set(we * smooth(0, 0.05, ring) * (1 - ring), ring * Math.hypot(W, H) * 0.75, SOUND(lerp(0.98, 0.3, ring)), 0);
-    const resolve = we * smooth(0.55, 1, ring); // the one calm trace at the very end
-
-    // ── scope: hero traces · the other signal's floor murmur · the resolution ──
-    const ha = x.anchor("hero");
-    const fold = smooth(0.5, 0.88, lh);
-    const heroBase = ha ? ha.y + ha.h / 2 : H * 0.74;
-    const life = smooth(0, 0.45, lh); // the traces quicken as you read
+    const still = x.delta <= 0; // reduced motion: still frames, fully formed
+    const since = still ? 10 : time - pageAt;
+    const arrive = Math.exp(-since * 3.5); // a little glitch as a page lands
+    const beat = Math.pow(1 - ((time * 124) / 60) % 1, 3); // 124 bpm kick, decaying
     const breathe = 0.75 + 0.25 * Math.sin(time * 0.8);
-    const heroW = wh * (1 - fold);
-    const reqs: ScopeReq[] = [
-      // hero: grey + a dim shimmer, apart, out of phase
-      { w: heroW, wb: heroW * 0.85, base: heroBase, amp: H * lerp(0.006, 0.05, life) * breathe, cyc: lerp(1.5, 4, lh),
-        harm: life, a: TECH(lerp(0.45, 0.7, life)), b: SOUND(lerp(0.35, 0.55, life)), ratio: 1.5 },
-      // code: SOUND murmurs low along the floor
-      { w: 0, wb: 0.35 * wc, base: H * 0.93, amp: H * 0.012, cyc: 6, harm: 0.4, a: 0, b: SOUND(0.3), ratio: 1 },
-      // music: TECH is a thin grey line on the floor
-      { w: 0.3 * wm, wb: 0, base: H * 0.95, amp: H * 0.006, cyc: 9, harm: 0.2, a: TECH(0.35), b: 0, ratio: 1 },
-      // the end: one signal, white-hot shimmer, slow and calm
-      { w: resolve, wb: 0, base: H * 0.62, amp: H * 0.03, cyc: 1.2, harm: 0, a: SOUND(0.97), b: 0, ratio: 1 },
-    ];
-    const sc = reqs.reduce((best, r) => (Math.max(r.w, r.wb) > Math.max(best.w, best.wb) ? r : best));
-    u.uScope.value.set(sc.w, sc.amp, sc.cyc, time * 0.9 + g * 30);
-    u.uScopeB.value.set(sc.base, sc.a, sc.harm, sc.b);
-    u.uScopeC.value.set(sc.wb, Math.PI, sc.ratio, 0.8);
+    const hov = (k: string) => (x.hover === k ? 1 : 0);
+    const flyT = x.fly ? smooth(0, 1, x.fly.t) : 0;
+    const flyTo = (...k: StageRouteKind[]) => (x.fly && k.includes(x.fly.kind) ? flyT : 0);
+    const flyKnot = flyTo("software", "project");
+    const flyFan = flyTo("music", "show");
+    const flyOrbit = flyTo("about");
+    const flyHome = flyTo("home");
 
-    // ── code: the white knot in its gutter ──────────────────────────────
-    const ca = x.anchor("code");
-    lissSpin += x.delta * (0.3 + 0.9 * hoverTech + 4 * flyTech + Math.min(Math.abs(x.velocity) / 2500, 1.5));
-    const knotW = Math.max(wc * (ca ? 1 : 0.6), wh * fold);
-    // born at the center from the hero traces, then carried into its gutter
-    const born = { r: M * 0.3 * Math.max(fold, 0.2), x: W * 0.5, y: H * 0.5 };
-    const held = ca
-      ? (() => {
-          const r = Math.min(ca.w * 0.42, H * 0.28);
-          // sticky inside its column: centered on screen while the column spans it
-          return { r, x: ca.x + ca.w / 2, y: Math.min(Math.max(H * 0.5, ca.y + r * 1.15), ca.y + ca.h - r * 1.15) };
-        })()
-      : { r: M * 0.3, x: W * 0.72, y: H * 0.5 };
-    const toGutter = smooth(0, 1, wc / Math.max(wc + wh * fold, 1e-4));
-    const kr = lerp(born.r, held.r, toGutter) * (1 + 2.6 * flyTech * flyTech);
-    const kx = lerp(born.x, held.x, toGutter);
-    const ky = lerp(born.y, held.y, toGutter);
-    u.uLiss.value.set(knotW * 0.95 * (1 - 0.8 * flyTech), 3, 2, time * 0.22 + g * 9);
-    u.uLissB.value.set(lissSpin, kr, TECH(lerp(0.75, 0.98, smooth(0, 0.3, lc))), 0.35 + 0.25 * Math.sin(time * 0.2));
-    u.uLissC.value.set(kx, ky);
+    Object.assign(tgt, ZERO);
+    let merge = 0, ring = 0, resolve = 0;
 
-    // ── music: shimmering fans from the gutter's floor ──────────────────
-    const ma = x.anchor("music");
-    const fx = ma ? ma.x + ma.w / 2 : W * 0.5;
-    const fy = ma ? Math.min(Math.max(ma.y + ma.h, H * 0.55), H * 1.04) : H * 1.04;
-    const drive = 0.38 + 0.3 * hoverSound + 0.6 * flySound;
-    u.uFan.value.set(
-      Math.min(1.2, wm * (0.62 + drive * beat) + flySound),
-      ma ? 6 : 7,
-      (ma ? lerp(0.6, 0.9, lm) : lerp(0.9, 1.35, lm)) * (1 + 1.2 * flySound),
-      0.36 * Math.sin(time * (0.55 + 0.6 * hoverSound) + lm * 7),
-    );
-    u.uFanB.value.set(fx, fy, SOUND(lerp(0.55, 0.75, lm) + 0.15 * beat), H * 1.3);
+    // ── compositions ───────────────────────────────────────────────────
+    if (x.page === "home") {
+      const life = smooth(0.6, 2.6, since);
+      const hS = hov("nav:software"), hM = hov("nav:music"), hA = hov("nav:about");
+      const rule = x.anchor("rule");
+      Object.assign(tgt, {
+        sW: 1, sWB: 1, sBase: rule ? rule.y + rule.h / 2 : H * 0.45, sSplit: rule ? rule.x + rule.w / 2 : W / 2,
+        sAmp: H * 0.02 * life * breathe * (1 + 0.8 * Math.max(hS, hM)), sCyc: 4, sHarm: 0.5,
+        sA: TECH(0.55 + 0.35 * hS), sB: SOUND(0.5 + 0.35 * hM),
+        bright: 0.92, hot: 0.12 + 0.3 * flyT, glitch: 0.012,
+      });
+      const os = x.anchor("opt-software");
+      if (os) Object.assign(tgt, { kW: 0.2 + 0.8 * hS, kX: os.x + os.w / 2, kY: os.y + os.h * 0.36, kR: Math.max(os.h * 0.8, 70), kPal: TECH(0.8 + 0.15 * hS) });
+      const om = x.anchor("opt-music");
+      if (om) Object.assign(tgt, { fW: 0.2 + 0.8 * hM, fX: om.x + om.w / 2, fY: om.y + om.h + H * 0.14, fSpread: 0.75, fLen: H * 0.55, fCount: 5, fPal: SOUND(0.62) });
+      const oa = x.anchor("opt-about");
+      if (oa) {
+        const ur = oa.h * 0.55;
+        Object.assign(tgt, { oW: 0.25 + 0.75 * hA, oX: oa.x + oa.w / 2, oY: oa.y + oa.h * 0.36, oSep: Math.max(oa.w * 0.62, ur * 2) * (1 - 0.35 * hA), oR: ur * 0.55, oA: TECH(0.9), oB: SOUND(0.75) });
+      }
+    } else if (x.page === "software" || x.page === "project") {
+      const detail = x.page === "project";
+      const rule = detail ? null : x.anchor("code-rule");
+      if (rule) Object.assign(tgt, { sW: 1, sBase: rule.y + rule.h / 2, sAmp: H * 0.014, sCyc: 6, sHarm: 0.7, sA: TECH(0.75) });
+      const ca = detail ? null : x.anchor("code");
+      if (ca) {
+        const r = Math.min(ca.w * 0.42, H * 0.28);
+        // sticky inside its gutter: centered on screen while the gutter spans it
+        Object.assign(tgt, { kW: 1, kX: ca.x + ca.w / 2, kY: Math.min(Math.max(H * 0.5, ca.y + r * 1.15), ca.y + ca.h - r * 1.15), kR: r });
+      } else {
+        Object.assign(tgt, { kW: detail ? 0.4 : 0.6, kX: W * 0.8, kY: H * 0.45, kR: M * (detail ? 0.22 : 0.3) });
+      }
+      const hoverProject = x.hover?.startsWith("project:") ? 1 : 0;
+      Object.assign(tgt, { kPal: TECH(0.95), kTilt: 0.35 + 0.6 * p, bright: detail ? 0.9 : 1, hot: 0.18 + 0.25 * hoverProject, glitch: 0.015 });
+    } else if (x.page === "music" || x.page === "show") {
+      const detail = x.page === "show";
+      const rule = detail ? null : x.anchor("music-rule");
+      if (rule) Object.assign(tgt, { sWB: 1, sBase: rule.y + rule.h / 2, sAmp: H * (0.008 + 0.022 * beat), sCyc: 5, sHarm: 0.5, sB: SOUND(0.7) });
+      const ma = detail ? null : x.anchor("music");
+      const hoverShow = x.hover?.startsWith("show:") ? 1 : 0;
+      Object.assign(tgt, {
+        fW: (detail ? 0.4 : 1) * (0.62 + (0.38 + 0.3 * hoverShow) * beat),
+        fX: ma ? ma.x + ma.w / 2 : W * (detail ? 0.8 : 0.5),
+        fY: ma ? Math.min(Math.max(ma.y + ma.h, H * 0.55), H * 1.04) : H * 1.04,
+        fSpread: ma ? lerp(0.6, 0.9, p) : 0.75, fLen: H * 1.3, fCount: 6,
+        fPal: SOUND(lerp(0.55, 0.75, p) + 0.15 * beat),
+        bright: 1.05, hot: 0.22 + 0.25 * beat, glitch: 0.04 + (detail ? 0 : 0.3 * Math.pow(beat, 6)),
+      });
+    } else if (x.page === "about") {
+      const ua = x.anchor("union");
+      let ucx = W * 0.5, ucy = H * 0.5, ur = M * 0.22;
+      if (ua) {
+        const cy = ua.y + ua.h / 2;
+        // spiral in while the about text crosses the screen, merge as it
+        // reaches the upper third, ring down as you read on past it
+        const read = clamp01((H * 0.95 - cy) / (H * 0.7));
+        merge = smooth(0.05, 0.92, read);
+        ucx = ua.x + ua.w / 2;
+        ucy = Math.max(cy, H * 0.25); // rides the text, then holds near the top
+        ur = Math.min(ua.w, ua.h) / 2;
+      }
+      // the ringdown is an event, not a place: once the signals fuse it spreads
+      // on its own clock (scrolling back up before the fusion resets it)
+      if (merge >= 0.97 && lastMerge < 0.97) fuseAt = time;
+      lastMerge = merge;
+      ring = merge >= 0.97 ? (still ? 1 : clamp01((time - fuseAt) / 2.4)) : 0;
+      const fused = smooth(0.88, 1, merge);
+      const floor = x.timelineProgress >= 0 ? 1 : 0;
+      resolve = smooth(0.55, 1, ring) * (1 - floor);
+      Object.assign(tgt, {
+        oW: 1 - fused * smooth(0, 0.12, ring), oX: ucx, oY: ucy,
+        oSep: lerp(ur * 0.56, 0, Math.pow(merge, 1.3)), oR: ur * lerp(0.36, 0.5, merge),
+        oA: TECH(0.95), oB: SOUND(lerp(0.62, 0.9, merge)),
+        rW: smooth(0, 0.05, ring) * (1 - ring) * (1 - floor), rR: ring * Math.hypot(W, H) * 0.75, rPal: SOUND(lerp(0.98, 0.3, ring)),
+        // the one calm trace — the timeline floor's horizon when it arrives
+        sW: Math.max(resolve, 0.6 * floor), sBase: H * 0.56, sAmp: H * 0.02 * (1 - floor), sCyc: 1.2, sA: SOUND(0.97),
+        gW: floor * 0.7, gRails: floor, gGap: W * 0.34 * (1 - 0.88 * smooth(0, 1, Math.max(x.timelineProgress, 0))),
+        bright: lerp(0.95, 0.82, floor), hot: lerp(0.2, 0.08, floor) + 0.5 * fused * (1 - ring),
+        glitch: lerp(0.015, 0.05, floor) * (1 - 0.95 * resolve),
+      });
+    }
+
+    // ── transitions: the figure you picked bursts on the way out ───────
+    tgt.kR *= 1 + 2.6 * flyKnot * flyKnot;
+    tgt.kW *= 1 - 0.75 * flyKnot;
+    tgt.fW = Math.min(1.2, tgt.fW + flyFan);
+    tgt.fSpread *= 1 + 1.2 * flyFan;
+    tgt.oW = Math.min(1.2, tgt.oW + flyOrbit);
+    tgt.oSep *= 1 - 0.8 * flyOrbit;
+    tgt.sAmp *= 1 + 2 * flyHome;
+
+    // ── damp toward the page's targets ─────────────────────────────────
+    const dt = Math.min(x.delta, 0.1);
+    if (!cur || dt <= 0) cur = { ...tgt }; // first frame / reduced motion: no glide
+    else {
+      const glide = since < 1.1 ? 4 : 14; // arrive slowly, then track anchors closely
+      for (const k of KEYS) {
+        const wk = WEIGHT_OF[k];
+        // a figure that was invisible takes its place instead of sliding in
+        if (wk && cur[wk] < 0.02) cur[k] = tgt[k];
+        else cur[k] += (tgt[k] - cur[k]) * (1 - Math.exp(-(SLOW.has(k) ? 5 : glide) * dt));
+      }
+    }
+
+    // ── write the uniforms ──────────────────────────────────────────────
+    const c = cur;
+    u.uScope.value.set(c.sW, c.sAmp, c.sCyc, time * 0.9 + p * 12);
+    u.uScopeB.value.set(c.sBase, c.sA, c.sHarm, c.sB);
+    u.uScopeC.value.set(c.sWB, Math.PI, 1.5, 0.8);
+    u.uScopeD.value.set(tgt.sSplit >= 0 ? c.sSplit : -1, W * 0.14, 0, 0);
+
+    const spinUp = x.hover?.startsWith("project:") || x.hover === "nav:software" ? 1 : 0;
+    lissSpin += dt * (0.3 + 0.9 * spinUp + 4 * flyKnot + Math.min(Math.abs(x.velocity) / 2500, 1.5));
+    u.uLiss.value.set(c.kW * 0.95, 3, 2, time * 0.22 + p * 6);
+    u.uLissB.value.set(lissSpin, c.kR, c.kPal, c.kTilt + 0.2 * Math.sin(time * 0.2));
+    u.uLissC.value.set(c.kX, c.kY);
+
+    u.uFan.value.set(c.fW, Math.round(c.fCount), c.fSpread, 0.36 * Math.sin(time * 0.55 + p * 7));
+    u.uFanB.value.set(c.fX, c.fY, c.fPal, c.fLen);
     u.uFanC.value.set(0.42, 0, 0, 0); // beams span the sound scale, edge to edge
 
-    // ── timeline: grey floor, a white and a shimmering rail converging ──
-    const tp = x.timelineProgress >= 0 ? x.timelineProgress : local("timeline");
-    const vx = W * (0.5 + 0.18 * (0.5 - tp));
-    u.uGridL.value.set(wt * 0.7, H * 0.56, tp * 14 + time * 0.12, TECH(0.32));
-    u.uGridB.value.set(vx, W * 0.085, 1.1, 0);
-    u.uRails.value.set(wt, W * 0.34 * (1 - 0.88 * smooth(0, 1, tp)), TECH(0.95), SOUND(0.8));
+    orbitPhase += dt * (0.6 + 7 * merge * merge);
+    u.uOrbit.value.set(c.oW, c.oSep, orbitPhase, c.oR);
+    u.uOrbitB.value.set(c.oX, c.oY, c.oA, c.oB);
+    u.uRingL.value.set(c.rW, c.rR, c.rPal, 0);
 
-    // ── mood: brightness, white-hot core, glitch ────────────────────────
-    const ws: [string, number][] = [["hero", wh], ["code", wc], ["music", wm], ["timeline", wt], ["epilogue", we]];
-    let sw = 0, br = 0, hot = 0, gb = 0;
-    for (const [id, wi] of ws) {
-      const [b0, h0, g0] = MOOD[id];
-      sw += wi; br += b0 * wi; hot += h0 * wi; gb += g0 * wi;
-    }
-    sw = Math.max(sw, 1e-4);
-    out.brightness = br / sw;
-    out.hot = hot / sw + 0.5 * fused * (1 - ring) + 0.25 * beat * wm + 0.25 * hoverTech * wc + 0.6 * flyT;
+    const tp = Math.max(x.timelineProgress, 0);
+    u.uGridL.value.set(c.gW, H * 0.56, tp * 14 + time * 0.12, TECH(0.32));
+    u.uGridB.value.set(W * (0.5 + 0.18 * (0.5 - tp)), W * 0.085, 1.1, 0);
+    u.uRails.value.set(c.gRails, c.gGap, TECH(0.95), SOUND(0.8));
+
+    // ── mood + glitch ───────────────────────────────────────────────────
     const speed = Math.min(Math.abs(x.velocity) / 3000, 1);
-    let edge = 0;
-    for (let i = 1; i < bounds.length; i++) edge = Math.max(edge, Math.exp(-(((g - bounds[i]) / 0.007) ** 2)));
-    const burstG = hash(Math.floor(time * 4)) > 0.975 ? 0.45 : 0;
-    const kick = wm * Math.pow(beat, 6) * 0.35;
-    out.glitch = clamp01((gb / sw + 0.45 * speed + 0.5 * edge + burstG + kick + 0.8 * flyT) * (1 - 0.95 * resolve));
-    if (merge >= 0.97 && lastMerge < 0.97) fuseAt = time;
-    lastMerge = merge;
-    out.burst = we * 0.5 * Math.exp(-Math.max(0, time - fuseAt) * 3.5);
+    const rare = hash(Math.floor(time * 4)) > 0.975 ? 0.4 : 0;
+    out.brightness = c.bright;
+    out.hot = c.hot;
+    out.glitch = clamp01((c.glitch + 0.45 * speed + 0.45 * arrive + rare + 0.8 * flyT) * (1 - 0.95 * resolve));
+    out.burst = x.page === "about" ? 0.5 * Math.exp(-Math.max(0, time - fuseAt) * 3.5) : 0;
     u.uJitter.value.set(Math.sin(time * 37) * 0.35 + (hash(time * 60) - 0.5) * 6 * out.glitch, Math.cos(time * 23) * 0.25);
     u.uLaserTime.value = time;
     return out;
+  };
+}
+
+/** The director's inputs from the journey store (shared by the 3D and 2D tiers). */
+export function laserInputFrom(
+  st: {
+    globalProgress: number;
+    timelineProgress: number;
+    velocity: number;
+    focus: { route: { kind: StageRouteKind }; hover: string | null; fly: { kind: StageRouteKind; start: number } | null };
+  },
+  now: number,
+  delta: number,
+  viewW: number,
+  viewH: number,
+  anchor: (id: string) => AnchorRect | null,
+  flyMs: number,
+): LaserInput {
+  const { route, hover, fly } = st.focus;
+  return {
+    page: route.kind,
+    p: st.globalProgress,
+    timelineProgress: st.timelineProgress,
+    velocity: st.velocity,
+    time: now / 1000,
+    delta,
+    viewW,
+    viewH,
+    anchor,
+    hover,
+    fly: fly ? { kind: fly.kind, t: (now - fly.start) / flyMs } : null,
   };
 }

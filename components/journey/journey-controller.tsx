@@ -32,7 +32,7 @@ import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
 gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
 
 import { useGSAP } from "@gsap/react";
-import { chapters } from "@/lib/chapters";
+import { chapters as allChapters } from "@/lib/chapters";
 import { journey } from "@/lib/journey-store";
 
 const BLEND_BAND = 0.15; // fraction of a chapter's scroll span used to cross-fade
@@ -42,12 +42,24 @@ const SNAP_MAGNET_VH = 0.2;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
+/** the chapters on this page, in document order */
+function presentChapters() {
+  const el = (id: string) => document.getElementById(id)!;
+  return allChapters
+    .filter((c) => document.getElementById(c.id))
+    .sort((a, b) => (el(a.id).compareDocumentPosition(el(b.id)) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+}
+
 export default function JourneyController() {
   useGSAP(() => {
     const mm = gsap.matchMedia();
 
     // ── no-preference branch ──────────────────────────────────────────────────
     mm.add("(prefers-reduced-motion: no-preference)", () => {
+      // each section page carries a subset of the chapters, in its own order
+      // (about puts the epilogue before the timeline) — measure those, top-down
+      const chapters = presentChapters();
+      journey.setIds(chapters.map((c) => c.id));
       const lastIndex = chapters.length - 1;
 
       // normalized scroll-start of each chapter over the global range; recomputed
@@ -353,7 +365,7 @@ export default function JourneyController() {
           for (const entry of entries) {
             if (!entry.isIntersecting) continue;
             const id = (entry.target as HTMLElement).id;
-            const idx = chapters.findIndex((c) => c.id === id);
+            const idx = presentChapters().findIndex((c) => c.id === id);
             if (idx !== -1) journey.setChapter(idx);
           }
         },
