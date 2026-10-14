@@ -4,7 +4,7 @@
 // Single source of truth for scroll→store state. Registers:
 //   1. one global #journey trigger that, each frame, derives which chapter we're
 //      in and the cross-chapter blend from precomputed boundary offsets, writes
-//      them to the journey store + a --journey-progress CSS var. No snapping:
+//      them to the journey store. No snapping:
 //      scroll behaves the same on every device. It refreshes last (refreshPriority -1) so its range and the chapter
 //      bounds include the timeline pin's spacer.
 //   2. one scrubbed reveal timeline per chapter ([data-reveal] autoAlpha + y).
@@ -46,8 +46,41 @@ function presentChapters() {
     .sort((a, b) => (el(a.id).compareDocumentPosition(el(b.id)) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
 }
 
+// Has a controller set up on this page load yet? The first one (hydration)
+// sets up synchronously, so no content is ever painted before its entrance
+// state is set. Later ones arrive by client navigation.
+let hydrated = false;
+
 export default function JourneyController() {
   useGSAP(() => {
+    // On a client navigation React commits the new page inside a view
+    // transition's update step, and the screen holds a frozen snapshot until
+    // that step returns. This setup (every trigger and split measured, ~25 ms
+    // in production, far more in dev or on slow machines) used to run in
+    // there and freeze the whole screen, stage included. It now waits one
+    // frame: the transition is already playing by then, and the new page is
+    // still invisible (globals.css vt-in: a 120 ms delay at opacity 0), so its
+    // entrance states are set before it can be seen.
+    const defer = hydrated && typeof document.startViewTransition === "function";
+    hydrated = true;
+    if (!defer) {
+      const mm = setup();
+      return () => mm.revert();
+    }
+    let mm: gsap.MatchMedia | null = null;
+    const raf = requestAnimationFrame(() => {
+      mm = setup();
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      mm?.revert();
+    };
+  });
+
+  return null;
+}
+
+function setup(): gsap.MatchMedia {
     const mm = gsap.matchMedia();
 
     // ── no-preference branch ──────────────────────────────────────────────────
@@ -89,8 +122,9 @@ export default function JourneyController() {
           computeBounds(self.start, self.end);
         },
         onUpdate(self) {
+          // (no CSS var: a per-frame write on <html> re-styled the whole page
+          // every scroll frame, and nothing read it)
           const g = self.progress;
-          document.documentElement.style.setProperty("--journey-progress", String(g));
 
           // segment i: the chapter whose [bounds[i], bounds[i+1]) contains g
           let i = 0;
@@ -323,10 +357,10 @@ export default function JourneyController() {
 
       // ── transition points ([data-tp]: section labels, the next-section
       //    handoff) — a shimmer draws through each as it comes into view
-      //    (globals.css .tp-line), and each drifts on its own plane: a scrubbed,
-      //    sine-eased offset slows it as it crosses the middle of the screen and
-      //    lets it catch up after, so the page's momentum varies as you pass
-      //    from one section into the next
+      //    (globals.css .tp-line), and each slides in from the page's left edge
+      //    as it enters the lower screen, lands in line with the text by the
+      //    time it reaches ~60% of the way up, and rests there. Horizontal only,
+      //    so it never overlaps the text above or below.
       gsap.utils.toArray<HTMLElement>("[data-tp]").forEach((el) => {
         const lit = ScrollTrigger.create({
           trigger: el,
@@ -334,16 +368,24 @@ export default function JourneyController() {
           onEnter: () => el.classList.add("tp-on"),
           onLeaveBack: () => el.classList.remove("tp-on"),
         });
+        // start at the viewport's left border, measured without our own offset
+        const fromEdge = () => -(el.getBoundingClientRect().left - (gsap.getProperty(el, "x") as number));
         const drift = gsap.fromTo(
           el,
-          { y: -36 },
-          { y: 36, ease: "sine.inOut", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 0.8 } },
+          { x: fromEdge, autoAlpha: 0 },
+          {
+            x: 0,
+            autoAlpha: 1,
+            ease: "power3.out",
+            immediateRender: false,
+            scrollTrigger: { trigger: el, start: "top bottom", end: "top 60%", scrub: 0.6, invalidateOnRefresh: true },
+          },
         );
         cleanup.push(() => {
           lit.kill();
           drift.scrollTrigger?.kill();
           drift.kill();
-          gsap.set(el, { clearProps: "transform" });
+          gsap.set(el, { clearProps: "transform,opacity,visibility" });
           el.classList.remove("tp-on");
         });
       });
@@ -384,7 +426,6 @@ export default function JourneyController() {
 
       return () => observer.disconnect();
     });
-  });
 
-  return null;
+    return mm;
 }

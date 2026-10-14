@@ -29,7 +29,11 @@ import { createLaserPainter, type TitleMask } from "@/lib/ascii-engine/laser-pai
 import { LASER_DOT, LASER_STROKES } from "@/lib/ascii-engine/laser-cpu";
 import { readAnchor } from "@/lib/laser-anchors";
 
-const FRAME_MS = 33;
+// the worker paints every display frame (a frame still waits while it's busy
+// with the last); painting on the page's own thread is held to 60 fps so it
+// never competes with scrolling. Motion is time-based either way.
+const FRAME_MS_WORKER = 0;
+const FRAME_MS_MAIN = 16;
 // a gentle vignette — figures live in the gutters and rise from the floor now
 const MASK = "radial-gradient(ellipse 125% 115% at 50% 45%, black 58%, transparent 100%)";
 
@@ -194,9 +198,10 @@ export default function Laser2D() {
     };
 
     resize();
-    // motion: ~30fps. reduced motion: no clock — redraw only when something the
-    // figures depend on changes (scroll moves their anchors, route, hover, size).
-    // A frame waits while the worker is still painting the last one.
+    // motion: the display's rate in the worker, 60 fps on the main thread.
+    // reduced motion: no clock — redraw only when something the figures depend
+    // on changes (scroll moves their anchors, route, hover, size). A frame waits
+    // while the worker is still painting the last one.
     let raf = 0;
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
@@ -206,7 +211,7 @@ export default function Laser2D() {
         const next = `${Math.round(window.scrollY)}|${st.focus.route.kind}|${st.focus.hover}|${W}x${H}|${st.timelineProgress}`;
         if (next === sig) return;
         sig = next;
-      } else if (now - last < FRAME_MS) return;
+      } else if (now - last < (worker ? FRAME_MS_WORKER : FRAME_MS_MAIN) - 1) return;
       draw(now);
     };
     const onResize = () => {

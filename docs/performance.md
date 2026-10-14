@@ -73,3 +73,51 @@ profile and `BASE=` to point it elsewhere.
 On project pages, LCP is now the description fading in. Chrome counts a CSS
 fade-in toward LCP but ignored framer's script-driven one. The fade is the
 same, and it now starts at first paint rather than after hydration.
+
+## Frame rate pass (2026-10-14)
+
+Measured on production builds in Chromium on the real GPU (ANGLE Metal, M4
+Pro, 120 Hz), 1440×900 at 2×, with scripted wheel scrolling. "6× CPU" is
+Chromium's CPU throttle, standing in for an older or battery-throttled laptop.
+
+| | before | after |
+|---|---|---|
+| Scroll at 6× CPU | 87 fps, p95 24.6 ms | 120 fps, p95 9.3 ms |
+| Scroll at 4× CPU | 108 fps, p95 16.7 ms | 120 fps, p95 9.2 ms |
+| Style recalc while scrolling, 1× / 6× CPU | 150 / 411 ms per s | 20 / 69 ms per s |
+| Style recalc idle, /software | 266 ms per s | 7 ms per s |
+| 2D tier, frames painted | 29 per s | 110–120 per s |
+| Click to new page | 280 ms hold + render | render only (65–140 ms in dev) |
+
+- **The shimmer runs on one clock** (`components/shimmer-clock.tsx`). The
+  iridescent keyframes (`sheen`, `pill-hue-cycle`, `iri-cycle`,
+  `subtitle-pulse`) animate colors and registered custom properties, which the
+  compositor can't run. Every running one forced a style recalc of its element
+  every frame, off screen or not: 50 on /software. They're now paused CSS
+  animations stepped at 20 Hz, only while on screen. Keyframes, durations,
+  easing and per-element phase offsets are unchanged. A 4–6 s drift moves well
+  under 1% of its range per step. Stepped CSS timing (`steps()`) doesn't help:
+  Blink still recalculates every frame.
+- **No per-frame CSS variable on `<html>`.** The journey controller wrote
+  `--journey-progress` to the root element on every scroll frame, which
+  re-styles the whole document. Nothing read it.
+- **The 2D tier paints at the display's rate.** It was capped at ~30 fps
+  (`FRAME_MS = 33`). The worker now paints every frame, still waiting while
+  busy. The main-thread fallback is held to 60 fps.
+- **Navigation is immediate.** Clicks used to wait `TRANSITION_MS` (280 ms)
+  for the figure's burst before routing. The burst and the click's wave now
+  play over the route change. The wave's reach is capped (`waveReach` in
+  `lib/director/laser.ts`).
+
+Still open: each page change has one 24–34 ms frame (1× CPU), mostly GSAP
+ScrollTrigger's setup re-measure. Each of ~25–30 triggers reads scroll
+position after the previous one wrote styles, which forced ~60 layouts in that
+frame. Batching the per-element reveal triggers would cut it, but changes how
+entrances behave.
+
+Scripts (gitignored, `e2e/_vt/`): `frames.mjs` (scroll + nav frame stats),
+`stress.mjs` (window sizes, CPU throttle), `stagefps.mjs` (frames the stage
+presents per tier), `style.mjs` / `style2.mjs` (style cost and fixes),
+`stylewrites.mjs`, `htmlstyle.mjs`, `navstress.mjs`, `navtrace.mjs`
+(transition frames and forced-layout callers). Run against a production build
+beside `next dev` with `NEXT_DIST_DIR=.next-prod` (see `next.config.ts`).

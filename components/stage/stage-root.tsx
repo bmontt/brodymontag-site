@@ -19,18 +19,17 @@
 // logged once to the console.
 //
 // Pages: the landing (/), the sections (/software, /music, /about) and the
-// detail pages. Following an internal link to another page bursts the picked
-// figure for TRANSITION_MS, then navigates; the persistent stage morphs into
-// the new page's composition (lib/director/laser.ts). Hovering or focusing a
+// detail pages. Following an internal link navigates immediately; the picked
+// figure bursts for TRANSITION_MS over the change and the persistent stage
+// morphs into the new page's composition (lib/director/laser.ts). Hovering or focusing a
 // [data-stage-id] entry stirs its figure.
 
 import { Component, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Laser2D from "@/components/stage/laser-2d";
 import { journey, type StageRouteKind } from "@/lib/journey-store";
 import { panelIndexBySlug, pillarIndexBySlug } from "@/lib/director/layouts";
-import { TRANSITION_MS } from "@/lib/director/laser";
 import { installStageInput } from "@/lib/stage-input";
 import { flag } from "@/lib/flags";
 
@@ -107,7 +106,6 @@ function routeOf(pathname: string): { kind: StageRouteKind; index: number } | nu
 
 export default function StageRoot() {
   const pathname = usePathname();
-  const router = useRouter();
   const [tier, setTier] = useState<Tier | null>(null);
   const [reason, setReason] = useState("pending");
   const [stageReady, setStageReady] = useState(false);
@@ -194,9 +192,10 @@ export default function StageRoot() {
     };
   }, [tier]);
 
-  // follow an internal link to another page → the picked figure bursts for a
-  // beat, then the route changes (the stage persists and morphs into the new
-  // page). Skipped under reduced motion and until a stage is drawing.
+  // follow an internal link to another page → the route changes at once (the
+  // Link navigates as normal) and the picked figure's burst and the click's
+  // wave play over the change: the stage persists and morphs into the new page.
+  // Skipped under reduced motion and until a stage is drawing.
   useEffect(() => {
     if (!tier) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -208,18 +207,15 @@ export default function StageRoot() {
       if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
       const r = routeOf(url.pathname);
       if (!r || flying.current) return;
-      e.preventDefault();
-      e.stopPropagation(); // keep the Link from navigating before the beat lands
       flying.current = true;
       // the transition's wave starts where you clicked (keyboard: the link itself)
       const box = a.getBoundingClientRect();
       const origin = e.detail === 0 ? { x: box.left + box.width / 2, y: box.top + box.height / 2 } : { x: e.clientX, y: e.clientY };
       journey.setFly(r.kind, r.index, origin);
-      window.setTimeout(() => router.push(url.pathname + url.search + url.hash), TRANSITION_MS);
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
-  }, [tier, router]);
+  }, [tier]);
 
   // pointer + grabbing the knot (flag: drag) — both tiers draw the laser layer
   useEffect(() => {

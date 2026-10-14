@@ -89,15 +89,17 @@ test("2D tier: project links navigate normally", async ({ page }) => {
   await expect(page.locator("h1")).toBeVisible();
 });
 
-test("3D tier: picking a section bursts its figure, then the page changes", async ({ page }) => {
+test("3D tier: picking a section changes the page at once, its figure bursting over the change", async ({ page }) => {
   const errors = trackErrors(page);
   await page.goto("/?tier=3d&debug");
   await waitForStage(page);
+  const t0 = Date.now();
   await page.locator('[data-stage-id="nav:software"]').click();
-  // the beat: the burst plays on the landing before the route changes
-  await page.waitForTimeout(100);
-  expect(new URL(page.url()).pathname).toBe("/");
-  await expect(page).toHaveURL(/\/software$/);
+  // navigation is immediate: no beat held back before the route changes
+  await expect(page).toHaveURL(/\/software$/, { timeout: 1500 });
+  expect(Date.now() - t0).toBeLessThan(1500);
+  // the click-to-fly survives the route change, so the burst plays over it
+  await expect.poll(async () => (await stageDebug(page)).focus.fly, { timeout: 400, intervals: [20] }).toBe(true);
   await expect.poll(async () => (await stageDebug(page)).focus.route).toBe("software:-1");
   // and on into a project
   const link = page.locator('[data-stage-id^="project:"] a[href^="/projects/"]').first();

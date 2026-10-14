@@ -21,6 +21,10 @@ export interface ChapterBlend {
 /** which page the stage is on: the landing, a section page, or a detail page */
 export type StageRouteKind = "home" | "software" | "music" | "about" | "project" | "show";
 
+/** a click-to-fly younger than this survives the route change it causes
+ *  (covers the 280 ms burst and the 650 ms camera fly to a detail page) */
+const FLY_KEEP_MS = 700;
+
 interface JourneyState {
   /** 0–1 progress through the whole #journey scroll range */
   globalProgress: number;
@@ -129,7 +133,10 @@ export const journey = {
 
   setRoute(kind: StageRouteKind, index = -1) {
     state.focus.route = { kind, index };
-    state.focus.fly = null;
+    // a click-to-fly that just started keeps playing over the route change
+    // (navigation is immediate); a stale one is dropped
+    const fly = state.focus.fly;
+    if (fly && performance.now() - fly.start > FLY_KEEP_MS) state.focus.fly = null;
     // a new page starts at its top; its controller (if any) reports from here
     state.globalProgress = 0;
     state.velocity = 0;

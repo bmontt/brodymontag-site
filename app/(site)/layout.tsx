@@ -6,11 +6,18 @@
 
 import StageRoot from "@/components/stage/stage-root";
 import SmoothScroll from "@/components/smooth-scroll";
+import ShimmerClock from "@/components/shimmer-clock";
+
+// The pages are prerendered, and "next up", the gigs list and the now lines
+// depend on today's date (lib/timeline.ts isFuture): re-render hourly so a
+// show moves from upcoming to played without a redeploy.
+export const revalidate = 3600;
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <SmoothScroll />
+      <ShimmerClock />
       <StageRoot />
       {children}
     </>

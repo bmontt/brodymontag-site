@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // a second output folder lets a production build run beside `next dev`
+  // (NEXT_DIST_DIR=.next-prod next build && NEXT_DIST_DIR=.next-prod next start)
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
     // AVIF first (smaller at the same quality), WebP for browsers without it
