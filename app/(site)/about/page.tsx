@@ -8,6 +8,8 @@ import PresenceGrid from "@/components/journey/presence-grid";
 import { AsciiRule, SectionLabel, SiteFooter } from "@/components/journey/section-bits";
 import { renderInline } from "@/components/rich-text";
 import { getChapter } from "@/lib/chapters";
+import NextSection from "@/components/journey/next-section";
+import { nowLines } from "@/lib/now";
 import { content } from "@/lib/content";
 
 // ── /about ────────────────────────────────────────────────────────────────────
@@ -28,7 +30,7 @@ export default function AboutPage() {
       <SiteNav />
       <main id="journey">
         {/* ── epilogue (about · contact · presence) ────────────────── */}
-        <Chapter {...ch}>
+        <Chapter {...ch} opener={{ index: "03", title: "about me", tone: "text-blend", now: nowLines().about }}>
           <div className="mx-auto flex max-w-5xl flex-col gap-20">
             {/* about */}
             <div className="flex items-start justify-between gap-12">
@@ -134,6 +136,8 @@ export default function AboutPage() {
 
         {/* ── coda: the timeline, 2021 → now ───────────────────────── */}
         <TimelineSection />
+
+        <NextSection href="/" id="home" word="start over" tone="text-foreground" caption="back to the split" />
       </main>
       <SiteFooter />
     </JourneyRoot>

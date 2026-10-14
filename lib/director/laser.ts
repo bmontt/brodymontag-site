@@ -49,7 +49,7 @@ const hash = (n: number) => {
 };
 
 /** the exit beat: how long a picked figure bursts before the page changes */
-export const TRANSITION_MS = 420;
+export const TRANSITION_MS = 280;
 
 /** palette coordinates on the two scales (t: 0 dark → 1 brightest) */
 export const TECH = (t: number) => clamp01(t) * 0.499;
@@ -146,6 +146,16 @@ export function createLaserDirector() {
 
     Object.assign(tgt, ZERO);
     let merge = 0, ring = 0, resolve = 0;
+    // section openers: the figure starts large in the opening screen, then is
+    // carried into its gutter as the opener scrolls away
+    const op = x.anchor("opener");
+    const inOpener = op ? 1 - smooth(H * 0.3, H * 0.95, -op.y) : 0;
+    const opCy = op ? op.y + op.h * 0.5 : H * 0.5;
+    // the next section's word, near the bottom: its figure starts to appear
+    const nextVis = (id: string) => {
+      const r = x.anchor(id);
+      return r ? { r, v: smooth(H * 1.05, H * 0.45, r.y) } : null;
+    };
 
     // ── compositions ───────────────────────────────────────────────────
     if (x.page === "home") {
@@ -179,6 +189,15 @@ export function createLaserDirector() {
       } else {
         Object.assign(tgt, { kW: detail ? 0.4 : 0.6, kX: W * 0.8, kY: H * 0.45, kR: M * (detail ? 0.22 : 0.3) });
       }
+      if (inOpener > 0) {
+        // the opener: a big knot to the right of the title
+        tgt.kW = 1;
+        tgt.kX = lerp(tgt.kX, W * 0.72, inOpener);
+        tgt.kY = lerp(tgt.kY, opCy, inOpener);
+        tgt.kR = lerp(tgt.kR, Math.min(M * 0.36, W * 0.22), inOpener);
+      }
+      const nx = nextVis("next-music");
+      if (nx && nx.v > 0) Object.assign(tgt, { fW: 0.7 * nx.v, fX: nx.r.x + nx.r.w * 0.3, fY: nx.r.y + nx.r.h + H * 0.12, fSpread: 0.8, fLen: H * 0.6, fCount: 5, fPal: SOUND(0.62) });
       const hoverProject = x.hover?.startsWith("project:") ? 1 : 0;
       Object.assign(tgt, { kPal: TECH(0.95), kTilt: 0.35 + 0.6 * p, bright: detail ? 0.9 : 1, hot: 0.18 + 0.25 * hoverProject, glitch: 0.015 });
     } else if (x.page === "music" || x.page === "show") {
@@ -195,6 +214,18 @@ export function createLaserDirector() {
         fPal: SOUND(lerp(0.55, 0.75, p) + 0.15 * beat),
         bright: 1.05, hot: 0.22 + 0.25 * beat, glitch: 0.04 + (detail ? 0 : 0.3 * Math.pow(beat, 6)),
       });
+      if (inOpener > 0) {
+        // the opener: a wide fan rising behind the title from the floor
+        tgt.fX = lerp(tgt.fX, W * 0.7, inOpener);
+        tgt.fY = lerp(tgt.fY, op!.y + op!.h * 1.02, inOpener);
+        tgt.fSpread = lerp(tgt.fSpread, 1.15, inOpener);
+        tgt.fCount = inOpener > 0.5 ? 7 : 6;
+      }
+      const nx = nextVis("next-epilogue");
+      if (nx && nx.v > 0) {
+        const ur = nx.r.h * 0.5;
+        Object.assign(tgt, { oW: 0.7 * nx.v, oX: nx.r.x + nx.r.w * 0.45, oY: nx.r.y + nx.r.h * 0.4, oSep: Math.max(nx.r.w * 0.5, ur * 2), oR: ur * 0.5, oA: TECH(0.9), oB: SOUND(0.75) });
+      }
     } else if (x.page === "about") {
       const ua = x.anchor("union");
       let ucx = W * 0.5, ucy = H * 0.5, ur = M * 0.22;
@@ -213,6 +244,12 @@ export function createLaserDirector() {
       if (merge >= 0.97 && lastMerge < 0.97) fuseAt = time;
       lastMerge = merge;
       ring = merge >= 0.97 ? (still ? 1 : clamp01((time - fuseAt) / 2.4)) : 0;
+      if (inOpener > 0) {
+        // the opener: the two rings orbit wide to the right of the title
+        ucx = lerp(ucx, W * 0.72, inOpener);
+        ucy = lerp(ucy, opCy, inOpener);
+        ur = lerp(ur, M * 0.3, inOpener);
+      }
       const fused = smooth(0.88, 1, merge);
       const floor = x.timelineProgress >= 0 ? 1 : 0;
       resolve = smooth(0.55, 1, ring) * (1 - floor);

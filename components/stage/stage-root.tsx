@@ -191,7 +191,7 @@ export default function StageRoot() {
   return (
     <>
       {!canvas2dGone && (
-        <div style={{ opacity: stageReady ? 0 : 1, transition: `opacity ${CROSSFADE_MS}ms ease` }}>
+        <div style={{ opacity: stageReady ? 0 : 1, transition: `opacity ${CROSSFADE_MS}ms ease`, viewTransitionName: "stage-2d" }}>
           <Laser2D />
         </div>
       )}
@@ -204,6 +204,8 @@ export default function StageRoot() {
             transition: `opacity ${CROSSFADE_MS}ms ease`,
             maskImage: MASK,
             WebkitMaskImage: MASK,
+            // one continuous piece across pages: kept live, outside the page crossfade
+            viewTransitionName: "stage-3d",
           }}
         >
           <StageBoundary onError={() => onLost("context-failed")}>

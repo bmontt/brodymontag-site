@@ -4,7 +4,8 @@
 // Each half lives on its own page: /software, /music, /about.
 
 import Landing from "@/components/landing";
+import { nowLines } from "@/lib/now";
 
 export default function Home() {
-  return <Landing />;
+  return <Landing now={nowLines()} />;
 }

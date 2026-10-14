@@ -223,3 +223,52 @@ html, body { overflow-x: clip; }
   }
   .text-shimmer { color: oklch(0.84 0.09 265); }
 }
+
+/* ── page transitions (React <ViewTransition> on the View Transitions API) ──
+   The picked word morphs into the next page's title (.morph); the rest of the
+   page leaves and arrives as a whole (.page-exit / .page-enter). The stage is
+   one continuous piece — kept live and outside the snapshot crossfade. */
+::view-transition-group(.morph) {
+  animation-duration: 620ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-image-pair(.morph) {
+  animation-name: vt-blur;
+}
+@keyframes vt-blur {
+  40% { filter: blur(5px); }
+}
+::view-transition-old(.page-exit) {
+  animation: 240ms ease-in both vt-out;
+}
+::view-transition-new(.page-enter) {
+  animation: 520ms 120ms cubic-bezier(0.22, 1, 0.36, 1) both vt-in;
+}
+@keyframes vt-out {
+  to { opacity: 0; filter: blur(6px); transform: translateY(-12px); }
+}
+@keyframes vt-in {
+  from { opacity: 0; filter: blur(6px); transform: translateY(22px); }
+}
+::view-transition-group(stage-3d),
+::view-transition-group(stage-2d),
+::view-transition-new(stage-3d),
+::view-transition-new(stage-2d) {
+  animation: none;
+}
+::view-transition-old(stage-3d),
+::view-transition-old(stage-2d) {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* the live dot beside each "now" line */
+.now-pulse { animation: now-pulse 2.4s ease-in-out infinite; }
+@keyframes now-pulse { 50% { opacity: 0.3; } }
+@media (prefers-reduced-motion: reduce) { .now-pulse { animation: none; } }

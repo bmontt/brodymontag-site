@@ -97,8 +97,9 @@ test("3D tier: picking a section bursts its figure, then the page changes", asyn
   await page.goto("/?tier=3d&debug");
   await waitForStage(page);
   await page.locator('[data-stage-id="nav:software"]').click();
-  // the beat: still on the landing, transition in flight
-  await expect.poll(async () => (await stageDebug(page)).focus.fly, { timeout: 2000 }).toBe(true);
+  // the beat: the burst plays on the landing before the route changes
+  await page.waitForTimeout(100);
+  expect(new URL(page.url()).pathname).toBe("/");
   await expect(page).toHaveURL(/\/software$/);
   await expect.poll(async () => (await stageDebug(page)).focus.route).toBe("software:-1");
   // and on into a project

@@ -6,6 +6,8 @@ import ProjectCard from "@/components/cards/project-card";
 import ExperienceCard from "@/components/cards/experience-card";
 import StackGrid from "@/components/cards/stack-grid";
 import { SectionLabel, SiteFooter } from "@/components/journey/section-bits";
+import NextSection from "@/components/journey/next-section";
+import { nowLines } from "@/lib/now";
 import { getChapter } from "@/lib/chapters";
 import { projects } from "@/lib/projects";
 import { experience } from "@/lib/stack-data";
@@ -26,7 +28,7 @@ export default function SoftwarePage() {
       <SiteNav />
       <main id="journey">
         {/* ── code · work · CS ─────────────────────────────────────── */}
-        <Chapter {...ch} figure>
+        <Chapter {...ch} figure opener={{ index: "01", title: "software", tone: "text-foreground", now: nowLines().software }}>
           <div className="flex flex-col gap-16">
             <div>
               <SectionLabel>projects</SectionLabel>
@@ -56,6 +58,7 @@ export default function SoftwarePage() {
             </div>
           </div>
         </Chapter>
+        <NextSection href="/music" id="music" word="music" tone="text-shimmer" caption="rooms, records, the collective" />
       </main>
       <SiteFooter />
     </JourneyRoot>
