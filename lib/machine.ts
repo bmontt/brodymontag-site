@@ -83,7 +83,7 @@ export function machineText(): string {
   for (const m of c.music.collective.meta) push(dots(m.label) + m.value);
 
   push("", "## about");
-  for (const s of c.about.sections) push(`### ${s.title}`, plainLinks(s.body), "");
+  for (const p of c.about.paragraphs) push(plainLinks(p), "");
   push("## contact");
   for (const i of c.contact.items) push(dots(i.label) + i.value);
   push("", "## presence");
