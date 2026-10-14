@@ -32,7 +32,7 @@ export default function AboutPage() {
       <SiteNav />
       <main id="journey">
         {/* ── epilogue (about · contact · presence) ────────────────── */}
-        <Chapter {...ch} opener={flag("openers") ? { index: "03", title: "about me", tone: "text-blend", now: flag("now") ? nowLines().about : undefined } : undefined}>
+        <Chapter {...ch} opener={flag("openers") ? { back: "/", index: "03", title: "about me", tone: "text-blend", now: flag("now") ? nowLines().about : undefined } : undefined}>
           <div className="mx-auto flex max-w-5xl flex-col gap-20">
             {/* about */}
             <div className="flex items-start justify-between gap-12">

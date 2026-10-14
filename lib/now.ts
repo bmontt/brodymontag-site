@@ -4,7 +4,6 @@
 // own). Computed at build/render time like the rest of the static site.
 
 import { content } from "./content";
-import { projects } from "./projects";
 import { getAllEntries, isFuture } from "./timeline";
 
 export interface NowLines {
@@ -14,13 +13,13 @@ export interface NowLines {
 }
 
 export function nowLines(): NowLines {
-  const wip = projects.find((p) => p.status === "wip");
   const shows = getAllEntries().filter((e) => e.kind === "show");
   const next = shows.filter((e) => isFuture(e))[0];
   const last = shows.filter((e) => !isFuture(e)).at(-1);
   const based = content.about.meta.find((m) => m.label === "based")?.value;
   return {
-    software: wip ? `building ${wip.name.toLowerCase()}` : `${projects.length} projects`,
+    // no live line for software: "building <first wip project>" read as random
+    software: "",
     music: next
       ? `next: ${next.title.toLowerCase()} · ${next.date.raw.toLowerCase()}`
       : last

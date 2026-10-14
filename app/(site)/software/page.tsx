@@ -29,7 +29,7 @@ export default function SoftwarePage() {
       <SiteNav />
       <main id="journey">
         {/* ── code · work · CS ─────────────────────────────────────── */}
-        <Chapter {...ch} figure opener={flag("openers") ? { index: "01", title: "software", tone: "text-foreground", now: flag("now") ? nowLines().software : undefined } : undefined}>
+        <Chapter {...ch} figure opener={flag("openers") ? { back: "/", index: "01", title: "software", tone: "text-foreground", now: flag("now") ? nowLines().software : undefined } : undefined}>
           <div className="flex flex-col gap-16">
             <div>
               <SectionLabel>projects</SectionLabel>

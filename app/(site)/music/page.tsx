@@ -38,7 +38,7 @@ export default function MusicPage() {
       <SiteNav />
       <main id="journey">
         {/* ── music ─────────────────────────────────────────────────── */}
-        <Chapter {...ch} figure opener={flag("openers") ? { index: "02", title: "music", tone: "text-shimmer", now: flag("now") ? nowLines().music : undefined } : undefined}>
+        <Chapter {...ch} figure opener={flag("openers") ? { back: "/", index: "02", title: "music", tone: "text-shimmer", now: flag("now") ? nowLines().music : undefined } : undefined}>
           <div className="flex flex-col gap-16">
             {/* untitled, edge to edge — the set film rises out of the background,
                 with the artists supported right beneath it */}

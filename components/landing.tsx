@@ -103,7 +103,7 @@ export default function Landing({ now }: { now: NowLines | null }) {
                 {o.caption}
                 <kbd className="ml-3 hidden rounded-sm border border-white/10 px-1 text-[10px] text-foreground/30 md:inline">{o.key}</kbd>
               </span>
-              {now && <span className="mt-1.5 block font-mono text-xs text-foreground/50">
+              {now && now[o.id as keyof NowLines] && <span className="mt-1.5 block font-mono text-xs text-foreground/50">
                 <span className={`mr-2 inline-block h-1.5 w-1.5 rounded-full align-middle ${o.id === "software" ? "bg-foreground/70" : o.id === "music" ? "bg-iridescent" : "bg-foreground/40"} now-pulse`} />
                 {now[o.id as keyof NowLines]}
               </span>}

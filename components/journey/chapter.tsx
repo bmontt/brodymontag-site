@@ -11,6 +11,7 @@
 // heightVh: expressed as `svh` (the small viewport) — stable while mobile
 // toolbars collapse and expand, so the page never reflows under a scroll.
 
+import Link from "next/link";
 import { Morph } from "@/components/morph";
 
 /** a section page's opening screen (the chapter starts with it) */
@@ -23,6 +24,8 @@ export interface Opener {
   tone: string;
   /** a live line: what's current in this half */
   now?: string;
+  /** a "← back" link above the index line (the section pages: to the landing) */
+  back?: string;
 }
 
 interface ChapterProps {
@@ -88,6 +91,11 @@ export default function Chapter({
         // "opener"]: the figure starts large here, then settles into the gutter)
         <div data-laser-anchor="opener" className="relative z-20 flex min-h-svh flex-col justify-center px-6 pt-20 md:px-12">
           <div className="mx-auto w-full max-w-6xl">
+            {opener.back && (
+              <Link href={opener.back} className="mb-8 inline-flex items-center gap-2 font-mono text-xs text-foreground/45 transition-colors duration-200 hover:text-foreground/85">
+                ← back
+              </Link>
+            )}
             <p className="mb-6 font-mono text-xs text-foreground/40">
               {opener.index} <span className="text-foreground/20">/</span> {opener.title}
             </p>
