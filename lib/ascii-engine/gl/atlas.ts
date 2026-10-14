@@ -3,6 +3,9 @@
 import { CanvasTexture, NearestFilter, Vector3 } from "three";
 import { DEFAULT_SKIN, ERA_SEQUENCE, SECTION_SKINS, type EraSkin } from "../skins";
 
+/** the laser layer's strokes (laser-shader.ts) */
+const LASER_GLYPHS = ["─", "│", "╲", "╱", "·"];
+
 /**
  * Every glyph any skin can show, deduped into one atlas so skins can dither
  * between vocabularies without swapping textures. Slot 0 is always the blank.
@@ -12,6 +15,7 @@ export const GLYPHS: readonly string[] = (() => {
   for (const s of [DEFAULT_SKIN, ...Object.values(SECTION_SKINS), ...ERA_SEQUENCE]) {
     for (const c of s.chars) set.add(c);
   }
+  for (const c of LASER_GLYPHS) set.add(c);
   return [...set];
 })();
 

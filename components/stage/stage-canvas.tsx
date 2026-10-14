@@ -40,6 +40,7 @@ import MontyScene from "@/components/stage/scenes/monty";
 import WorldlineScene, { WORLDLINE_X } from "@/components/stage/scenes/worldline";
 import TitlesScene from "@/components/stage/scenes/titles";
 import DustScene from "@/components/stage/scenes/dust";
+import { createLaserDirector } from "@/lib/director/laser";
 
 const TWO_PI = Math.PI * 2;
 const N_FRAMES = MathUtils.clamp(Math.round(TWO_PI / asciiConfig.dt), 180, 480);
@@ -66,6 +67,8 @@ function blendPose(T: Pose, D: Partial<Pose>, e: number) {
   if (typeof D.dist === "number") T.dist = (T.dist as number) + (D.dist - (T.dist as number)) * e;
 }
 const debugOn = typeof window !== "undefined" && /[?&]debug\b/.test(window.location.search);
+// the journey's background is the laser layer; ?bg=wave brings back the wave field (A/B)
+const waveBg = typeof window !== "undefined" && /[?&]bg=wave\b/.test(window.location.search);
 
 /** Shared uniforms for everything that evaluates the field. */
 function makeFieldUniforms() {
@@ -219,6 +222,8 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
   const phase = useRef(0);
   const light = useRef({ angle: parity ? 0 : Math.random() * TWO_PI, hue: 0 });
   const rig = useRef({ ...FLAT, dist: 0, lookX: 0, lookY: 0 });
+  const sheet = useRef<Mesh>(null);
+  const laserDirector = useMemo(createLaserDirector, []);
   const target = useRef<Pose>({ ...FLAT });
   const track = useRef<{ bounds: number[] | null; t: ResolvedTrack | null }>({ bounds: null, t: null });
   const firstFrame = useRef(false);
@@ -394,6 +399,22 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
       else slots[i].z = 0;
     }
 
+    // ── background: laser layer (journey) or the wave sheet (lab, ?bg=wave) ──
+    const laserOn = mode === "journey" && !parity && !waveBg;
+    if (sheet.current) sheet.current.visible = !laserOn;
+    if (laserOn) {
+      const L = ascii.laser;
+      // detail pages keep the figure where the journey left it, quieter
+      L.uLaserMix.value = MathUtils.damp(L.uLaserMix.value, routeKind === "home" ? 1 : 0.45, 4, delta);
+      ascii.frame.uGlitch.value = laserDirector(L, {
+        g: p, ids: CHAPTER_IDS, bounds: st.bounds, timelineProgress: st.timelineProgress,
+        merge, ring, velocity: st.velocity, time: now / 1000, delta, viewW: size.width, viewH: size.height,
+      });
+    } else {
+      ascii.laser.uLaserMix.value = 0;
+      ascii.frame.uGlitch.value = 0;
+    }
+
     gl.info.reset(); // count every pass this frame, not just the last one
     ascii.render(scene, cam);
     if (!firstFrame.current && ascii.ready) {
@@ -439,7 +460,7 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
 
   return (
     <>
-      <mesh material={sheetMat} frustumCulled={false}>
+      <mesh ref={sheet} material={sheetMat} frustumCulled={false}>
         <planeGeometry args={[SHEET, SHEET, 320, 320]} />
       </mesh>
       {mode === "journey" && (

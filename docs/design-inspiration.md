@@ -109,3 +109,26 @@ as the signature moment, and fold **#4–#6** into Phase 6 hardening.
   - **Bug found and fixed on the way:** upright planes were rotated by `+az` instead of
     `−az`, so every one faced 2·az off-axis. The music photo panels were about 48° off.
     `faceRotation()` in `layouts.ts` now derives rotation from the facing direction.
+
+## Round 1 inspection feedback (2026-10-13)
+
+- **Background → analog laser layer.**
+  - The full-screen wave field read as too busy, so the journey's background is
+    now one continuous, scroll-driven laser piece rendered through the same
+    ASCII pipeline (`lib/ascii-engine/gl/laser-shader.ts`, directed by
+    `lib/director/laser.ts`). Sequence: an oscilloscope trace, then a Lissajous
+    knot, club fan beams, a perspective laser floor, and finally the binary
+    merger and its ringdown.
+  - Beams are one glyph thick in any direction, and the glyph is picked by the
+    beam's direction (─ ╲ │ ╱) with flickering · haze around it.
+  - The glitch layer in the compose pass adds row tears with an RGB split,
+    scanlines and flicker. It rises with scroll speed and at chapter boundaries.
+  - Scene objects dim to 40% underneath the beams. `?bg=wave` restores the wave
+    field for A/B, and the lab still uses the wave field (parity test).
+- **Machine view without a toggle:** `proxy.ts` and `lib/agent.ts` serve
+  `/machine` to AI crawlers, `/machine.txt` to CLI clients and text/markdown
+  requests, and the journey to browsers, search engines and unfurlers.
+- **Headings:** the sticky mono rail is gone. The bold white display line is the
+  chapter's `h2`.
+- **Artist logos:** each logo is cropped to its content and sized to equal visual
+  area. noizu and rivo show as wordmarks until logo files exist.

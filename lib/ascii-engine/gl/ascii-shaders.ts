@@ -9,12 +9,16 @@
  *                     the cell center (camera.setViewOffset aligns the grid).
  *   pass 2  cell    → cellRT (cols × rows): r = atlas slot (0 = empty),
  *                     g = level after LUT, b = base alpha, a = specular.
+ *                     Laser cells (laser-shader.ts) — wherever no scene object
+ *                     claims the cell — are marked g = -1 and carry a = hue.
  *                     Level quantize, skin dither, density cull, carve, cursor
  *                     repulsor, light — all per cell.
  *   pass 3  compose → screen (full res): stamps glyphs from the atlas, with the
  *                     left neighbour's overflow first (canvas paint order),
  *                     tinted light, brightness-gated glow halo, lattice flash.
  */
+
+import { laserChunk } from "./laser-shader";
 
 export const TRAIL_MAX = 18;
 
@@ -54,6 +58,7 @@ uniform float uShimmerMin;
 uniform vec3  uTrail[${TRAIL_MAX}];  // x, y (css px, y-down), age factor 0–1
 uniform vec2  uRepel;              // radius, core
 ${COMMON}
+${laserChunk}
 
 float suppression(vec2 p) {
   float supp = 0.0;
@@ -68,6 +73,13 @@ float suppression(vec2 p) {
     supp = max(supp, u * u * (3.0 - 2.0 * u) * ageF);
   }
   return min(supp, 1.0);
+}
+
+// reading-column calm: 1 outside the carve, 1 - calm at its center
+float carveAt(vec2 ctr) {
+  if (uCarve.x < 0.0) return 1.0;
+  float inside = clamp((uCarve.y - abs(ctr.x - uCarve.x)) / uCarve.w, 0.0, 1.0);
+  return 1.0 - uCarve.z * inside * inside * (3.0 - 2.0 * inside);
 }
 
 void main() {
@@ -86,18 +98,22 @@ void main() {
       float slot = useB ? uSlotsB[li] : uSlotsA[li];
       vec2  ctr  = (cell + 0.5) * uCell;
 
-      float mul = uDim;
-      if (uCarve.x >= 0.0) {
-        float inside = clamp((uCarve.y - abs(ctr.x - uCarve.x)) / uCarve.w, 0.0, 1.0);
-        float carve = 1.0 - uCarve.z * inside * inside * (3.0 - 2.0 * inside);
-        // scene objects (presence > 1) are only partly calmed by the carve
-        mul *= mix(carve, 1.0, s.b > 1.001 ? 0.6 : 0.0);
-      }
+      // scene objects (presence > 1) are only partly calmed by the carve
+      float mul = uDim * mix(carveAt(ctr), 1.0, s.b > 1.001 ? 0.6 : 0.0);
+      // under the laser layer, scene objects step back so the beams lead
+      mul *= 1.0 - 0.6 * uLaserMix;
       float baseAlpha = (1.0 - suppression(ctr)) * mul * s.b;
       float spec = (lvl >= uShimmerMin && s.g > 0.0)
         ? pow(s.g, uLight.x) * uLight.y * baseAlpha : 0.0;
       if (baseAlpha > 0.0 && slot > 0.5) outv = vec4(slot, lvl, baseAlpha, spec);
     }
+  }
+  // the laser layer fills every cell no scene object claimed
+  if (outv.x < 0.5 && uLaserMix > 0.001) {
+    vec2 ctr = (cell + 0.5) * uCell;
+    vec3 l = laserCell(cell, ctr);
+    float a = l.y * uLaserMix * carveAt(ctr) * (1.0 - suppression(ctr));
+    if (l.x > 0.5 && a > 0.004) outv = vec4(l.x, -1.0, a, l.z);
   }
   gl_FragColor = outv;
 }
@@ -120,6 +136,7 @@ uniform float uFlash;              // 0–1 full-grid glyph flash
 uniform float uFlashSlot;
 uniform float uTime;               // seconds
 uniform float uGradientMix;        // 1 = moving gradient light, 0 = the 2D vessel's per-cell hue cycle
+uniform float uGlitch;             // 0–1 analog glitch: row tears, RGB split, flicker (laser mode)
 
 const float STEPS = 90.0;
 
@@ -160,6 +177,16 @@ void shade(vec2 cell, vec2 off, inout vec3 col) {
   vec4 c = texelFetch(uCells, ivec2(int(cell.x), int(uGrid.y - 1.0 - cell.y)), 0);
   if (c.x < 0.5) return;
   float slot = floor(c.x + 0.5);
+  if (c.y < -0.5) {
+    // laser beam: saturated, additive, with a soft bloom off the stroke
+    float lg = glyphAt(slot, off);
+    float bloom = glyphAt(slot, off + vec2(1.0, 0.0)) + glyphAt(slot, off - vec2(1.0, 0.0))
+                + glyphAt(slot, off + vec2(0.0, 1.0)) + glyphAt(slot, off - vec2(0.0, 1.0));
+    vec3 lc = hsl2rgb(c.w * 360.0, 0.95, 0.56);
+    col += lc * (lg * c.z + bloom * 0.07 * c.z);
+    col = mix(col, vec3(1.0), lg * c.z * c.z * 0.22);               // white-hot where the beam is strongest
+    return;
+  }
   float baseAlpha = c.z;
   float spec = c.w;
   float strength = uLight.y;
@@ -192,9 +219,8 @@ void shade(vec2 cell, vec2 off, inout vec3 col) {
   }
 }
 
-void main() {
+vec3 field(vec2 px) {
   vec3 col  = uBg;
-  vec2 px   = vec2(gl_FragCoord.x, uViewport.y * uDpr - gl_FragCoord.y) / uDpr;  // y-down css px
   vec2 cell = floor(px / uCell);
   vec2 off  = px - cell * uCell;
   // left neighbour first (its glyph overflows into this cell), then own cell —
@@ -205,6 +231,29 @@ void main() {
     float fg = max(glyphAt(uFlashSlot, off), glyphAt(uFlashSlot, off + vec2(uCell.x, 0.0)));
     col = mix(col, vec3(0.9, 0.91, 0.93), fg * uFlash * 0.55);
   }
-  gl_FragColor = vec4(col, 1.0);
+  return col;
+}
+
+void main() {
+  vec2 px = vec2(gl_FragCoord.x, uViewport.y * uDpr - gl_FragCoord.y) / uDpr;  // y-down css px
+  if (uGlitch <= 0.0) {
+    gl_FragColor = vec4(field(px), 1.0);
+    return;
+  }
+  // analog glitch — bands of three rows tear sideways for a tick (14/s), the
+  // torn band splits into RGB; faint scanlines and a brightness flicker
+  float tick = floor(uTime * 14.0);
+  float band = floor(px.y / (uCell.y * 3.0));
+  float roll = h21(vec2(band, tick));
+  float tear = step(1.0 - uGlitch * 0.35, roll);
+  px.x += tear * (h21(vec2(roll * 91.7, tick)) - 0.5) * (14.0 + 90.0 * uGlitch);
+  vec3 col = field(px);
+  if (tear > 0.0) {
+    float sp = 2.0 + 5.0 * uGlitch;
+    col = vec3(field(px + vec2(sp, 0.0)).r, col.g, field(px - vec2(sp, 0.0)).b);
+  }
+  col *= 1.0 - 0.06 * step(0.5, fract(px.y * 0.5));                  // scanlines
+  col *= 1.0 - 0.08 * uGlitch * h21(vec2(tick, 9.1));               // flicker
+  gl_FragColor = vec4(min(col, vec3(1.0)), 1.0);
 }
 `;

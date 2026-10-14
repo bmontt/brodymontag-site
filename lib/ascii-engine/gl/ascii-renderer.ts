@@ -18,7 +18,8 @@ import {
   type WebGLRenderer,
 } from "three";
 import { cellFragment, composeFragment, quadVertex, TRAIL_MAX } from "./ascii-shaders";
-import { GLYPHS, buildGlyphAtlas, parseStyle, slotWidth } from "./atlas";
+import { GLYPHS, buildGlyphAtlas, parseStyle, slotOf, slotWidth } from "./atlas";
+import { makeLaserUniforms, type LaserUniforms } from "./laser-shader";
 import { makeSkinUniforms, type SkinUniforms } from "./skin-uniforms";
 
 export { TRAIL_MAX };
@@ -57,6 +58,8 @@ function cellTarget(): WebGLRenderTarget {
  */
 export class AsciiRenderer {
   readonly skin: SkinUniforms;
+  /** the laser layer (laser-shader.ts) — uLaserMix 0 keeps the wave field only */
+  readonly laser: LaserUniforms = makeLaserUniforms();
   /** per-frame inputs (trail, hue phase, flash) — mutate in place */
   readonly frame = {
     uTrail: { value: Array.from({ length: TRAIL_MAX }, () => new Vector3()) },
@@ -66,6 +69,8 @@ export class AsciiRenderer {
     uTime: { value: 0 },
     /** 1 = moving gradient glyph light (3D default), 0 = the vessel's per-cell hue cycle */
     uGradientMix: { value: 1 },
+    /** 0–1 analog glitch in the compose pass (row tears, RGB split, flicker) */
+    uGlitch: { value: 0 },
   };
 
   private readonly sceneRT = new WebGLRenderTarget(1, 1, {
@@ -108,8 +113,11 @@ export class AsciiRenderer {
         uShimmerMin: { value: o.shimmerMin },
         uTrail: this.frame.uTrail,
         uRepel: { value: new Vector2(o.repelR, o.repelCore) },
+        ...this.laser,
       },
     });
+    this.laser.uLaserSlots.value.set(slotOf("─"), slotOf("│"), slotOf("╲"), slotOf("╱"));
+    this.laser.uLaserDot.value = slotOf("·");
 
     this.composeMat = new ShaderMaterial({
       vertexShader: quadVertex,
@@ -133,6 +141,7 @@ export class AsciiRenderer {
         uFlashSlot: this.frame.uFlashSlot,
         uTime: this.frame.uTime,
         uGradientMix: this.frame.uGradientMix,
+        uGlitch: this.frame.uGlitch,
       },
     });
 
@@ -149,6 +158,7 @@ export class AsciiRenderer {
     this.cols = Math.ceil(viewW / cellW);
     this.rows = Math.ceil(viewH / cellH);
     this.sceneRT.setSize(this.cols, this.rows);
+    this.laser.uView.value.set(viewW, viewH);
     this.cellRT.setSize(this.cols, this.rows);
 
     const u = this.composeMat.uniforms;
