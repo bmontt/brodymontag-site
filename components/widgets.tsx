@@ -46,7 +46,7 @@ export function TagRow({ tags }: { tags: string[] }) {
   return (
     <div className="mt-4 flex flex-wrap gap-1.5">
       {tags.map((t) => (
-        <span key={t} className="rounded-full border border-white/10 px-2.5 py-0.5 font-mono text-[11px] text-foreground/50">
+        <span key={t} className="pill pointer-events-auto relative cursor-default rounded-full border border-white/10 px-2.5 py-0.5 font-mono text-[11px] text-foreground/50">
           {t}
         </span>
       ))}

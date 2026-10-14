@@ -362,3 +362,24 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   50% { transform: translateY(-3px); }
 }
 @media (prefers-reduced-motion: reduce) { .subwidget { animation: none; } }
+
+/* pills (tags, stack): on hover each picks up the landing titles' shimmer —
+   its text and border take the cycling pearl hue (.text-shimmer), a soft glow
+   like a landing choice in focus, and a slight lift. Transform-only motion. */
+.pill {
+  display: inline-block;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), color 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+}
+.pill:hover {
+  color: oklch(0.86 0.09 var(--pill-hue));
+  border-color: oklch(0.84 0.09 var(--pill-hue) / 0.6);
+  box-shadow: 0 0 16px -3px oklch(0.84 0.09 var(--pill-hue) / 0.5);
+  transform: translateY(-2px) scale(1.05);
+  animation: pill-hue-cycle 6s ease-in-out infinite;
+}
+.pill.pill-iridescent:hover {
+  animation: pill-hue-cycle 6s ease-in-out infinite, sheen 4.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pill:hover { transform: none; }
+}

@@ -16,7 +16,7 @@ export default function ReleaseCard({ release }: { release: Release }) {
         {release.tags.map((t, i) => (
           <span
             key={t}
-            className="pill-iridescent font-mono text-xs text-foreground/35 border border-white/8 px-2 py-0.5"
+            className="pill pill-iridescent cursor-default font-mono text-xs text-foreground/35 border border-white/8 px-2 py-0.5"
             style={{ animationDelay: `${-((i * 1.53) % 4.2)}s` }}
           >
             {t}
