@@ -905,53 +905,15 @@
           "Claude API",
           "DeFi"
         ],
-        "description": "An autonomous capital-allocation agent running on real money, unattended, four cycles a day: DeFi yield, prediction markets and paper crypto, with a Claude-led weekly review held to narrow, explicit limits.",
-        "longDescription": "venture is an agent with real stakes: it allocates real money across several avenues on its own schedule, and the engineering is mostly about keeping that safe.\n\nAn allocator decides where new money goes — stablecoin conversion, gas for the on-chain wallet, topping up a prediction-market account to its target — and anything that would send money off the exchange waits for approval. A weekly review by Claude reads the system's own history and may adjust only the crypto strategy's tunables.\n\nIt's operated from a terminal interface: a live view of every account, money in and out, history charts, open positions, and a setup wizard that walks through each connection in order.",
+        "description": "An autonomous capital-allocation agent that runs real money unattended across DeFi yield, prediction markets and paper crypto. Built around one question: how much should an agent be allowed to decide on its own?",
+        "longDescription": "venture is an experiment in giving an agent real stakes and engineering the trust around them. It runs on a schedule with no one watching, so most of the design is about what it may and may not do by itself.\n\nMoney enters one way, through a single exchange account, and an allocator decides where it goes: converting to stablecoins, keeping the on-chain wallet's gas topped up, funding the prediction-market account to its target. Anything that would send money off the exchange is proposed, not executed, and waits for a human to approve it.\n\nStrategy and safety are kept apart. Each avenue runs its own logic and reports its own health; a weekly review by Claude reads the system's history and may adjust only the crypto strategy's tunables, never the guardrails. Paper trading runs alongside the real accounts, so a change can prove itself before it touches money.\n\nIt's operated from a terminal interface — a live view of every account, history, open positions, and a setup wizard that brings each connection online in order — and every agent that touches it has its financial actions gated.",
         "highlights": [
-          "Runs unattended on a schedule, four cycles a day",
-          "Moves off the exchange wait for human approval",
-          "Weekly LLM review may change only crypto tunables",
-          "Allocator: stablecoin conversion, gas, account top-ups",
-          "Terminal UI: live, money, history and activity views",
-          "Paper trading alongside real accounts"
-        ],
-        "statsAsOf": "October 14, 2026",
-        "stats": [
-          {
-            "label": "real value",
-            "value": "$567.26",
-            "note": "on $600.79 put in"
-          },
-          {
-            "label": "all-time result",
-            "value": "−$33.53",
-            "note": "−5.6%"
-          },
-          {
-            "label": "cycles run",
-            "value": "45",
-            "note": "four a day, unattended"
-          },
-          {
-            "label": "defi (aave)",
-            "value": "$118.62",
-            "note": "earning 3.1% APY"
-          },
-          {
-            "label": "kalshi",
-            "value": "$48.65",
-            "note": "prediction markets"
-          },
-          {
-            "label": "treasury",
-            "value": "$399.99",
-            "note": "newly added, waiting on coinbase"
-          },
-          {
-            "label": "paper crypto",
-            "value": "+$2.53",
-            "note": "+5.1% on $50"
-          }
+          "One way in for money; an allocator decides where it goes",
+          "Moves off the exchange are proposals awaiting approval",
+          "The LLM review may tune strategy, never the guardrails",
+          "Paper trading alongside real accounts, to prove changes first",
+          "Per-avenue health checks and a degraded mode",
+          "Terminal UI and a setup wizard for every connection"
         ]
       },
       {
