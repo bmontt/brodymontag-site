@@ -149,8 +149,8 @@ export function buildRoadside(r: RoadsideInput, segs: Float32Array, segsB: Float
       const w = r.weight * fade * Math.exp(-Math.max(z - 1.3, 0) * 0.07);
       if (w < 0.01) continue;
       const X = side * road * 1.32;
-      const foot = P(X, 0, z), head = P(X, 1.12, z);
-      const arm = P(X - side * road * 0.22, 1.08, z);
+      const foot = P(X, 0, z), head = P(X, 0.82, z); // below eye level (1): tops stay under the horizon
+      const arm = P(X - side * road * 0.22, 0.78, z);
       segs.set([foot[0], foot[1], head[0], head[1]], n * 4);
       segsB.set([r.post, 0.75 * w, 0.75 * w, 0], n * 4);
       n++;

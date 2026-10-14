@@ -63,6 +63,11 @@ export const TRANSITION_MS = 280;
 
 /** the transition waves stay local: their reach is a fraction of the shorter
  *  screen side, clamped, and they fade out as they reach it */
+/** the timeline road's half-width at the bottom edge. A share of the width on
+ *  wide screens; on tall ones (phones) it follows the road's depth instead, so
+ *  the rails meet the horizon at the same angle rather than in a sharp point */
+export const roadHalfOf = (W: number, H: number) => Math.max(W * 0.34, (H - H * 0.56) * 1.05);
+
 const waveReach = (W: number, H: number) => Math.min(Math.max(Math.min(W, H) * 0.32, 140), 300);
 
 /** palette coordinates on the two scales (t: 0 dark → 1 brightest) */
@@ -328,7 +333,7 @@ export function createLaserDirector() {
         // the one calm trace — the timeline floor's horizon when it arrives
         sW: Math.max(resolve, 0.6 * floor), sBase: H * 0.56, sAmp: H * 0.02 * (1 - floor), sCyc: 1.2, sA: SOUND(0.97),
         // the floor is a road: a white and a pearl rail at its edges, a car on it (car.ts)
-        gW: floor * 0.7, gRails: floor, gGap: W * 0.34,
+        gW: floor * 0.7, gRails: floor, gGap: roadHalfOf(W, H),
         bright: lerp(0.95, 0.82, floor), hot: lerp(0.2, 0.08, floor) + 0.5 * fused * (1 - ring),
       });
     }
@@ -392,7 +397,7 @@ export function createLaserDirector() {
     const roadScroll = tp * 14 + time * 0.12;
     const roadVx = W * (0.5 + 0.18 * (0.5 - tp));
     u.uGridL.value.set(c.gW, H * 0.56, roadScroll, TECH(0.32));
-    u.uGridB.value.set(roadVx, W * 0.085, 1.1, 0);
+    u.uGridB.value.set(roadVx, roadHalfOf(W, H) * 0.25, 1.1, 0); // floor lines: a quarter road apart
     u.uRails.value.set(c.gRails, c.gGap, TECH(0.95), SOUND(0.8));
 
     const feat = x.features ?? { room: false, wipe: false, titles: false };
@@ -497,7 +502,7 @@ function debris(segs: Float32Array, segsB: Float32Array, n0: number, d: DebrisIn
   if (vis < 0.01) return n0;
 
   // where each piece lands: the scene as it stands when the road arrives (tp 0)
-  const hy = H * 0.56, vx = W * 0.59, roadHalf = W * 0.34, depth = H - hy;
+  const hy = H * 0.56, vx = W * 0.59, roadHalf = roadHalfOf(W, H), depth = H - hy;
   const T: number[][] = [];
   const hw = (W * 0.84) / 6;
   for (let i = 0; i < 6; i++) {
