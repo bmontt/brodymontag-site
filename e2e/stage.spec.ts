@@ -92,3 +92,18 @@ test("lab: GPU cell levels match the 2D bake", async ({ page }) => {
     )
     .toBeGreaterThan(99);
 });
+
+test("adaptive quality: sustained slow frames step dpr down, then fall back to 2D", async ({ browser }) => {
+  test.setTimeout(90_000);
+  const ctx = await browser.newContext({ deviceScaleFactor: 2, viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto("/?tier=3d&debug");
+  await waitForStage(page);
+  const quality = () => page.evaluate(() => document.documentElement.dataset.stageQuality);
+  expect(await quality()).toBe("2");
+  const cdp = await ctx.newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 40 });
+  await expect.poll(quality, { timeout: 30_000 }).toBe("1.5");
+  await expect.poll(() => tier(page), { timeout: 45_000 }).toBe("2d");
+  await ctx.close();
+});

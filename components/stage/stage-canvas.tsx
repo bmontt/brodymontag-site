@@ -102,7 +102,7 @@ interface StageProps {
 }
 
 function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, onLost }: StageProps) {
-  const { gl, scene, camera, size, viewport } = useThree();
+  const { gl, scene, camera, size, viewport, setDpr } = useThree();
   const cam = camera as PerspectiveCamera;
   const dpr = viewport.dpr;
 
@@ -163,6 +163,42 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     el.addEventListener("webglcontextlost", lost);
     return () => el.removeEventListener("webglcontextlost", lost);
   }, [gl, onLost]);
+
+  // ── adaptive quality: step the pixel ratio down when frames run long ─────
+  // Measured in 2s windows (skipping the first 3s of shader compiles and any
+  // hidden-tab time). Thresholds sit below 30fps on purpose: browsers that
+  // cap at 30 (battery saver) keep full sharpness. Sustained < 28fps steps
+  // dpr 2 → 1.5 → 1; still < 20fps at dpr 1 hands back to the 2D tier.
+  // ?quality=fixed disables it; <html data-stage-quality> mirrors the dpr.
+  const governor = useRef({ since: 0, frames: 0, slow: 0, start: 0, fixed: false });
+  useEffect(() => {
+    governor.current.fixed = new URLSearchParams(window.location.search).get("quality") === "fixed";
+    governor.current.start = performance.now();
+  }, []);
+  useEffect(() => {
+    document.documentElement.dataset.stageQuality = String(dpr);
+  }, [dpr]);
+  useFrame(() => {
+    const q = governor.current;
+    const now = performance.now();
+    if (q.fixed || parity || now - q.start < 3000) return;
+    if (document.hidden || q.since === 0) {
+      q.since = now;
+      q.frames = 0;
+      return;
+    }
+    q.frames++;
+    if (now - q.since < 2000) return;
+    const fps = (q.frames * 1000) / (now - q.since);
+    q.since = now;
+    q.frames = 0;
+    const floor = dpr > 1 ? 28 : 20;
+    q.slow = fps < floor ? q.slow + 1 : 0;
+    if (q.slow < 2) return;
+    q.slow = 0;
+    if (dpr > 1) setDpr(dpr > 1.5 ? 1.5 : 1);
+    else onLost?.();
+  });
 
   // ── pointer trail (same ring buffer semantics as the 2D vessel) ──────────
   const trail = useRef<{ x: number; y: number; t: number }[]>([]);
