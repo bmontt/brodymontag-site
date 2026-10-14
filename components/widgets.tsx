@@ -53,3 +53,24 @@ export function TagRow({ tags }: { tags: string[] }) {
     </div>
   );
 }
+
+/** figures as sub-widgets: a large number, its label, a quiet note */
+export function StatWidgets({ stats, cols = 3 }: { stats: { label: string; value: string; note?: string }[]; cols?: 2 | 3 | 4 }) {
+  if (!stats.length) return null;
+  const grid = cols === 4 ? "grid-cols-2 sm:grid-cols-4" : cols === 3 ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2";
+  return (
+    <ul className={`mt-4 grid gap-2.5 ${grid}`}>
+      {stats.map((s, i) => (
+        <li
+          key={s.label}
+          className="subwidget px-3.5 py-3"
+          style={{ animationDelay: `${-((i * 1.9) % 7)}s`, marginTop: i % 2 === 1 ? 6 : 0 }}
+        >
+          <p className="font-sans text-xl font-medium leading-none tracking-[-0.02em] text-foreground tabular-nums md:text-2xl">{s.value}</p>
+          <p className="mt-1.5 font-mono text-[11px] text-foreground/55">{s.label}</p>
+          {s.note && <p className="mt-0.5 font-sans text-[11px] leading-snug text-foreground/38">{s.note}</p>}
+        </li>
+      ))}
+    </ul>
+  );
+}

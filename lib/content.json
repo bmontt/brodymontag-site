@@ -905,8 +905,8 @@
           "Claude API",
           "DeFi"
         ],
-        "description": "An autonomous capital-allocation agent that runs unattended four times a day across DeFi yield, prediction-market research and paper crypto, with a Claude-led weekly review held to narrow, explicit limits.",
-        "longDescription": "venture is an agent with real stakes: it allocates a small amount of money across several avenues on its own schedule, and the engineering is mostly about keeping that safe.\n\nAn allocator decides where new money goes — stablecoin conversion, gas for the on-chain wallet, topping up a prediction-market account to its target — and anything that would send money off the exchange waits for approval. A weekly review by Claude reads the system's own history and may adjust only the crypto strategy's tunables.\n\nIt's operated from a terminal interface: a live view of every account, money in and out, history charts, open positions, and a setup wizard that walks through each connection in order.",
+        "description": "An autonomous capital-allocation agent running on real money, unattended, four cycles a day: DeFi yield, prediction markets and paper crypto, with a Claude-led weekly review held to narrow, explicit limits.",
+        "longDescription": "venture is an agent with real stakes: it allocates real money across several avenues on its own schedule, and the engineering is mostly about keeping that safe.\n\nAn allocator decides where new money goes — stablecoin conversion, gas for the on-chain wallet, topping up a prediction-market account to its target — and anything that would send money off the exchange waits for approval. A weekly review by Claude reads the system's own history and may adjust only the crypto strategy's tunables.\n\nIt's operated from a terminal interface: a live view of every account, money in and out, history charts, open positions, and a setup wizard that walks through each connection in order.",
         "highlights": [
           "Runs unattended on a schedule, four cycles a day",
           "Moves off the exchange wait for human approval",
@@ -914,6 +914,44 @@
           "Allocator: stablecoin conversion, gas, account top-ups",
           "Terminal UI: live, money, history and activity views",
           "Paper trading alongside real accounts"
+        ],
+        "statsAsOf": "October 14, 2026",
+        "stats": [
+          {
+            "label": "real value",
+            "value": "$567.26",
+            "note": "on $600.79 put in"
+          },
+          {
+            "label": "all-time result",
+            "value": "−$33.53",
+            "note": "−5.6%"
+          },
+          {
+            "label": "cycles run",
+            "value": "45",
+            "note": "four a day, unattended"
+          },
+          {
+            "label": "defi (aave)",
+            "value": "$118.62",
+            "note": "earning 3.1% APY"
+          },
+          {
+            "label": "kalshi",
+            "value": "$48.65",
+            "note": "prediction markets"
+          },
+          {
+            "label": "treasury",
+            "value": "$399.99",
+            "note": "newly added, waiting on coinbase"
+          },
+          {
+            "label": "paper crypto",
+            "value": "+$2.53",
+            "note": "+5.1% on $50"
+          }
         ]
       },
       {
@@ -954,15 +992,15 @@
           "decision models",
           "evals"
         ],
-        "description": "A headless asyncio game client for a private server, where a decision model only picks a mode and every call falls back to a heuristic policy on timeout, low confidence or an outage.",
-        "longDescription": "realmbot is a study in putting a model in charge of as little as possible. Deterministic code owns safety, movement and every required protocol reply; the decision model (TypeSafe AI's Jev) only chooses a tactical mode.\n\nEvery call degrades to a heuristic policy on a timeout, low confidence or an outage, and an action gate plus a rate and cost governor sit between the model and the game. Thresholds are tuned from reliability sweeps rather than by feel.\n\nIt targets a private server I run for development and testing, and contains no anti-detection work.",
+        "description": "A test bed for Jev-style decision-making systems: a headless game client where the model only picks a tactical mode, and every call falls back to a heuristic policy on a timeout, low confidence or an outage.",
+        "longDescription": "realmbot is where I test how a Jev-style decision model behaves when it's in charge of as little as possible. The model (TypeSafe AI's Jev) only chooses a tactical mode; deterministic code owns safety, movement and every required protocol reply.\n\nEvery call degrades to a heuristic policy on a timeout, low confidence or an outage, and an action gate plus a rate and cost governor sit between the model and the game. Thresholds are tuned from reliability sweeps rather than by feel, so the interesting output is the evaluation: when the model helps, when the fallback wins, and what it costs.\n\nThe game is the test harness: a private server I run, with no anti-detection work of any kind.",
         "highlights": [
-          "The model picks a mode; deterministic code does the rest",
+          "Tests a Jev-style model as a narrow mode picker",
           "Heuristic fallback on timeout, low confidence or outage",
           "Action gate and a rate/cost governor",
           "Danger thresholds tuned from reliability sweeps",
-          "Seven rounds of structured code review",
-          "Private test server only; no anti-detection"
+          "Evals: when the model helps, when the fallback wins",
+          "Private test server; no anti-detection"
         ]
       },
       {

@@ -5,7 +5,7 @@
 // that was a hydration bug); the GitHub link sits above the overlay.
 import Link from "next/link";
 import type { Project } from "@/lib/projects";
-import { SubWidgets, TagRow, Widget, WidgetHead } from "@/components/widgets";
+import { StatWidgets, SubWidgets, TagRow, Widget, WidgetHead } from "@/components/widgets";
 
 export default function ProjectCard({ project }: { project: Project }) {
   return (
@@ -36,7 +36,14 @@ export default function ProjectCard({ project }: { project: Project }) {
           }
         />
         <p className="font-sans text-sm leading-relaxed text-foreground/65">{project.description}</p>
-        <SubWidgets items={project.highlights.slice(0, 3)} cols={3} />
+        {project.stats ? (
+          <>
+            <StatWidgets stats={project.stats.slice(0, 3)} />
+            {project.statsAsOf && <p className="mt-2 font-mono text-[11px] text-foreground/35">as of {project.statsAsOf.toLowerCase()}</p>}
+          </>
+        ) : (
+          <SubWidgets items={project.highlights.slice(0, 3)} cols={3} />
+        )}
         <TagRow tags={project.tags} />
       </div>
     </Widget>

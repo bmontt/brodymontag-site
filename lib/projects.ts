@@ -13,6 +13,9 @@ export interface Project {
   // detail-page fields
   longDescription: string;
   highlights: string[];
+  /** live figures (a dated snapshot): shown on the card and the detail page */
+  stats?: { label: string; value: string; note?: string }[];
+  statsAsOf?: string;
 }
 
 import { content } from "./content";

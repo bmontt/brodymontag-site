@@ -4,7 +4,7 @@ import { enterStyle } from "@/lib/enter";
 import SiteNav from "@/components/nav";
 import BackLink from "@/components/back-link";
 import { SECTION_HEADING, SECTION_SIZE } from "@/components/journey/section-bits";
-import { SubWidgets } from "@/components/widgets";
+import { StatWidgets, SubWidgets } from "@/components/widgets";
 import { projects } from "@/lib/projects";
 
 function AsciiRule({ className = "" }: { className?: string }) {
@@ -114,6 +114,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           </div>
 
           <AsciiRule className="mb-8" />
+
+          {/* live figures, where a project has them (a dated snapshot) */}
+          {project.stats && (
+            <div className="enter mb-14" style={enterStyle({ y: 10, dur: 0.5, delay: 0.4 })}>
+              <h2 className={`mb-1 ${SECTION_HEADING}`} style={{ fontSize: SECTION_SIZE.sm }}>results</h2>
+              {project.statsAsOf && <p className="font-mono text-xs text-foreground/40">as of {project.statsAsOf.toLowerCase()}</p>}
+              <StatWidgets stats={project.stats} cols={4} />
+            </div>
+          )}
 
           {/* highlights */}
           <div

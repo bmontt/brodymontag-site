@@ -59,6 +59,7 @@ export function machineText(): string {
     push(`- ${p.name}  [${p.tags.join(" · ")}]${p.status === "wip" ? "  (in progress)" : ""}`);
     push(`  ${p.description}`);
     push(`  → ${ORIGIN}/projects/${p.slug}${p.githubUrl ? `   ↗ ${p.githubUrl}` : ""}`);
+    if (p.stats) push(`  results${p.statsAsOf ? ` (as of ${p.statsAsOf})` : ""}: ${p.stats.map((x) => `${x.label} ${x.value}${x.note ? ` (${x.note})` : ""}`).join(" · ")}`);
   }
   push("", "## code / experience");
   for (const e of experience) {
