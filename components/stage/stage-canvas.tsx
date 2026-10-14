@@ -39,6 +39,7 @@ import BuildScene from "@/components/stage/scenes/build";
 import MontyScene from "@/components/stage/scenes/monty";
 import WorldlineScene, { WORLDLINE_X } from "@/components/stage/scenes/worldline";
 import TitlesScene from "@/components/stage/scenes/titles";
+import DustScene from "@/components/stage/scenes/dust";
 
 const TWO_PI = Math.PI * 2;
 const N_FRAMES = MathUtils.clamp(Math.round(TWO_PI / asciiConfig.dt), 180, 480);
@@ -411,6 +412,7 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
           <MontyScene shared={solidShared} />
           <WorldlineScene shared={solidShared} />
           <TitlesScene shared={solidShared} />
+          <DustScene rig={rig} />
         </>
       )}
       <mesh ref={bodyA} material={bodyMat} visible={false}>
