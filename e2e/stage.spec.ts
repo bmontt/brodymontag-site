@@ -128,7 +128,9 @@ test("adaptive quality: sustained slow frames step dpr down, then fall back to 2
   const quality = () => page.evaluate(() => document.documentElement.dataset.stageQuality);
   expect(await quality()).toBe("2");
   const cdp = await ctx.newCDPSession(page);
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 40 });
+  // ~8fps with steady frames: slow, but not the >250ms gaps the governor
+  // reads as browser throttling (40× produced those)
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 20 });
   await expect.poll(quality, { timeout: 30_000 }).not.toBe("2"); // 1.5, or already 1 between polls
   await expect.poll(() => tier(page), { timeout: 45_000 }).toBe("2d");
   await ctx.close();
