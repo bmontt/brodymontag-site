@@ -17,6 +17,9 @@ interface ChapterProps {
   children?: React.ReactNode;
 }
 
+/** "the build — systems, models, tools." → "systems, models, tools." */
+const displayLine = (heading: string) => heading.split(" — ").pop()!;
+
 export default function Chapter({
   id,
   heading,
@@ -76,6 +79,17 @@ export default function Chapter({
 
       {/* reading layer — entries flow here; GSAP reveals animate these */}
       <div className="relative z-20 px-6 pb-24 pt-8 md:px-12">
+        {/* display line — the chapter's one oversized typographic moment, set
+            against the tiny mono rail above (docs/design-inspiration.md #6).
+            Decorative: the h2 already carries the same words. */}
+        <p
+          data-display
+          aria-hidden="true"
+          className="mx-auto mb-16 max-w-5xl font-sans font-medium leading-[0.92] tracking-[-0.045em] text-foreground/90 md:mb-24"
+          style={{ fontSize: "clamp(2.75rem, 9vw, 8.5rem)" }}
+        >
+          {displayLine(heading)}
+        </p>
         {children}
       </div>
     </section>

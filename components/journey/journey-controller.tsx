@@ -180,6 +180,29 @@ export default function JourneyController() {
           );
         }
 
+        // 1b. display line — words rise out of their line masks, then drift
+        //     sideways a touch with the scroll (kinetic scale contrast)
+        const display = section.querySelector<HTMLElement>("[data-display]");
+        let displaySplit: SplitText | null = null;
+        if (display) {
+          displaySplit = new SplitText(display, { type: "lines,words", mask: "lines" });
+          entrance.from(
+            displaySplit.words,
+            { yPercent: 110, duration: 0.9, ease: "power4.out", stagger: 0.05 },
+            0.05,
+          );
+          const drift = gsap.fromTo(
+            display,
+            { xPercent: 2 },
+            {
+              xPercent: -4,
+              ease: "none",
+              scrollTrigger: { trigger: section, start: "top bottom", end: "bottom top", scrub: true },
+            },
+          );
+          cleanup.push(() => drift.scrollTrigger?.kill());
+        }
+
         // 2. labels — decode in like a terminal resolving a cipher
         const labels = gsap.utils.toArray<HTMLElement>(section.querySelectorAll("[data-scramble]"));
         labels.forEach((el, i) => {
@@ -217,6 +240,7 @@ export default function JourneyController() {
           entrance.scrollTrigger?.kill();
           entrance.kill();
           split?.revert();
+          displaySplit?.revert();
         });
       });
 
