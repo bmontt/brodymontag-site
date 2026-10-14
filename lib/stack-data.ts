@@ -13,6 +13,10 @@ export interface ExperienceEntry {
   period: string;
   tags: string[];
   description: string;
+  /** the org's site — the card links its name */
+  href?: string;
+  /** a few concrete results (inline markdown links allowed) */
+  highlights?: string[];
 }
 
 // Copy lives in content.json (code.stack / code.experience).

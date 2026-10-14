@@ -19,7 +19,7 @@ const neueHaas = localFont({
 export const metadata: Metadata = {
   title: { default: "Brody Montag", template: "%s — Brody Montag" },
   description:
-    "Full Stack Developer & DJ/Producer. Fiserv ML/AI team. Monty (US). Based in NY/DC.",
+    "Full-stack developer & DJ/producer. Fiserv. Monty (US). East Coast based.",
   metadataBase: new URL("https://brodymontag.com"),
   openGraph: {
     title: "Brody Montag",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Brody Montag",
     description:
-      "Full Stack Developer & DJ/Producer. Fiserv ML/AI team. Monty (US). Based in NY/DC.",
+      "Full-stack developer & DJ/producer. Fiserv. Monty (US). East Coast based.",
     images: ["/brody.optimized.webp"],
   },
   icons: {

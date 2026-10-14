@@ -25,7 +25,6 @@ export default function NextSection({
   return (
     <section aria-label="next" className="relative z-20 px-6 pb-24 pt-40 md:px-12 md:pt-56">
       <div className="mx-auto max-w-6xl">
-        <p data-tp className="tp-line mb-4 font-mono text-xs text-foreground/35">next</p>
         <Link
           href={href}
           data-stage-id={`nav:${id}`}

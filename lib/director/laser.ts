@@ -27,9 +27,12 @@
 //                        circle the about text wraps. Reading tightens the
 //                        orbit; they keep twirling until "Let's work together."
 //                        comes on screen, then spiral in beside it and fuse
-//                        white-hot (a one-shot flash), ring down, and lie down
-//                        as one calm trace — the horizon of the timeline floor,
-//                        a road with a car driving on through the years.
+//                        white-hot (a one-shot flash) and explode: their glyphs
+//                        scatter, hang, then fly back together as the timeline
+//                        rises — into the horizon, the road's two rails and the
+//                        car. Lamp posts stream past beside the road through
+//                        the years; the car holds just ahead until "start
+//                        over" comes up, then drives off over the horizon.
 //   detail    an echo    a project page keeps a faint knot, a show page faint fans.
 //
 // Every figure parameter is damped toward its page's target, so moving between
@@ -42,7 +45,7 @@ import type { LaserUniforms } from "@/lib/ascii-engine/gl/laser-shader";
 import type { AnchorRect } from "@/lib/laser-anchors";
 import type { StageRouteKind } from "@/lib/journey-store";
 import { buildRoom } from "./room";
-import { buildCar } from "./car";
+import { buildCar, buildRoadside } from "./car";
 import { drag, knot, pointer, stepDrag } from "@/lib/stage-input";
 import { flag } from "@/lib/flags";
 import { CAR_HULL, ROOM_SEGS } from "@/lib/ascii-engine/gl/laser-shader";
@@ -54,8 +57,13 @@ const smooth = (a: number, b: number, x: number) => {
 };
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-/** the exit beat: how long a picked figure bursts before the page changes */
+/** the exit beat: how long a picked figure bursts (and the click's wave runs)
+ *  as the page changes underneath it — navigation itself is immediate */
 export const TRANSITION_MS = 280;
+
+/** the transition waves stay local: their reach is a fraction of the shorter
+ *  screen side, clamped, and they fade out as they reach it */
+const waveReach = (W: number, H: number) => Math.min(Math.max(Math.min(W, H) * 0.32, 140), 300);
 
 /** palette coordinates on the two scales (t: 0 dark → 1 brightest) */
 export const TECH = (t: number) => clamp01(t) * 0.499;
@@ -135,6 +143,7 @@ export function createLaserDirector() {
   let lissSpin = 0;
   let lastMerge = 0;
   let fuseAt = -1e9;
+  let fuseX = 0, fuseY = 0; // where the signals fused (the debris flies from here)
   let page: StageRouteKind | null = null;
   let pageAt = 0;
   const out: LaserOutput = { knot: { x: 0, y: 0, r: 0, w: 0 }, title: false, burst: 0, brightness: 1, hot: 0.2 };
@@ -165,6 +174,9 @@ export function createLaserDirector() {
 
     Object.assign(tgt, ZERO);
     let merge = 0, ring = 0, resolve = 0;
+    // about's road: assemble 0–1 as the timeline rises (the debris converging),
+    // past = the timeline is behind you (the road stays), away = the drive-off
+    let assemble = 0, pastTimeline = false, away = 0;
     let orbitRate = 0.6, ecc = 0.15; // rad/s at rest, orbit eccentricity
     // section openers: the figure starts large in the opening screen, then is
     // carried into its gutter as the opener scrolls away
@@ -277,7 +289,11 @@ export function createLaserDirector() {
       merge = smooth(0.45, 0.97, pull);
       // the ringdown is an event, not a place: once the signals fuse it spreads
       // on its own clock (scrolling back up before the fusion resets it)
-      if (merge >= 0.97 && lastMerge < 0.97) fuseAt = time;
+      if (merge >= 0.97 && lastMerge < 0.97) {
+        fuseAt = time;
+        fuseX = ucx;
+        fuseY = ucy;
+      }
       lastMerge = merge;
       ring = merge >= 0.97 ? (still ? 1 : clamp01((time - fuseAt) / 2.4)) : 0;
       if (inOpener > 0) {
@@ -287,7 +303,14 @@ export function createLaserDirector() {
         ur = lerp(ur, M * 0.3, inOpener);
       }
       const fused = smooth(0.88, 1, merge);
-      const floor = x.timelineProgress >= 0 ? 1 : 0;
+      // the road: assembled by the time the timeline pins, and kept after it
+      // (the pin's progress resets once it releases) through "start over"
+      const tl = x.anchor("timeline");
+      pastTimeline = x.timelineProgress < 0 && !!tl && tl.y < -10;
+      assemble = x.timelineProgress >= 0 || pastTimeline ? 1 : tl ? clamp01((H * 0.9 - tl.y) / (H * 0.9)) : 0;
+      const nh = x.anchor("next-home");
+      away = pastTimeline && nh ? smooth(H * 0.95, H * 0.3, nh.y) : 0;
+      const floor = x.timelineProgress >= 0 || pastTimeline ? 1 : smooth(0.6, 1, assemble) * (ring > 0 ? 1 : 0);
       resolve = smooth(0.55, 1, ring) * (1 - floor);
       // the orbit's size: wide, tightened by reading, then the plunge
       const a = ur * 0.56 * lerp(1, 0.55, smooth(0, 1, read)) * Math.pow(1 - merge, 1.2);
@@ -364,9 +387,12 @@ export function createLaserDirector() {
     u.uOrbitB.value.set(c.oX, c.oY, c.oA, c.oB);
     u.uRingL.value.set(c.rW, c.rR, c.rPal, 0);
 
-    const tp = Math.max(x.timelineProgress, 0);
-    u.uGridL.value.set(c.gW, H * 0.56, tp * 14 + time * 0.12, TECH(0.32));
-    u.uGridB.value.set(W * (0.5 + 0.18 * (0.5 - tp)), W * 0.085, 1.1, 0);
+    // past the timeline the road holds its "now" framing
+    const tp = pastTimeline ? 1 : Math.max(x.timelineProgress, 0);
+    const roadScroll = tp * 14 + time * 0.12;
+    const roadVx = W * (0.5 + 0.18 * (0.5 - tp));
+    u.uGridL.value.set(c.gW, H * 0.56, roadScroll, TECH(0.32));
+    u.uGridB.value.set(roadVx, W * 0.085, 1.1, 0);
     u.uRails.value.set(c.gRails, c.gGap, TECH(0.95), SOUND(0.8));
 
     const feat = x.features ?? { room: false, wipe: false, titles: false };
@@ -385,10 +411,17 @@ export function createLaserDirector() {
     let nSeg = buildRoom({ page: x.page, W, H, p, time, pointer: ptr, focus, tech: TECH, sound: SOUND, weight: roomW }, segs, segsB);
     // the car on the timeline's road, in the floor's perspective
     const car = buildCar({
-      W, H, hy: H * 0.56, vx: W * (0.5 + 0.18 * (0.5 - tp)), roadHalf: c.gGap, tp, time,
+      W, H, hy: H * 0.56, vx: roadVx, roadHalf: c.gGap, tp, away, time,
       weight: c.gW / 0.7, body: TECH(0.9), light: SOUND(0.95), glow: SOUND(0.7),
     }, segs, segsB, nSeg, hull);
     nSeg = car.n;
+    // lamp posts beside the road, streaming past at the floor's pace
+    nSeg = buildRoadside({
+      H, hy: H * 0.56, vx: roadVx, roadHalf: c.gGap, scroll: roadScroll, density: 1.1,
+      weight: c.gW / 0.7, post: TECH(0.7), lamp: SOUND(0.92),
+    }, segs, segsB, nSeg);
+    // the fusion's debris: scattered glyphs that fly back together into the road
+    if (x.page === "about" && ring > 0) nSeg = debris(segs, segsB, nSeg, { W, H, time, still, fuseAt, fuseX, fuseY, assemble, M });
     for (let i = 0; i < car.hullN; i++) u.uCarHull.value[i].fromArray(hull, i * 2);
     u.uCarN.value = car.hullN;
     for (let i = 0; i < nSeg; i++) {
@@ -399,16 +432,17 @@ export function createLaserDirector() {
 
     // ── shader transitions: a glyph shockwave out of the click, and another
     //    out of the new page's title as it lands ───────────────────────────
-    const maxR = Math.hypot(W, H);
+    const reach = waveReach(W, H);
     const op2 = x.anchor("opener");
     if (feat.wipe && !still && x.fly && flyT > 0) {
       const o = x.fly.origin ?? { x: W / 2, y: H / 2 };
-      u.uWipe.value.set(o.x, o.y, maxR * 0.75 * smooth(0, 1, flyT), H * 0.08);
-      u.uWipeB.value.set(0.9, tone(x.fly.kind, 0.85), 0, 0);
+      const r = 1 - (1 - flyT) * (1 - flyT); // fast out, settling at the edge
+      u.uWipe.value.set(o.x, o.y, reach * r, reach * 0.18);
+      u.uWipeB.value.set(0.9 * (1 - flyT * flyT), tone(x.fly.kind, 0.85), 0, 0);
     } else if (feat.wipe && !still && since < 0.95) {
       const a = smooth(0, 0.95, since);
       const o = op2 ? { x: op2.x + Math.min(op2.w * 0.25, 360), y: op2.y + op2.h * 0.45 } : { x: W / 2, y: H * 0.45 };
-      u.uWipe.value.set(o.x, o.y, maxR * (0.1 + 0.9 * (1 - (1 - a) * (1 - a))), H * 0.12);
+      u.uWipe.value.set(o.x, o.y, reach * (0.1 + 0.9 * (1 - (1 - a) * (1 - a))), reach * 0.22);
       u.uWipeB.value.set(0.75 * (1 - a), tone(x.page, 0.8), 0, 0);
     } else u.uWipeB.value.x = 0;
 
@@ -431,6 +465,86 @@ export function createLaserDirector() {
     u.uLaserTime.value = time;
     return out;
   };
+}
+
+// ── the fusion's debris ───────────────────────────────────────────────────────
+// When the two signals fuse on the about page, the figure explodes: DEBRIS
+// short strokes shoot out of the fusion point, each born in its signal's color
+// (white for tech, pearl for sound), slowing as they spread, then hanging and
+// drifting. As the timeline rises (`assemble` 0 → 1) each flies to its own
+// piece of the road scene, staggered, and lies down on it: the horizon, the
+// two rails, the edges of the car. The real scene fades in beneath them, and
+// they fade out as they land, so the road is literally made of the explosion.
+
+const DEBRIS = 28;
+const dSegs = new Float32Array(ROOM_SEGS * 4);
+const dSegsB = new Float32Array(ROOM_SEGS * 4);
+const dHull = new Float32Array(CAR_HULL * 2);
+const hash = (n: number) => {
+  const v = Math.sin(n) * 43758.5453;
+  return v - Math.floor(v);
+};
+
+interface DebrisInput {
+  W: number; H: number; M: number; time: number; still: boolean;
+  fuseAt: number; fuseX: number; fuseY: number; assemble: number;
+}
+
+function debris(segs: Float32Array, segsB: Float32Array, n0: number, d: DebrisInput): number {
+  const { W, H, M, time, still, fuseAt, fuseX, fuseY, assemble } = d;
+  const tE = still ? 10 : Math.max(0, time - fuseAt); // the explosion's own clock
+  const vis = smooth(0, 0.12, tE) * (1 - smooth(0.8, 1, assemble));
+  if (vis < 0.01) return n0;
+
+  // where each piece lands: the scene as it stands when the road arrives (tp 0)
+  const hy = H * 0.56, vx = W * 0.59, roadHalf = W * 0.34, depth = H - hy;
+  const T: number[][] = [];
+  const hw = (W * 0.84) / 6;
+  for (let i = 0; i < 6; i++) {
+    const x0 = vx - W * 0.42 + i * hw;
+    T.push([x0 + 6, hy, x0 + hw - 6, hy, SOUND(0.97)]);
+  }
+  for (const side of [-1, 1]) {
+    for (let j = 0; j < 5; j++) {
+      const t0 = 0.22 + j * 0.155, t1 = t0 + 0.12;
+      T.push([vx + side * roadHalf * t0, hy + depth * t0, vx + side * roadHalf * t1, hy + depth * t1, side < 0 ? TECH(0.95) : SOUND(0.8)]);
+    }
+  }
+  const nc = buildCar({ W, H, hy, vx, roadHalf, tp: 0, away: 0, time, weight: 1, body: TECH(0.9), light: SOUND(0.95), glow: SOUND(0.7) }, dSegs, dSegsB, 0, dHull).n;
+  for (let k = 0; k < nc && T.length < DEBRIS; k++) {
+    if (dSegsB[k * 4 + 2] === 0) continue; // the lights' glow on the road isn't a shape
+    T.push([dSegs[k * 4], dSegs[k * 4 + 1], dSegs[k * 4 + 2], dSegs[k * 4 + 3], dSegsB[k * 4]]);
+  }
+
+  let n = n0;
+  const v = Math.exp(-2.6 * tE); // 1 at the blast, → 0 as they slow
+  for (let i = 0; i < T.length && n < ROOM_SEGS; i++) {
+    const h1 = hash(i * 12.9898 + 1), h2 = hash(i * 78.233 + 2), h3 = hash(i * 37.719 + 3);
+    // flight: out along its own heading, slowing, then a slow drift and tumble
+    const th = h1 * Math.PI * 2;
+    const r = (0.18 + 0.5 * h2) * M * (1 - v);
+    const px = fuseX + Math.cos(th) * r + Math.sin(time * 0.5 + i) * M * 0.015;
+    const py = fuseY + Math.sin(th) * r * 0.85 + Math.cos(time * 0.4 + i * 1.7) * M * 0.012;
+    const phi = th + (1 - v) * (h3 - 0.5) * 2 * Math.sin(time * 0.35 + i);
+    const L = 8 + 56 * v;
+    const dx = Math.cos(phi) * L * 0.5, dy = Math.sin(phi) * L * 0.5;
+    // landing, staggered so the scene builds piece by piece
+    const e0 = clamp01((assemble - 0.25 * h3) / 0.75);
+    const e = e0 * e0 * (3 - 2 * e0);
+    let [ax, ay, bx, by] = T[i];
+    const pal = T[i][4];
+    // land without flipping end over end: match the stroke's direction
+    if ((bx - ax) * dx + (by - ay) * dy < 0) [ax, ay, bx, by] = [bx, by, ax, ay];
+    const x1 = lerp(px - dx, ax, e), y1 = lerp(py - dy, ay, e);
+    const x2 = lerp(px + dx, bx, e), y2 = lerp(py + dy, by, e);
+    // born in its signal's hottest color, settling into its place's color
+    const p = e > 0.5 ? pal : pal < 0.5 ? TECH(0.98) : SOUND(0.98);
+    const w = Math.min(1.3, vis * (0.95 - 0.25 * e) * (1 + 1.5 * v));
+    segs.set([x1, y1, x2, y2], n * 4);
+    segsB.set([p, w, w, 0], n * 4);
+    n++;
+  }
+  return n;
 }
 
 /** The director's inputs from the journey store, pointer and flags (shared by the 3D and 2D tiers). */
@@ -465,7 +579,8 @@ export function laserInputFrom(
     viewH,
     anchor,
     hover,
-    fly: fly ? { kind: fly.kind, t: (now - fly.start) / flyMs, origin: fly.origin } : null,
+    // a finished fly (navigation is immediate, so it outlives its beat) is over
+    fly: fly && now - fly.start < flyMs ? { kind: fly.kind, t: (now - fly.start) / flyMs, origin: fly.origin } : null,
     pointer,
     drag,
     features: { room: flag("room"), wipe: flag("wipe"), titles: flag("titles") },

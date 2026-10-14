@@ -62,8 +62,9 @@ export function machineText(): string {
   }
   push("", "## code / experience");
   for (const e of experience) {
-    push(`- ${e.role} @ ${e.org} (${e.orgDetail}) · ${e.period}`);
+    push(`- ${e.role} @ ${e.org} (${e.orgDetail}) · ${e.period}${e.href ? `  ↗ ${e.href}` : ""}`);
     push(`  ${e.description}`);
+    for (const h of e.highlights ?? []) push(`  · ${plainLinks(h)}`);
   }
   push("", "## code / stack");
   for (const s of stack) push(dots(s.label) + s.items.join(", "));

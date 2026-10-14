@@ -26,6 +26,6 @@ export function nowLines(): NowLines {
       : last
         ? `last: ${last.title.toLowerCase()} · ${last.date.raw.toLowerCase()}`
         : "monty (us)",
-    about: based ? based.toLowerCase() : "",
+    about: based ? `${based.toLowerCase()} based` : "",
   };
 }

@@ -15,9 +15,10 @@
 // (August 2026) — isFuture(entry) === true — so callers can render it as
 // "next up" rather than a past event. Use isFuture() in the rendering layer.
 //
-// sortKey encoding: year*100 + (month ?? 0). Month-unknown entries sort to the
-// start of their year (month=0). Period entries (experience) use the start year;
-// endDate captures the end. "present" end → endDate is undefined.
+// sortKey encoding: year*10000 + (month ?? 0)*100 + (day ?? 0). Month-unknown
+// entries sort to the start of their year, day-unknown ones to the start of
+// their month. Period entries (experience) use the start; endDate captures the
+// end. "present" end → endDate is undefined.
 
 import { content } from "./content";
 
@@ -28,14 +29,15 @@ export type EntryKind = "show" | "release" | "project" | "experience";
 export interface ParsedDate {
   year: number;
   month?: number;
+  day?: number;
 }
 
 export interface TimelineEntry {
   kind: EntryKind;
   id: string;
   sortKey: number;
-  date: { year: number; month?: number; raw: string };
-  endDate?: { year: number; month?: number; raw: string };
+  date: { year: number; month?: number; day?: number; raw: string };
+  endDate?: { year: number; month?: number; day?: number; raw: string };
   title: string;
   href?: string;
   source: unknown;
@@ -64,9 +66,14 @@ interface PeriodResult {
   isPresent: boolean;
 }
 
-// parseDate: handles "September 2025", "oct 2025", "2024", "April 2025".
+// parseDate: handles "September 2025", "oct 2025", "2024", "October 24, 2026".
 export function parseDate(raw: string): ParsedDate {
   const s = raw.trim();
+  const dated = s.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$/);
+  if (dated) {
+    const month = MONTH_MAP[dated[1].toLowerCase()];
+    if (month) return { year: parseInt(dated[3], 10), month, day: parseInt(dated[2], 10) };
+  }
   const parts = s.split(/\s+/);
   if (parts.length === 2) {
     const maybeMonth = MONTH_MAP[parts[0].toLowerCase()];
@@ -95,18 +102,23 @@ export function parsePeriod(raw: string): PeriodResult {
   return { start, end, isPresent };
 }
 
-// sortKey encoding: year*100 + (month ?? 0).
+// sortKey encoding: year*10000 + (month ?? 0)*100 + (day ?? 0).
 export function toSortKey(d: ParsedDate): number {
-  return d.year * 100 + (d.month ?? 0);
+  return d.year * 10000 + (d.month ?? 0) * 100 + (d.day ?? 0);
 }
 
 // ── future-event guard ────────────────────────────────────────────────────────
 
-// isFuture: true when the entry's date is strictly after `now`.
-// Uses sortKey comparison: nowKey = year*100 + month (1-based).
+// isFuture: true when the entry's date is strictly after `now`. A dated entry
+// ("October 24, 2026") is upcoming until its day; a month-only one counts as
+// past from the first of its month, as before.
+// "Today" is the East Coast's, not the server's (Vercel runs in UTC, where a
+// 10pm show's date ends at 8pm Eastern).
+const EAST = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" });
 export function isFuture(entry: TimelineEntry, now: Date = new Date()): boolean {
-  const nowKey = now.getFullYear() * 100 + (now.getMonth() + 1);
-  return entry.sortKey > nowKey;
+  const today = Number(EAST.format(now).replace(/-/g, ""));
+  const month = Math.floor(today / 100) * 100;
+  return entry.date.day ? entry.sortKey >= today : entry.sortKey > month;
 }
 
 // ── source maps ──────────────────────────────────────────────────────────────

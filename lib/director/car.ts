@@ -2,8 +2,9 @@
 // A car on the timeline's road (about), seen from behind like an arcade chase
 // cam: a low-poly wireframe in laser strokes — the white body, the two tail
 // lights burning pearl, their glow streaking down the road toward you. It
-// drives on as the years go by, pulling away toward the horizon by "now", and
-// sways a little in its lane.
+// holds its place just ahead of you through the years, swaying a little in its
+// lane while the road and the lamp posts beside it stream past, and only pulls
+// away into the distance when "start over" comes up (`away`).
 //
 // It lives in the floor's own perspective (laser-shader.ts gridL): the horizon
 // at hy, the vanishing point at vx, the camera one unit above the road, and a
@@ -26,6 +27,8 @@ export interface CarInput {
   roadHalf: number;
   /** timeline progress 0–1 */
   tp: number;
+  /** 0–1: the drive-off — 0 holding just ahead, 1 gone over the horizon */
+  away: number;
   time: number;
   weight: number;
   body: number; // palette
@@ -64,8 +67,10 @@ export function buildCar(c: CarInput, segs: Float32Array, segsB: Float32Array, n
   const depth = Math.max(c.H - c.hy, 1);
   const road = c.roadHalf / depth; // road half-width, world units (camera height 1)
   const s = road * 0.46; // the car's half-width — about a quarter of the screen up close
-  // close behind it in 2021, pulling away toward the horizon by now
-  const zc = 1.3 + 4.4 * Math.pow(Math.min(Math.max(c.tp, 0), 1), 1.1);
+  // close behind it through the years (easing back a touch by "now"), then
+  // accelerating away over the horizon on the drive-off
+  const away = Math.min(Math.max(c.away, 0), 1);
+  const zc = 1.3 + 0.35 * Math.min(Math.max(c.tp, 0), 1) + 46 * Math.pow(away, 2.2);
   const t = c.time;
   const x0 = (Math.sin(t * 0.45) * 0.16 + Math.sin(t * 0.17 + 1) * 0.08) * road; // swaying in its lane
   const roll = -Math.cos(t * 0.45) * 0.04; // leaning into the sway
@@ -84,7 +89,8 @@ export function buildCar(c: CarInput, segs: Float32Array, segsB: Float32Array, n
     const a = P(x1, y1, z1), b = P(x2, y2, z2);
     if (kind !== 2) pts.push([a[0], a[1]], [b[0], b[1]]);
     const pal = kind === 0 ? c.body : kind === 1 ? c.light : c.glow;
-    const w = (kind === 0 ? 0.8 : kind === 1 ? 1.3 : 0.45) * c.weight;
+    // gone over the horizon: it fades out as it reaches the vanishing point
+    const w = (kind === 0 ? 0.8 : kind === 1 ? 1.3 : 0.45) * c.weight * (1 - smoothstep(0.82, 1, away));
     // distance haze, like the rungs fading toward the horizon
     const fog = (z: number) => Math.exp(-Math.max(z - 1.3, 0) * 0.06);
     segs.set([a[0], a[1], b[0], b[1]], n * 4);
@@ -93,10 +99,72 @@ export function buildCar(c: CarInput, segs: Float32Array, segsB: Float32Array, n
   }
   // the body's silhouette — only once it's really there (fading in, the road
   // shows through)
-  const h = c.weight > 0.5 ? convexHull(pts) : [];
+  const h = c.weight > 0.5 && c.away < 0.9 ? convexHull(pts) : [];
   const hullN = Math.min(h.length, CAR_HULL);
   for (let i = 0; i < hullN; i++) hull.set(h[Math.floor((i * h.length) / hullN)], i * 2);
   return { n, hullN };
+}
+
+// ── the roadside: lamp posts streaming past ───────────────────────────────────
+// A row of posts on each side, just outside the rails, at the floor's own pace:
+// the rungs sit where z·density + scroll is a whole number (laser-shader.ts
+// gridL), and a post stands on every third rung — so posts and rungs move as
+// one ground. Each is a post (body palette) and a lamp at its head (light
+// palette, leaning over the road). They fade in from the haze and out as they
+// pass beside you, so none ever pops.
+
+export interface RoadsideInput {
+  H: number;
+  hy: number;
+  vx: number;
+  roadHalf: number;
+  /** the floor's rung scroll (uGridL.z) and density (uGridB.z) */
+  scroll: number;
+  density: number;
+  weight: number;
+  post: number; // palette
+  lamp: number;
+}
+
+const POSTS_PER_SIDE = 4;
+const RUNGS_APART = 3;
+const Z_NEAR = 0.45;
+
+export function buildRoadside(r: RoadsideInput, segs: Float32Array, segsB: Float32Array, n0: number): number {
+  if (r.weight < 0.002) return n0;
+  const depth = Math.max(r.H - r.hy, 1);
+  const road = r.roadHalf / depth;
+  const P = (X: number, Y: number, Z: number) => [r.vx + (depth * X) / Z, r.hy + (depth * (1 - Y)) / Z];
+  const gap = RUNGS_APART / r.density; // world units between posts
+  const span = gap * POSTS_PER_SIDE;
+  let n = n0;
+  for (let side = -1; side <= 1; side += 2) {
+    for (let i = 0; i < POSTS_PER_SIDE; i++) {
+      if (n + 2 > ROOM_SEGS) return n;
+      // a post on every RUNGS_APART-th rung, wrapping from just beside you back
+      // out to the haze (the two sides staggered by half a gap)
+      const k = i * gap + (side > 0 ? gap / 2 : 0) - r.scroll / r.density;
+      const z = Z_NEAR + (((k - Z_NEAR) % span) + span) % span;
+      const fade = smoothstep(Z_NEAR, Z_NEAR + 0.9, z) * (1 - smoothstep(Z_NEAR + span - gap, Z_NEAR + span, z));
+      const w = r.weight * fade * Math.exp(-Math.max(z - 1.3, 0) * 0.07);
+      if (w < 0.01) continue;
+      const X = side * road * 1.32;
+      const foot = P(X, 0, z), head = P(X, 1.12, z);
+      const arm = P(X - side * road * 0.22, 1.08, z);
+      segs.set([foot[0], foot[1], head[0], head[1]], n * 4);
+      segsB.set([r.post, 0.75 * w, 0.75 * w, 0], n * 4);
+      n++;
+      segs.set([head[0], head[1], arm[0], arm[1]], n * 4);
+      segsB.set([r.lamp, 1.1 * w, 1.1 * w, 0], n * 4);
+      n++;
+    }
+  }
+  return n;
+}
+
+function smoothstep(a: number, b: number, x: number) {
+  const t = Math.min(Math.max((x - a) / (b - a), 0), 1);
+  return t * t * (3 - 2 * t);
 }
 
 /** Andrew's monotone chain, counter-clockwise (y-down screen: clockwise on screen). */

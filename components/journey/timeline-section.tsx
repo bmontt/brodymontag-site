@@ -18,6 +18,8 @@ export default function TimelineSection() {
     <section
       data-chapter
       id="timeline"
+      // the laser layer assembles the road as this rises (lib/director/laser.ts)
+      data-laser-anchor="timeline"
       aria-labelledby="timeline-heading"
       className="relative z-20"
       style={{ minHeight: `${chapter.heightVh}svh` }}

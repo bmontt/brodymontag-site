@@ -4,7 +4,7 @@ import type { Texture } from "three";
 import { Vec2 as Vector2, Vec4 as Vector4 } from "../vec";
 
 /** max projected room segments per frame (lib/director/room.ts) */
-export const ROOM_SEGS = 32;
+export const ROOM_SEGS = 64;
 
 /** max points of the car's silhouette (lib/director/car.ts) */
 export const CAR_HULL = 12;

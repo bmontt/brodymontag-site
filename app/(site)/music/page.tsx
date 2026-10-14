@@ -15,6 +15,7 @@ import { getAllEntries, isFuture } from "@/lib/timeline";
 import { releases } from "@/lib/releases-data";
 import { content } from "@/lib/content";
 import DeferredIframe from "@/components/deferred-iframe";
+import PromoFilm from "@/components/promo-film";
 
 // ── /music ────────────────────────────────────────────────────────────────────
 // The sound half: shows, supported artists, releases, the collective. The
@@ -38,6 +39,9 @@ export default function MusicPage() {
         {/* ── music ─────────────────────────────────────────────────── */}
         <Chapter {...ch} figure opener={flag("openers") ? { index: "02", title: "music", tone: "text-shimmer", now: flag("now") ? nowLines().music : undefined } : undefined}>
           <div className="flex flex-col gap-16">
+            {/* untitled, edge to edge — the set film rises out of the background */}
+            <PromoFilm film={content.music.film} />
+
             {upcomingShows.length > 0 && (
               <div data-reveal>
                 <SectionLabel>next up</SectionLabel>
@@ -103,7 +107,7 @@ export default function MusicPage() {
                   </div>
                 ))}
                 <div data-reveal>
-                  <p data-scramble className="font-mono text-xs text-iridescent-dim mb-3">// latest tracks</p>
+                  <p data-scramble className="font-mono text-xs text-foreground/45 mb-3">// latest tracks</p>
                   <div className="pill-iridescent border border-white/8 overflow-hidden">
                     <DeferredIframe
                       title="SoundCloud"

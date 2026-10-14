@@ -159,6 +159,11 @@ html, body { overflow-x: clip; }
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  /* gradient-clipped text only paints inside the box (padding included); the
+     titles' tight negative tracking pushes the last letter's ink past the
+     edge, so give it room without moving anything */
+  padding-inline-end: 0.12em;
+  margin-inline-end: -0.12em;
   animation: pill-hue-cycle 6s ease-in-out infinite;
 }
 
@@ -280,33 +285,22 @@ html, body { overflow-x: clip; }
   }
 }
 
-/* transition points ([data-tp], journey-controller.tsx): a pearl hairline
-   draws out of the label as it comes into view, and a glint runs along it once */
+/* transition points ([data-tp], journey-controller.tsx): a plain hairline
+   draws out of the label as it comes into view, then rests */
 .tp-line { display: flex; align-items: center; gap: 1rem; }
 .tp-line::after {
   content: "";
   flex: 1;
   max-width: 26rem;
   height: 1px;
-  background:
-    linear-gradient(90deg, transparent 30%, oklch(1 0 0 / 0.95) 50%, transparent 70%) no-repeat,
-    linear-gradient(90deg, oklch(0.88 0.06 225 / 0.55), oklch(0.84 0.08 300 / 0.3) 55%, transparent);
-  background-size: 35% 100%, 100% 100%;
-  background-position: -80% 0, 0 0;
+  background: linear-gradient(90deg, oklch(1 0 0 / 0.22), transparent);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 1.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.tp-line.tp-on::after {
-  transform: scaleX(1);
-  animation: tp-glint 1.5s 0.35s cubic-bezier(0.45, 0, 0.2, 1) both;
-}
-@keyframes tp-glint {
-  from { background-position: -80% 0, 0 0; }
-  to { background-position: 180% 0, 0 0; }
-}
+.tp-line.tp-on::after { transform: scaleX(1); }
 @media (prefers-reduced-motion: reduce) {
-  .tp-line::after { transform: none; transition: none; animation: none; }
+  .tp-line::after { transform: none; transition: none; }
 }
 
 /* entrances (lib/enter.ts) — mount animations at framer-motion's values
