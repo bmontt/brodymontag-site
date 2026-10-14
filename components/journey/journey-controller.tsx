@@ -4,9 +4,8 @@
 // Single source of truth for scroll→store state. Registers:
 //   1. one global #journey trigger that, each frame, derives which chapter we're
 //      in and the cross-chapter blend from precomputed boundary offsets, writes
-//      them to the journey store + a --journey-progress CSS var, and gently
-//      snaps onto a chapter start when the reader stops near one (desktop only).
-//      It refreshes last (refreshPriority -1) so its range and the chapter
+//      them to the journey store + a --journey-progress CSS var. No snapping:
+//      scroll behaves the same on every device. It refreshes last (refreshPriority -1) so its range and the chapter
 //      bounds include the timeline pin's spacer.
 //   2. one scrubbed reveal timeline per chapter ([data-reveal] autoAlpha + y).
 //
@@ -36,9 +35,6 @@ import { chapters as allChapters } from "@/lib/chapters";
 import { journey } from "@/lib/journey-store";
 
 const BLEND_BAND = 0.15; // fraction of a chapter's scroll span used to cross-fade
-// snap is magnetic, not a trap: only settle onto a chapter start when the reader
-// stops within this fraction of a viewport of it; mid-chapter stops stay put
-const SNAP_MAGNET_VH = 0.2;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
@@ -63,14 +59,12 @@ export default function JourneyController() {
       const lastIndex = chapters.length - 1;
 
       // normalized scroll-start of each chapter over the global range; recomputed
-      // on every ScrollTrigger refresh (resize, font/image reflow, dvh changes).
+      // on every ScrollTrigger refresh (resize, font/image reflow).
       let bounds: number[] = chapters.map(() => 0);
-      let rangePx = 1;
 
       function computeBounds(start: number, end: number) {
         const range = end - start;
         if (range <= 0) return;
-        rangePx = range;
         const scrollY = window.scrollY;
         bounds = chapters.map((c) => {
           const el = document.getElementById(c.id);
@@ -81,10 +75,8 @@ export default function JourneyController() {
         journey.setBounds(bounds);
       }
 
-      // snap to the nearest chapter boundary — desktop only (touch momentum +
-      // snap fight each other). isTouch === 1 means touch-only.
-      const enableSnap = ScrollTrigger.isTouch !== 1;
-
+      // (no snapping: it ran on mouse and trackpad but not on touch, so the same
+      // page scrolled differently per device — scroll is free everywhere)
       const globalTrigger = ScrollTrigger.create({
         trigger: "#journey",
         start: "top top",
@@ -124,24 +116,6 @@ export default function JourneyController() {
 
           journey.report(local, self.getVelocity(), g);
         },
-        snap: enableSnap
-          ? {
-              snapTo(value: number) {
-                let best = value;
-                let bestDist = Infinity;
-                for (const b of bounds) {
-                  const d = Math.abs(b - value);
-                  if (d < bestDist) { bestDist = d; best = b; }
-                }
-                // magnetic: settle only when already near a chapter start
-                return bestDist * rangePx <= window.innerHeight * SNAP_MAGNET_VH ? best : value;
-              },
-              duration: { min: 0.15, max: 0.4 },
-              delay: 0.12,
-              ease: "power1.inOut",
-              directional: true,
-            }
-          : undefined,
       });
 
       // per-chapter choreography (independent of the global trigger). Each
@@ -300,14 +274,20 @@ export default function JourneyController() {
       if (timelineSection && track) {
         timelineSection.classList.add("is-horizontal");
         const move = () => Math.max(track.scrollWidth - window.innerWidth, 0);
-        // extra pinned scroll AFTER the track stops, so 2026 (and the fully
-        // assembled "now" vessel) lingers before the section releases.
-        const dwell = () => window.innerWidth * 0.85;
+        // scroll lengths in screens, not px of width, so a year takes the same
+        // scroll on every device: each panel the track slides past costs
+        // PANEL_SCREENS of a screen, and the dwell after it — 2026 lingering
+        // before the section releases — DWELL_SCREENS (on a 16:10 laptop the
+        // same as before, when both were measured in px of width)
+        const PANEL_SCREENS = 0.6, DWELL_SCREENS = 1.36;
+        const panelW = () => track.querySelector<HTMLElement>(".timeline-panel")?.offsetWidth || window.innerWidth;
+        const travel = () => (move() / panelW()) * PANEL_SCREENS * window.innerHeight;
+        const dwell = () => DWELL_SCREENS * window.innerHeight;
 
         // vessel era maps to the TRACK position only (held at "now" through the
         // dwell) so the displayed year and the field's era stay in lockstep.
         const report = (self: ScrollTrigger) => {
-          const m = move();
+          const m = travel();
           const moveFrac = m + dwell() > 0 ? m / (m + dwell()) : 1;
           journey.setTimelineProgress(
             moveFrac > 0 ? Math.min(self.progress / moveFrac, 1) : 1,
@@ -318,7 +298,7 @@ export default function JourneyController() {
           scrollTrigger: {
             trigger: timelineSection,
             start: "top top",
-            end: () => `+=${move() + dwell()}`,
+            end: () => `+=${travel() + dwell()}`,
             pin: true,
             scrub: 1,
             invalidateOnRefresh: true,
@@ -330,7 +310,7 @@ export default function JourneyController() {
           },
         });
         // segment 1: slide the track across all years; segment 2: hold (dwell)
-        tl.to(track, { x: () => -move(), ease: "none", duration: move() })
+        tl.to(track, { x: () => -move(), ease: "none", duration: travel() })
           .to(track, { duration: dwell() });
 
         cleanup.push(() => {

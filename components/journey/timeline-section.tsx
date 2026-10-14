@@ -19,8 +19,8 @@ export default function TimelineSection() {
       data-chapter
       id="timeline"
       aria-labelledby="timeline-heading"
-      className="relative"
-      style={{ minHeight: `${chapter.heightVh}dvh` }}
+      className="relative z-20"
+      style={{ minHeight: `${chapter.heightVh}svh` }}
     >
       {/* heading — bold white display type like the other chapters, smaller so
           the pinned year track keeps the viewport */}

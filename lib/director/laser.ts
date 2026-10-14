@@ -28,7 +28,8 @@
 //                        orbit; they keep twirling until "Let's work together."
 //                        comes on screen, then spiral in beside it and fuse
 //                        white-hot (a one-shot flash), ring down, and lie down
-//                        as one calm trace — the horizon of the timeline floor.
+//                        as one calm trace — the horizon of the timeline floor,
+//                        a road with a car driving on through the years.
 //   detail    an echo    a project page keeps a faint knot, a show page faint fans.
 //
 // Every figure parameter is damped toward its page's target, so moving between
@@ -41,9 +42,10 @@ import type { LaserUniforms } from "@/lib/ascii-engine/gl/laser-shader";
 import type { AnchorRect } from "@/lib/laser-anchors";
 import type { StageRouteKind } from "@/lib/journey-store";
 import { buildRoom } from "./room";
+import { buildCar } from "./car";
 import { drag, knot, pointer, stepDrag } from "@/lib/stage-input";
 import { flag } from "@/lib/flags";
-import { ROOM_SEGS } from "@/lib/ascii-engine/gl/laser-shader";
+import { CAR_HULL, ROOM_SEGS } from "@/lib/ascii-engine/gl/laser-shader";
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const smooth = (a: number, b: number, x: number) => {
@@ -138,6 +140,7 @@ export function createLaserDirector() {
   const out: LaserOutput = { knot: { x: 0, y: 0, r: 0, w: 0 }, title: false, burst: 0, brightness: 1, hot: 0.2 };
   const segs = new Float32Array(ROOM_SEGS * 4);
   const segsB = new Float32Array(ROOM_SEGS * 4);
+  const hull = new Float32Array(CAR_HULL * 2);
 
   return function update(u: LaserUniforms, x: LaserInput): LaserOutput {
     const { time, viewW: W, viewH: H, p } = x;
@@ -301,7 +304,8 @@ export function createLaserDirector() {
         rW: smooth(0, 0.05, ring) * (1 - ring) * (1 - floor), rR: ring * Math.hypot(W, H) * 0.75, rPal: SOUND(lerp(0.98, 0.3, ring)),
         // the one calm trace — the timeline floor's horizon when it arrives
         sW: Math.max(resolve, 0.6 * floor), sBase: H * 0.56, sAmp: H * 0.02 * (1 - floor), sCyc: 1.2, sA: SOUND(0.97),
-        gW: floor * 0.7, gRails: floor, gGap: W * 0.34 * (1 - 0.88 * smooth(0, 1, Math.max(x.timelineProgress, 0))),
+        // the floor is a road: a white and a pearl rail at its edges, a car on it (car.ts)
+        gW: floor * 0.7, gRails: floor, gGap: W * 0.34,
         bright: lerp(0.95, 0.82, floor), hot: lerp(0.2, 0.08, floor) + 0.5 * fused * (1 - ring),
       });
     }
@@ -378,7 +382,15 @@ export function createLaserDirector() {
       : { x: W / 2, y: H * 0.45 };
     const roomW = !feat.room ? 0
       : (x.page === "home" ? 0.45 : x.page === "project" || x.page === "show" ? 0.25 : 0.4) * (1 - c.gW) * (still ? 0.8 : smooth(0, 0.8, since));
-    const nSeg = buildRoom({ page: x.page, W, H, p, time, pointer: ptr, focus, tech: TECH, sound: SOUND, weight: roomW }, segs, segsB);
+    let nSeg = buildRoom({ page: x.page, W, H, p, time, pointer: ptr, focus, tech: TECH, sound: SOUND, weight: roomW }, segs, segsB);
+    // the car on the timeline's road, in the floor's perspective
+    const car = buildCar({
+      W, H, hy: H * 0.56, vx: W * (0.5 + 0.18 * (0.5 - tp)), roadHalf: c.gGap, tp, time,
+      weight: c.gW / 0.7, body: TECH(0.9), light: SOUND(0.95), glow: SOUND(0.7),
+    }, segs, segsB, nSeg, hull);
+    nSeg = car.n;
+    for (let i = 0; i < car.hullN; i++) u.uCarHull.value[i].fromArray(hull, i * 2);
+    u.uCarN.value = car.hullN;
     for (let i = 0; i < nSeg; i++) {
       u.uSegs.value[i].fromArray(segs, i * 4);
       u.uSegsB.value[i].fromArray(segsB, i * 4);

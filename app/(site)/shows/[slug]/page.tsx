@@ -1,8 +1,7 @@
-"use client";
-
-import { notFound, useParams } from "next/navigation";
+// static: every show is prerendered at build (generateStaticParams)
+import { notFound } from "next/navigation";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { enterStyle } from "@/lib/enter";
 import SiteNav from "@/components/nav";
 import BackLink from "@/components/back-link";
 import { events } from "@/lib/brody-events";
@@ -19,9 +18,12 @@ function AsciiRule({ className = "" }: { className?: string }) {
   );
 }
 
-export default function ShowPage() {
-  const params = useParams();
-  const slug = params?.slug as string;
+export function generateStaticParams() {
+  return events.map((e) => ({ slug: e.slug }));
+}
+
+export default async function ShowPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const event = events.find((e) => e.slug === slug);
 
   if (!event) notFound();
@@ -38,21 +40,17 @@ export default function ShowPage() {
           <BackLink href="/music" />
 
           {/* section header */}
-          <motion.div
-            className="mb-12 font-mono text-sm text-foreground/28 overflow-hidden whitespace-nowrap"
-            initial={{ opacity: 0, x: -12 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
+          <div
+            className="enter mb-12 font-mono text-sm text-foreground/28 overflow-hidden whitespace-nowrap"
+            style={enterStyle({ x: -12, dur: 0.6 })}
           >
             {`┌─ // show ${"─".repeat(120)}┐`}
-          </motion.div>
+          </div>
 
           {/* headline row */}
-          <motion.div
-            className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 mb-2"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+          <div
+            className="enter flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 mb-2"
+            style={enterStyle({ y: 14, dur: 0.5, delay: 0.1 })}
           >
             <h1
               className="text-iridescent-stroke font-sans font-light text-foreground/90"
@@ -61,25 +59,21 @@ export default function ShowPage() {
               {event.venue}
             </h1>
             <span className="font-mono text-sm text-foreground/40">{event.date}</span>
-          </motion.div>
+          </div>
 
-          <motion.p
-            className="font-mono text-sm text-foreground/50 mb-10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
+          <p
+            className="enter font-mono text-sm text-foreground/50 mb-10"
+            style={enterStyle({ dur: 0.4, delay: 0.2 })}
           >
             {event.city}
-          </motion.p>
+          </p>
 
           <AsciiRule className="mb-8" />
 
           {/* metadata grid */}
-          <motion.div
-            className="flex flex-col gap-3 mb-10"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.25 }}
+          <div
+            className="enter flex flex-col gap-3 mb-10"
+            style={enterStyle({ y: 10, dur: 0.45, delay: 0.25 })}
           >
             {[
               { label: "format",    value: event.format                          },
@@ -110,15 +104,14 @@ export default function ShowPage() {
                 )}
               </div>
             ))}
-          </motion.div>
+          </div>
 
           <AsciiRule className="mb-8" />
 
           {/* context */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.35 }}
+          <div
+            className="enter"
+            style={enterStyle({ y: 10, dur: 0.5, delay: 0.35 })}
           >
             <p className="font-sans text-base text-foreground/65 leading-relaxed mb-6">
               {event.context}
@@ -128,30 +121,23 @@ export default function ShowPage() {
                 {event.setlistNote}
               </p>
             )}
-          </motion.div>
+          </div>
 
           {/* images */}
           {images.length > 0 && (
-            <motion.div
-              className="mt-12"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.45 }}
+            <div
+              className="enter mt-12"
+              style={enterStyle({ y: 10, dur: 0.5, delay: 0.45 })}
             >
               <AsciiRule className="mb-8" />
               <div
                 className={`grid gap-3 ${images.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}
               >
                 {images.map((img, i) => (
-                  <motion.div
+                  <div
                     key={i}
-                    className="relative w-full overflow-hidden border border-white/8"
-                    style={{ filter: PHOTO_FILTER, maxHeight: "360px", aspectRatio: "16/9" }}
-                    whileHover={{
-                      filter: "grayscale(0) brightness(1) contrast(1)",
-                      borderColor: "rgba(255,255,255,0.18)",
-                    }}
-                    transition={{ duration: 0.4 }}
+                    className="photo-hover relative w-full overflow-hidden border border-white/8"
+                    style={{ "--photo-filter": PHOTO_FILTER, maxHeight: "360px", aspectRatio: "16/9" } as React.CSSProperties}
                   >
                     <Image
                       src={img.src}
@@ -161,19 +147,17 @@ export default function ShowPage() {
                       className="object-cover"
                       sizes="(max-width: 640px) 100vw, 50vw"
                     />
-                  </motion.div>
+                  </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* links */}
           {event.links && event.links.length > 0 && (
-            <motion.div
-              className="mt-10 flex flex-wrap gap-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.55 }}
+            <div
+              className="enter mt-10 flex flex-wrap gap-6"
+              style={enterStyle({ dur: 0.4, delay: 0.55 })}
             >
               {event.links.map(({ label, href }) => (
                 <a
@@ -186,7 +170,7 @@ export default function ShowPage() {
                   {label}&nbsp;↗
                 </a>
               ))}
-            </motion.div>
+            </div>
           )}
         </div>
       </main>

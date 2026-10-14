@@ -57,15 +57,12 @@ test("reduced motion gets the 2D tier", async ({ browser }) => {
 });
 
 // the 2D tier draws the same laser piece (CPU)
+// lit pixels on the 2D tier's canvas — asked of whoever paints it (a worker
+// owns the canvas where OffscreenCanvas works)
 const litPixels = (page: import("@playwright/test").Page) =>
-  page.evaluate(() => {
-    const c = document.querySelector<HTMLCanvasElement>("[aria-hidden] canvas");
-    const ctx = c?.getContext("2d");
-    if (!c || !ctx) return -1;
-    const d = ctx.getImageData(0, 0, c.width, c.height).data;
-    let n = 0;
-    for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
-    return n;
+  page.evaluate(async () => {
+    const lit = (window as unknown as { __laser2dLit?: () => Promise<number> }).__laser2dLit;
+    return lit ? lit() : -1;
   });
 
 test("2D tier draws the laser layer, with motion and without", async ({ browser }) => {
@@ -161,9 +158,12 @@ test("a lost WebGL context drops back to the 2D tier, never a blank stage", asyn
   await page.goto("/?tier=3d&debug");
   await waitForStage(page);
   await page.evaluate(() => {
-    // the stage's canvas — a 2D canvas answers getContext("webgl2") with null
+    // the stage's canvas — a 2D canvas answers getContext("webgl2") with null,
+    // and one handed to a worker throws
     for (const c of document.querySelectorAll("canvas")) {
-      c.getContext("webgl2")?.getExtension("WEBGL_lose_context")?.loseContext();
+      try {
+        c.getContext("webgl2")?.getExtension("WEBGL_lose_context")?.loseContext();
+      } catch {}
     }
   });
   await expect.poll(() => tier(page)).toBe("2d");
@@ -209,4 +209,20 @@ test("the entering page layer is see-through, so the morphing title and the stag
   await page.goto("/software?tier=2d");
   const wrapper = page.locator("#journey").locator("xpath=..");
   expect(await wrapper.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
+});
+
+test("the timeline's road has a car on it (both tiers draw the projected segments)", async ({ page }) => {
+  await page.goto("/about?tier=3d&debug");
+  await waitForStage(page);
+  const top = await page.evaluate(() => document.getElementById("timeline")!.getBoundingClientRect().top + window.scrollY);
+  await page.evaluate((y) => window.scrollTo(0, y), top + 300);
+  await expect.poll(async () => (await stageDebug(page)).tl, { timeout: 10_000 }).toBeGreaterThan(0);
+  // the car's 18 strokes (room off): body, tail lights, their glow on the road
+  await expect.poll(async () => (await stageDebug(page)).segs).toBeGreaterThanOrEqual(18);
+});
+
+test("2D tier paints in a worker where its glyphs can match the page", async ({ page }) => {
+  await page.goto("/software?tier=2d");
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __laser2dMode?: string }).__laser2dMode)).toBe("worker");
+  await expect.poll(() => litPixels(page)).toBeGreaterThan(200);
 });

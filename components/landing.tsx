@@ -11,12 +11,12 @@
 
 import Link from "next/link";
 import type { NowLines } from "@/lib/now";
-import { motion, useReducedMotion } from "framer-motion";
+import { enterStyle } from "@/lib/enter";
 import TypedHeading from "@/components/typed-heading";
 import { ICONS } from "@/lib/platform-data";
 import { content } from "@/lib/content";
 import { glow } from "@/lib/glow";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { Morph, PageTransition } from "@/components/morph";
 
 const j = content.journey as Record<string, { heading: string }>;
@@ -34,8 +34,12 @@ const OPTIONS = [
 ] as const;
 
 export default function Landing({ now }: { now: NowLines | null }) {
-  const reduced = useReducedMotion();
-  const [hoverLink, setHoverLink] = useState<string | null>(null);
+  // the entrances (globals.css .enter) wait for hydration, where the name
+  // starts typing, so the choreography holds on any device
+  const gate = useRef<HTMLElement>(null);
+  useEffect(() => {
+    gate.current?.setAttribute("data-ready", "");
+  }, []);
 
   // s / m / a pick a half from the keyboard (through the link, so the exit
   // burst and the morph play the same as a click)
@@ -49,20 +53,15 @@ export default function Landing({ now }: { now: NowLines | null }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-  const rise = (i: number) =>
-    reduced
-      ? {}
-      : {
-          initial: { opacity: 0, y: 28, filter: "blur(8px)" },
-          animate: { opacity: 1, y: 0, filter: "blur(0px)" },
-          transition: { delay: 1.15 + i * 0.16, duration: 0.9, ease: [0.22, 1, 0.36, 1] as const },
-        };
+  const rise = (i: number) => enterStyle({ y: 28, blur: 8, dur: 0.9, delay: 1.15 + i * 0.16, ease: "cubic-bezier(0.22, 1, 0.36, 1)" });
 
   return (
     <PageTransition>
     <main
+      ref={gate}
+      data-gate
       id="landing"
-      className="relative z-20 flex min-h-dvh flex-col items-center justify-center px-6 py-24 md:px-12"
+      className="relative z-20 flex min-h-svh flex-col items-center justify-center px-6 py-24 md:px-12"
     >
       <Morph name="title-home">
       <h1
@@ -85,7 +84,7 @@ export default function Landing({ now }: { now: NowLines | null }) {
 
       <nav aria-label="sections" className="landing-opts grid w-full max-w-6xl grid-cols-1 gap-y-10 md:grid-cols-2 md:gap-y-6">
         {OPTIONS.map((o, i) => (
-          <motion.div key={o.id} className={`landing-opt ${o.place}`} {...rise(i)}>
+          <div key={o.id} className={`enter enter-blur landing-opt ${o.place}`} style={rise(i)}>
             <Link
               href={o.href}
               data-stage-id={`nav:${o.id}`}
@@ -109,16 +108,13 @@ export default function Landing({ now }: { now: NowLines | null }) {
                 {now[o.id as keyof NowLines]}
               </span>}
             </Link>
-          </motion.div>
+          </div>
         ))}
       </nav>
 
-      <motion.div
-        className="iri-cycle absolute bottom-8 flex items-center gap-5"
-        initial={reduced ? undefined : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.9, duration: 0.8 }}
-      >
+      {/* the entrance on its own box: .iri-cycle runs an animation of its own */}
+      <div className="enter absolute bottom-8" style={enterStyle({ dur: 0.8, delay: 1.9 })}>
+      <div className="iri-cycle flex items-center gap-5">
         {LINKS.map(({ id, icon: Icon, href, label, glowRgb }) => (
           <a
             key={id}
@@ -126,17 +122,14 @@ export default function Landing({ now }: { now: NowLines | null }) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={label}
-            onMouseEnter={() => setHoverLink(id)}
-            onMouseLeave={() => setHoverLink(null)}
-            style={{
-              color: hoverLink === id ? glow(glowRgb, 1) : "rgba(255,255,255,0.28)",
-              transition: "color 0.25s ease",
-            }}
+            className="social-link"
+            style={{ "--glow": glow(glowRgb, 1) } as CSSProperties}
           >
             <Icon className="h-4 w-4" />
           </a>
         ))}
-      </motion.div>
+      </div>
+      </div>
     </main>
     </PageTransition>
   );

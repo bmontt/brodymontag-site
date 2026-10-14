@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import type { PlatformData } from "@/lib/platform-data";
 import { glow } from "@/lib/glow";
 
@@ -91,65 +90,61 @@ export default function PlatformCard({
           )}
         </div>
 
-        {/* expandable details */}
-        <AnimatePresence initial={false}>
-          {expanded && (
-            <motion.div
-              key="details"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.22, ease: "easeInOut" }}
-              className="overflow-hidden"
-            >
-              <div className="pt-3 mt-1 border-t border-white/8 flex flex-col gap-2.5">
-                {details.map((d) => (
-                  <div
-                    key={d.label}
-                    className="flex items-baseline justify-between gap-4"
-                  >
-                    <span className="font-mono text-xs text-foreground/32 shrink-0">
-                      {d.label}
-                    </span>
-                    {d.href ? (
-                      <a
-                        href={d.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="font-mono text-xs text-foreground/62 hover:text-accent/80 transition-colors text-right"
-                      >
-                        {d.value}&nbsp;↗
-                      </a>
-                    ) : (
-                      <span className="font-mono text-xs text-foreground/62 text-right">
-                        {d.value}
-                      </span>
-                    )}
-                  </div>
-                ))}
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="mt-1.5 font-mono text-xs transition-colors"
-                  style={{
-                    color: `${glow(glowRgb, 0.55)}`,
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.color = `${glow(glowRgb, 0.90)}`;
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.color = `${glow(glowRgb, 0.55)}`;
-                  }}
+        {/* expandable details — the row animates 0fr ↔ 1fr (height 0 ↔ auto),
+            0.22s ease-in-out; inert while closed */}
+        <div
+          className="grid transition-[grid-template-rows,opacity] duration-[220ms] ease-in-out"
+          style={{ gridTemplateRows: expanded ? "1fr" : "0fr", opacity: expanded ? 1 : 0 }}
+          inert={!expanded}
+        >
+          <div className="min-h-0 overflow-hidden">
+            <div className="pt-3 mt-1 border-t border-white/8 flex flex-col gap-2.5">
+              {details.map((d) => (
+                <div
+                  key={d.label}
+                  className="flex items-baseline justify-between gap-4"
                 >
-                  view profile&nbsp;↗
-                </a>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  <span className="font-mono text-xs text-foreground/32 shrink-0">
+                    {d.label}
+                  </span>
+                  {d.href ? (
+                    <a
+                      href={d.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="font-mono text-xs text-foreground/62 hover:text-accent/80 transition-colors text-right"
+                    >
+                      {d.value}&nbsp;↗
+                    </a>
+                  ) : (
+                    <span className="font-mono text-xs text-foreground/62 text-right">
+                      {d.value}
+                    </span>
+                  )}
+                </div>
+              ))}
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="mt-1.5 font-mono text-xs transition-colors"
+                style={{
+                  color: `${glow(glowRgb, 0.55)}`,
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.color = `${glow(glowRgb, 0.90)}`;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.color = `${glow(glowRgb, 0.55)}`;
+                }}
+              >
+                view profile&nbsp;↗
+              </a>
+            </div>
+          </div>
+        </div>
 
         {/* expand hint */}
         <p className="mt-3 font-mono text-xs text-foreground/18">

@@ -5,6 +5,9 @@ type StageDebug = {
   bounds: number[];
   focus: { route: string; hover: string | null; fly: boolean };
   fps: number;
+  /** projected laser segments this frame (room + car) · year-track progress (-1 off) */
+  segs: number;
+  tl: number;
 };
 
 /** Collect console errors / page errors for the life of the page. */

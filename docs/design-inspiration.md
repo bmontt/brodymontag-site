@@ -285,3 +285,35 @@ as the signature moment, and fold **#4–#6** into Phase 6 hardening.
   - Each label drifts on a scrubbed, sine-eased offset (±36px). It slows as
     it crosses mid-screen and catches up after, so the momentum varies from
     section to section.
+
+## Round 6: a car on the road, consistent scroll (2026-10-14)
+
+- **The timeline floor is a road** (`lib/director/car.ts`).
+  - The two rails stay at road width instead of converging.
+  - A low-poly car, seen from behind like an arcade chase cam, drives on
+    through the years. It's close in 2021 and pulls away toward the horizon
+    by "now", swaying in its lane.
+  - It's drawn in the floor's own perspective (horizon, vanishing point,
+    camera one unit up), so it sits on the rungs at any screen size. It's
+    projected on the CPU into the room's segment slots, so both tiers draw
+    it.
+  - The model suits a glyph grid: one line at the bumper and one at the roof,
+    the tail lights burning between them, verticals and slants for the rest.
+  - Its silhouette (a convex hull, grown by a glyph) hides the road behind it.
+    Without that, the rungs ran straight through it.
+- **Timeline stacking fix:** the section had no z-index, so in the 3D tier
+  its years and entries painted under the stage canvas. It's `z-20` now.
+- **Scroll is the same everywhere:**
+  - Wheel steps scale with window height. Sections are sized in screens, so a
+    notch now covers the same share of a section on any display. Firefox's
+    line-mode wheels are brought to 100 px per notch.
+  - The magnetic chapter snap is gone: it ran on mouse and trackpad but not
+    on touch.
+  - The timeline's pin length is 0.6 screens per year panel, plus a
+    1.36-screen dwell, on every size. On a 16:10 laptop that's the same
+    length as before.
+  - Heights use `svh` (`dvh` reflowed under the finger as mobile toolbars
+    moved). The stages are pinned to `lvh`, so the WebGL canvas never
+    resizes mid-scroll.
+  - `ScrollTrigger.config({ ignoreMobileResize: true })`.
+- **Performance:** see `docs/performance.md`.

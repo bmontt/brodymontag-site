@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useReducedMotion } from "framer-motion";
 
 export interface Typo {
   at: number;       // index in `text` the mistake happens *before* (use text.length for a trailing typo)
@@ -66,8 +65,7 @@ export default function TypedHeading({
   className?: string;
   onComplete?: () => void;
 }) {
-  const prefersReducedMotion = useReducedMotion();
-  // Initial state must NOT depend on prefersReducedMotion: it is false during
+  // Initial state must NOT depend on reduced motion: it is unknown during
   // SSR but true on the client under reduced motion, which would desync the
   // first render and throw a hydration mismatch (#418). Start empty to match
   // SSR; the effect below fills in the full text immediately when reduced.
@@ -75,7 +73,7 @@ export default function TypedHeading({
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    if (prefersReducedMotion) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setDisplayed(text);
       setDone(true);
       onComplete?.();
@@ -103,7 +101,7 @@ export default function TypedHeading({
     };
     // typos/onComplete intentionally excluded — the timeline is built once per `text`
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, prefersReducedMotion]);
+  }, [text]);
 
   return (
     <span className={className}>

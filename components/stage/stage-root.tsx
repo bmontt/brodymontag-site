@@ -64,6 +64,8 @@ const MASK = "radial-gradient(ellipse 125% 115% at 50% 45%, black 58%, transpare
 const CROSSFADE_MS = 800;
 const CELL = { w: 8, h: 22 };
 
+/** The cheap checks, at mount. "3d" here is a candidate: the GPU probe
+ *  (probeWebGL2) runs later, when the stage is about to mount. */
 function detectTier(): [Tier, string] {
   const forced = new URLSearchParams(window.location.search).get("tier");
   if (forced === "2d" || forced === "3d") return [forced, "forced"];
@@ -71,15 +73,22 @@ function detectTier(): [Tier, string] {
   const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
   if (nav.connection?.saveData) return ["2d", "save-data"];
   if ((nav.deviceMemory ?? 8) < 4 || (navigator.hardwareConcurrency ?? 8) < 4) return ["2d", "low-end"];
+  return ["3d", "capable"];
+}
+
+/** A real (hardware) WebGL2 context? Creating one is a long task — hundreds of
+ *  ms on a slow phone — so it runs off the critical path, just before the
+ *  stage would mount, never during first paint and hydration. */
+function probeWebGL2(): boolean {
   try {
     const probe = document.createElement("canvas");
     const gl = probe.getContext("webgl2", { failIfMajorPerformanceCaveat: true });
-    if (!gl) return ["2d", "no-webgl2"];
+    if (!gl) return false;
     gl.getExtension("WEBGL_lose_context")?.loseContext(); // free the probe context
+    return true;
   } catch {
-    return ["2d", "no-webgl2"];
+    return false;
   }
-  return ["3d", "capable"];
 }
 
 const SECTIONS: Record<string, StageRouteKind> = { "/": "home", "/software": "software", "/music": "music", "/about": "about" };
@@ -103,6 +112,7 @@ export default function StageRoot() {
   const [reason, setReason] = useState("pending");
   const [stageReady, setStageReady] = useState(false);
   const [canvas2dGone, setCanvas2dGone] = useState(false);
+  const [stageGo, setStageGo] = useState(false);
   const flying = useRef(false);
 
   useEffect(() => {
@@ -127,6 +137,32 @@ export default function StageRoot() {
     journey.setHover(null);
     flying.current = false;
   }, [pathname]);
+
+  // the 3D stage (~1 MB: three.js + the renderer) and its GPU probe wait until
+  // the page has loaded and the main thread is idle (at most 1.5 s more), so
+  // neither competes with first paint and hydration — the 2D tier paints the
+  // same piece meanwhile, then the stage crossfades in as before
+  useEffect(() => {
+    if (tier !== "3d") return;
+    const ric = window.requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 1));
+    const cic = window.cancelIdleCallback ?? window.clearTimeout;
+    let idle = 0;
+    const go = () => {
+      idle = ric(() => {
+        if (reason === "forced" || probeWebGL2()) setStageGo(true);
+        else {
+          setTier("2d");
+          setReason("no-webgl2");
+        }
+      }, { timeout: 1500 });
+    };
+    if (document.readyState === "complete") go();
+    else window.addEventListener("load", go, { once: true });
+    return () => {
+      window.removeEventListener("load", go);
+      cic(idle);
+    };
+  }, [tier, reason]);
 
   // after the stage's first frame, let the crossfade finish, then drop the 2D canvas
   useEffect(() => {
@@ -206,10 +242,10 @@ export default function StageRoot() {
           <Laser2D />
         </div>
       )}
-      {tier === "3d" && (
+      {tier === "3d" && stageGo && (
         <div
           aria-hidden="true"
-          className="pointer-events-none fixed inset-0 z-10"
+          className="stage-box pointer-events-none z-10"
           style={{
             opacity: stageReady ? 1 : 0,
             transition: `opacity ${CROSSFADE_MS}ms ease`,

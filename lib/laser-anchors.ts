@@ -13,19 +13,30 @@ export interface AnchorRect {
   h: number;
 }
 
-const cache = new Map<string, HTMLElement>();
+const cache = new Map<string, HTMLElement | null>();
+
+// The director asks for every page's anchors each frame; most aren't on the
+// current page. A miss is remembered until the DOM's element tree changes
+// (route, reveal), instead of a full-document query per frame per id.
+let watching = false;
+function watch() {
+  if (watching || typeof MutationObserver === "undefined") return;
+  watching = true;
+  new MutationObserver(() => {
+    for (const [id, el] of cache) if (el === null) cache.delete(id);
+  }).observe(document.documentElement, { childList: true, subtree: true });
+}
 
 /** Viewport rect of an anchor, or null when absent / hidden (e.g. on phones). */
 export function readAnchor(id: string): AnchorRect | null {
   if (typeof document === "undefined") return null;
+  watch();
   let el = cache.get(id);
+  if (el === null) return null; // known absent
   if (!el || !el.isConnected) {
-    el = document.querySelector<HTMLElement>(`[data-laser-anchor="${id}"]`) ?? undefined;
-    if (!el) {
-      cache.delete(id);
-      return null;
-    }
+    el = document.querySelector<HTMLElement>(`[data-laser-anchor="${id}"]`);
     cache.set(id, el);
+    if (!el) return null;
   }
   const r = el.getBoundingClientRect();
   if (r.width < 2 || r.height < 2) return null;

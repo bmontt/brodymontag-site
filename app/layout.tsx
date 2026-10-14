@@ -10,7 +10,7 @@ const geistMono = Geist_Mono({
 });
 
 const neueHaas = localFont({
-  src: "../public/fonts/NeueHaasDisplayMedium.ttf",
+  src: "../public/fonts/NeueHaasDisplayMedium.woff2", // lossless WOFF2 of the .ttf (¼ the bytes)
   weight: "500",
   display: "swap",
   variable: "--font-neue",

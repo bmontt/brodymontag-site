@@ -1,6 +1,7 @@
 /* ─── ASCII engine (GL) — three-pass renderer ───────────────────────────────── */
 
 import {
+  DataTexture,
   DataUtils,
   HalfFloatType,
   Mesh,
@@ -116,6 +117,10 @@ export class AsciiRenderer {
         ...this.laser,
       },
     });
+    // the 3D title's mask starts as a black texel (laser-shader.ts stays three-free)
+    const blank = new DataTexture(new Uint8Array(4), 1, 1);
+    blank.needsUpdate = true;
+    this.laser.uTitleTex.value = blank;
     this.laser.uLaserSlots.value.set(slotOf("─"), slotOf("│"), slotOf("╲"), slotOf("╱"));
     this.laser.uLaserDot.value = slotOf("·");
 
@@ -180,8 +185,35 @@ export class AsciiRenderer {
     }
   }
 
+  /** every pass's program is compiled (see compile()) */
+  compiled = false;
+
+  /**
+   * Compile all three passes' programs before the first frame, in parallel and
+   * off the main thread where the driver allows (KHR_parallel_shader_compile,
+   * via three's compileAsync) — the first render would otherwise block on
+   * compiling and linking the big cell shader. Each pass is compiled with its
+   * own render target bound, so the program variant is the one render() uses.
+   */
+  compile(scene: Scene, camera: PerspectiveCamera): Promise<void> {
+    const gl = this.gl;
+    const prev = gl.getRenderTarget();
+    const jobs: Promise<unknown>[] = [];
+    gl.setRenderTarget(this.sceneRT);
+    jobs.push(gl.compileAsync(scene, camera));
+    gl.setRenderTarget(this.cellRT);
+    jobs.push(gl.compileAsync(this.cellScene, this.quadCam));
+    gl.setRenderTarget(null);
+    jobs.push(gl.compileAsync(this.composeScene, this.quadCam));
+    gl.setRenderTarget(prev);
+    const done = () => {
+      this.compiled = true;
+    };
+    return Promise.all(jobs).then(done, done); // a failure compiles again on first use
+  }
+
   get ready(): boolean {
-    return this.composeMat.uniforms.uAtlas.value !== null;
+    return this.compiled && this.composeMat.uniforms.uAtlas.value !== null;
   }
 
   render(scene: Scene, camera: PerspectiveCamera): void {

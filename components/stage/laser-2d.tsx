@@ -7,6 +7,13 @@
 // first on every visit (before the 3D stage crossfades in) and is what reduced-
 // motion, low-end and lost-WebGL visitors keep.
 //
+// The painting runs in a worker (laser-2d.worker.ts) on an OffscreenCanvas:
+// the page only runs the director — it reads layout — and posts each frame's
+// packed uniforms, so the main thread stays free for input and scroll on the
+// very devices this tier is for. Where a worker can't paint (no
+// OffscreenCanvas, or the glyph font won't load there) it paints here instead,
+// with the same painter (laser-paint.ts).
+//
 //   motion OK      → ~30fps, scroll-driven like the 3D layer
 //   reduced motion → no clock, no glides: still frames, redrawn only
 //                    when the layout the figures sit in moves (scroll, route,
@@ -17,63 +24,148 @@ import { journey } from "@/lib/journey-store";
 import { createLaserDirector, laserInputFrom, noteKnot, TRANSITION_MS } from "@/lib/director/laser";
 import { TITLE_ASPECT, TITLE_TEXT, titleCanvas } from "@/lib/ascii-engine/title-mask";
 import { makeLaserUniforms } from "@/lib/ascii-engine/gl/laser-shader";
-import { laserFrame, laserRgb, shimmerHue } from "@/lib/ascii-engine/laser-cpu";
+import { LASER_PACK_SIZE, packLaser } from "@/lib/ascii-engine/laser-pack";
+import { createLaserPainter, type TitleMask } from "@/lib/ascii-engine/laser-paint";
+import { LASER_DOT, LASER_STROKES } from "@/lib/ascii-engine/laser-cpu";
 import { readAnchor } from "@/lib/laser-anchors";
 
-const CELL_W = 8;
-const CELL_H = 22;
 const FRAME_MS = 33;
 // a gentle vignette — figures live in the gutters and rise from the floor now
 const MASK = "radial-gradient(ellipse 125% 115% at 50% 45%, black 58%, transparent 100%)";
 
+type Face = { family: string; src: string; descriptors: FontFaceDescriptors };
+
+/** The page's @font-face rules for every family in the glyph font's stack
+ *  (next/font adds a metric-matched fallback face), with absolute URLs — the
+ *  worker registers the same faces, so the same glyphs come out. */
+function glyphFaces(family: string): Face[] {
+  const names = new Set(family.split(",").map((f) => f.trim().replace(/^['"]|['"]$/g, "")));
+  const out: Face[] = [];
+  // (sizeAdjust is newer than the DOM typings)
+  const DESCRIPTORS: [string, string][] = [
+    ["font-style", "style"], ["font-weight", "weight"], ["font-stretch", "stretch"], ["unicode-range", "unicodeRange"],
+    ["size-adjust", "sizeAdjust"], ["ascent-override", "ascentOverride"], ["descent-override", "descentOverride"],
+    ["line-gap-override", "lineGapOverride"], ["font-feature-settings", "featureSettings"],
+  ];
+  for (const sheet of Array.from(document.styleSheets)) {
+    let rules: CSSRuleList;
+    try {
+      rules = sheet.cssRules;
+    } catch {
+      continue;
+    }
+    for (const r of Array.from(rules)) {
+      if (!(r instanceof CSSFontFaceRule)) continue;
+      const fam = r.style.getPropertyValue("font-family").trim().replace(/^['"]|['"]$/g, "");
+      if (!names.has(fam)) continue;
+      const base = sheet.href ?? location.href;
+      const src = r.style.getPropertyValue("src").replace(/url\((['"]?)([^'")]+)\1\)/g, (_m, _q, url) => `url("${new URL(url, base).href}")`);
+      const d: Record<string, string> = {};
+      for (const [css, key] of DESCRIPTORS) {
+        const v = r.style.getPropertyValue(css).trim();
+        if (v) d[key] = v;
+      }
+      out.push({ family: fam, src, descriptors: d as FontFaceDescriptors });
+    }
+  }
+  return out;
+}
+
+const monoFamily = () => getComputedStyle(document.documentElement).getPropertyValue("--font-geist-mono").trim() || "monospace";
+
 export default function Laser2D() {
-  const ref = useRef<HTMLCanvasElement>(null);
+  const host = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const canvas = ref.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    if (!host.current) return;
+    // the canvas is made here, per run: one handed to a worker can't be handed
+    // again (Strict Mode runs this twice; a fallback needs a fresh one)
+    const hostEl = host.current;
+    const freshCanvas = () => {
+      const c = document.createElement("canvas");
+      c.className = "absolute inset-0";
+      hostEl.appendChild(c);
+      return c;
+    };
+    let canvas = freshCanvas();
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const u = makeLaserUniforms();
     const direct = createLaserDirector();
-    let W = 0, H = 0, cols = 0, rows = 0, family = "monospace";
-    // palette coordinate × hue × brightness → css color (quantized + cached;
-    // the hue only varies on the sound scale — the shimmer)
-    let title: { text: string; data: Uint8ClampedArray; w: number; h: number } = { text: "", data: new Uint8ClampedArray(4), w: 1, h: 1 };
-    const styles = new Map<number, string>();
-    let brightness = 1;
-    const palStyle = (v: number, hue: number) => {
-      const pq = Math.round(v * 128);
-      const hq = v < 0.5 ? 0 : Math.round(hue / 5) % 72;
-      const k = (pq * 72 + hq) * 8 + Math.round(brightness * 6);
-      let s = styles.get(k);
-      if (!s) {
-        const [r, g, b] = laserRgb(pq / 128, hq * 5).map((c) => Math.min(255, Math.round(c * brightness)));
-        styles.set(k, (s = `rgb(${r} ${g} ${b})`));
-      }
-      return s;
+    let W = 0, H = 0, dpr = 1, family = "monospace";
+    let titleText = "";
+    let mainTitle: TitleMask | null = null;
+
+    // ── the painter: a worker (OffscreenCanvas) or, failing that, right here ──
+    let worker: Worker | null = null;
+    let painter: ReturnType<typeof createLaserPainter> | null = null;
+    let ready = false, busy = false;
+    let sig = "";
+    let litWaiter: ((n: number) => void) | null = null;
+    const buf = new Float64Array(LASER_PACK_SIZE);
+    family = monoFamily();
+    const paintHere = () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      painter = createLaserPainter(ctx);
+      ready = true;
     };
+    // a worker that can't paint (no font there, or it failed): paint here on a fresh canvas
+    const fallBack = () => {
+      worker?.terminate();
+      worker = null;
+      busy = false;
+      canvas.remove();
+      canvas = freshCanvas();
+      paintHere();
+      resize();
+      sig = "";
+    };
+    // ?laser2d=main paints here (A/B). A worker paints only where its glyphs
+    // can match this page's pixel for pixel: an OffscreenCanvas doesn't inherit
+    // the page's font smoothing (macOS: -webkit-font-smoothing: antialiased),
+    // and "geometricPrecision" text rendering reproduces it exactly — so the
+    // browser must support textRendering there; anywhere else paints here.
+    const forceMain = new URLSearchParams(window.location.search).get("laser2d") === "main";
+    const matchable =
+      typeof OffscreenCanvasRenderingContext2D !== "undefined" && "textRendering" in OffscreenCanvasRenderingContext2D.prototype;
+    const textRendering: CanvasTextRendering =
+      /Mac/.test(navigator.platform) && getComputedStyle(document.documentElement).getPropertyValue("-webkit-font-smoothing") === "antialiased"
+        ? "geometricPrecision"
+        : "auto";
+    const faces = !forceMain && matchable && "transferControlToOffscreen" in canvas && typeof Worker !== "undefined" ? glyphFaces(family) : [];
+    (window as unknown as { __laser2dMode?: string }).__laser2dMode = faces.length ? "worker" : "main";
+    if (faces.length) {
+      const off = canvas.transferControlToOffscreen();
+      worker = new Worker(new URL("./laser-2d.worker.ts", import.meta.url), { type: "module" });
+      worker.onmessage = (e: MessageEvent) => {
+        const m = e.data;
+        if (m.type === "ready") {
+          ready = true;
+          resize();
+        } else if (m.type === "done") busy = false;
+        else if (m.type === "lit") litWaiter?.(m.n);
+        else if (m.type === "nofont") fallBack();
+      };
+      worker.onerror = fallBack;
+      worker.postMessage({ type: "init", canvas: off, faces, family, glyphs: LASER_STROKES.join("") + LASER_DOT, textRendering }, [off]);
+    } else paintHere();
+    // tests: lit pixels, wherever the painting happens
+    (window as unknown as { __laser2dLit?: () => Promise<number> }).__laser2dLit = () =>
+      worker ? new Promise((res) => { litWaiter = res; worker!.postMessage({ type: "lit" }); }) : Promise.resolve(painter!.lit());
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      W = window.innerWidth;
-      H = window.innerHeight;
-      canvas.width = Math.round(W * dpr);
-      canvas.height = Math.round(H * dpr);
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // the stage box (globals.css .stage-box): the large viewport, so mobile
+      // toolbars coming and going don't resize the piece mid-scroll
+      W = hostEl.clientWidth || window.innerWidth;
+      H = hostEl.clientHeight || window.innerHeight;
       canvas.style.width = `${W}px`;
       canvas.style.height = `${H}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      cols = Math.ceil(W / CELL_W);
-      rows = Math.ceil(H / CELL_H);
       u.uView.value.set(W, H);
-      family = getComputedStyle(document.documentElement).getPropertyValue("--font-geist-mono").trim() || "monospace";
-    };
-
-    // the reading column stays calm, like the 3D carve
-    const calm = (x: number) => {
-      const half = Math.min(512, W * 0.4);
-      const inside = Math.min(1, Math.max(0, (half - Math.abs(x - W / 2)) / 120));
-      return 1 - 0.55 * inside * inside * (3 - 2 * inside);
+      family = monoFamily();
+      if (worker) {
+        if (ready) worker.postMessage({ type: "resize", w: W, h: H, dpr, family });
+      } else painter!.resize(W, H, dpr, family);
     };
 
     let last = 0;
@@ -86,33 +178,29 @@ export default function Laser2D() {
       const lo = direct(u, laserInputFrom(st, reduced ? 0 : now, delta, W, H, readAnchor, TRANSITION_MS));
       noteKnot(lo);
       const text = lo.title ? TITLE_TEXT[st.focus.route.kind] : undefined;
-      if (text && title.text !== text) {
+      if (text && titleText !== text) {
+        titleText = text;
         const c = titleCanvas(text);
-        title = { text, data: c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data, w: c.width, h: c.height };
+        const mask = { data: c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data, w: c.width, h: c.height };
         u.uTitleB.value.y = TITLE_ASPECT;
+        if (worker) worker.postMessage({ type: "title", mask }, [mask.data.buffer]);
+        else mainTitle = mask;
       }
-      brightness = Math.round(lo.brightness * 6) / 6;
-
-      ctx.clearRect(0, 0, W, H);
-      ctx.globalCompositeOperation = "lighter";
-      ctx.font = `${Math.round(CELL_H * (16 / 22))}px ${family}`;
-      ctx.textBaseline = "top";
-      laserFrame(u, cols, rows, CELL_W, CELL_H, (col, row, c) => {
-        ctx.globalAlpha = Math.min(1, c.alpha);
-        ctx.fillStyle = palStyle(c.pal, shimmerHue(time, col, row));
-        ctx.fillText(c.ch, col * CELL_W, row * CELL_H);
-      }, calm, lo.title ? title : null);
-      ctx.globalAlpha = 1;
+      if (worker) {
+        packLaser(u, buf);
+        busy = true;
+        worker.postMessage({ type: "frame", buf, time, bright: lo.brightness, titled: lo.title });
+      } else painter!.paint(u, time, lo.brightness, lo.title ? mainTitle : null);
     };
 
     resize();
     // motion: ~30fps. reduced motion: no clock — redraw only when something the
-    // figures depend on changes (scroll moves their anchors, route, hover, size)
+    // figures depend on changes (scroll moves their anchors, route, hover, size).
+    // A frame waits while the worker is still painting the last one.
     let raf = 0;
-    let sig = "";
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
-      if (document.hidden) return;
+      if (document.hidden || !ready || busy) return;
       if (reduced) {
         const st = journey.state;
         const next = `${Math.round(window.scrollY)}|${st.focus.route.kind}|${st.focus.hover}|${W}x${H}|${st.timelineProgress}`;
@@ -131,16 +219,17 @@ export default function Laser2D() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
+      worker?.terminate();
+      canvas.remove();
     };
   }, []);
 
   return (
     <div
+      ref={host}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-10 overflow-hidden"
+      className="stage-box pointer-events-none z-10 overflow-hidden"
       style={{ maskImage: MASK, WebkitMaskImage: MASK }}
-    >
-      <canvas ref={ref} className="absolute inset-0" />
-    </div>
+    />
   );
 }

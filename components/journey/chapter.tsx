@@ -8,7 +8,8 @@
 // data-chapter: selector the controller uses to find all chapter sections.
 // id="${id}-heading": a focus target for in-page links (tabIndex={-1} makes it
 //   programmatically focusable without adding it to the tab order).
-// heightVh: expressed as `dvh` so iOS viewport shrink doesn't create dead scroll.
+// heightVh: expressed as `svh` (the small viewport) — stable while mobile
+// toolbars collapse and expand, so the page never reflows under a scroll.
 
 import { Morph } from "@/components/morph";
 
@@ -59,7 +60,7 @@ export default function Chapter({
       id={id}
       aria-labelledby={`${id}-heading`}
       className="relative"
-      style={{ minHeight: `${heightVh}dvh` }}
+      style={{ minHeight: `${heightVh}svh` }}
     >
       {/* ghost layer — giant year numeral behind the vessel; out of flow (no
           layout impact), sticky so it holds the viewport through the era. The
@@ -71,7 +72,7 @@ export default function Chapter({
         >
           <div
             data-ghost
-            className="sticky top-0 flex h-dvh items-center justify-center"
+            className="sticky top-0 flex h-svh items-center justify-center"
           >
             <span
               className="font-mono font-extralight leading-none text-white/[0.02] tabular-nums"
@@ -85,7 +86,7 @@ export default function Chapter({
       {opener && (
         // the opening screen — the laser layer frames it ([data-laser-anchor=
         // "opener"]: the figure starts large here, then settles into the gutter)
-        <div data-laser-anchor="opener" className="relative z-20 flex min-h-dvh flex-col justify-center px-6 pt-20 md:px-12">
+        <div data-laser-anchor="opener" className="relative z-20 flex min-h-svh flex-col justify-center px-6 pt-20 md:px-12">
           <div className="mx-auto w-full max-w-6xl">
             <p className="mb-6 font-mono text-xs text-foreground/40">
               {opener.index} <span className="text-foreground/20">/</span> {opener.title}

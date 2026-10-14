@@ -21,7 +21,53 @@ export function proxy(request: NextRequest) {
   return res;
 }
 
+// the human pages only (the (site) route group); everything else is untouched.
+// Client-side navigations and prefetches (RSC requests) skip it: only the app's
+// own router sends those, never an agent — so moving between pages costs no
+// proxy hop. (Static objects: Next reads this at build time.)
 export const config = {
-  // the human pages only (the (site) route group); everything else is untouched
-  matcher: ["/", "/software", "/music", "/about", "/projects/:slug", "/shows/:slug"],
+  matcher: [
+    {
+      source: "/",
+      missing: [
+        { type: "header", key: "rsc" },
+        { type: "header", key: "next-router-prefetch" },
+      ],
+    },
+    {
+      source: "/software",
+      missing: [
+        { type: "header", key: "rsc" },
+        { type: "header", key: "next-router-prefetch" },
+      ],
+    },
+    {
+      source: "/music",
+      missing: [
+        { type: "header", key: "rsc" },
+        { type: "header", key: "next-router-prefetch" },
+      ],
+    },
+    {
+      source: "/about",
+      missing: [
+        { type: "header", key: "rsc" },
+        { type: "header", key: "next-router-prefetch" },
+      ],
+    },
+    {
+      source: "/projects/:slug",
+      missing: [
+        { type: "header", key: "rsc" },
+        { type: "header", key: "next-router-prefetch" },
+      ],
+    },
+    {
+      source: "/shows/:slug",
+      missing: [
+        { type: "header", key: "rsc" },
+        { type: "header", key: "next-router-prefetch" },
+      ],
+    },
+  ],
 };

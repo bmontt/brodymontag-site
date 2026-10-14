@@ -14,6 +14,7 @@ import { flag } from "@/lib/flags";
 import { getAllEntries, isFuture } from "@/lib/timeline";
 import { releases } from "@/lib/releases-data";
 import { content } from "@/lib/content";
+import DeferredIframe from "@/components/deferred-iframe";
 
 // ── /music ────────────────────────────────────────────────────────────────────
 // The sound half: shows, supported artists, releases, the collective. The
@@ -104,7 +105,7 @@ export default function MusicPage() {
                 <div data-reveal>
                   <p data-scramble className="font-mono text-xs text-iridescent-dim mb-3">// latest tracks</p>
                   <div className="pill-iridescent border border-white/8 overflow-hidden">
-                    <iframe
+                    <DeferredIframe
                       title="SoundCloud"
                       width="100%"
                       height="120"

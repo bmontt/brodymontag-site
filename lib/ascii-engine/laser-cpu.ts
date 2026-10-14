@@ -132,6 +132,17 @@ export function laserFrame(
   const oz = Math.sin(orbit.z) * Math.min(1, Math.max(0, orbit.y / Math.max(orbit.w, 1)));
   const nSeg = Math.round(u.uSegN.value);
   const segs = u.uSegs.value, segsB = u.uSegsB.value;
+  const carHull = u.uCarHull.value, carN = Math.round(u.uCarN.value);
+  // inside the car's silhouette, grown by about a glyph, the road behind it is
+  // hidden (laser-shader.ts inCar)
+  const inCar = (px: number, py: number) => {
+    if (carN < 3) return false;
+    for (let i = 0; i < carN; i++) {
+      const a = carHull[i], b = carHull[i + 1 >= carN ? 0 : i + 1];
+      if ((b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x) < -12 * Math.hypot(b.x - a.x, b.y - a.y)) return false;
+    }
+    return true;
+  };
   const wipe = u.uWipe.value, wipeB = u.uWipeB.value;
   const tt = u.uTitle.value, tb = u.uTitleB.value;
   const titleOn = !!title && tt.w >= 0.002 && tt.z >= 1;
@@ -186,6 +197,7 @@ export function laserFrame(
     for (let col = 0; col < cols; col++) {
       const px = (col + 0.5) * cw, py = (row + 0.5) * ch;
       b.score = 1e9; b.w = 0;
+      const car = inCar(px, py);
 
       const trace = (ph: number, fr: number, amp: number, pal: number, w: number, side: number) => {
         if (scopeD.x >= 0) {
@@ -198,8 +210,8 @@ export function laserFrame(
         const L = Math.hypot(df, 1);
         take(Math.abs(py - (scopeB.x + f)) / L, -df / L, 1 / L, pal, w);
       };
-      if (scope.x >= 0.002) trace(scope.w, 1, 1, scopeB.y, scope.x, -1);
-      if (scopeC.x >= 0.002) trace(scope.w + scopeC.y, scopeC.z, scopeC.w, scopeB.w, scopeC.x, 1);
+      if (!car && scope.x >= 0.002) trace(scope.w, 1, 1, scopeB.y, scope.x, -1);
+      if (!car && scopeC.x >= 0.002) trace(scope.w + scopeC.y, scopeC.z, scopeC.w, scopeB.w, scopeC.x, 1);
       if (lissOn && Math.hypot(px - lissC.x, py - lissC.y) <= lissB.y * 1.9 + 80) {
         segBest = 1e9; segCount = 0;
         for (let i = 0; i < SEG; i++) seg(px, py, lx[i], ly[i], lx[i + 1], ly[i + 1]);
@@ -217,7 +229,7 @@ export function laserFrame(
         const pd = (segT - fanC.z) / 0.07;
         take(segBest, segNx, segNy, Math.min(fanLo + 0.499, Math.max(fanLo, fanB.z + k * fanC.x)), fan.x * far * (1 + fanC.w * Math.exp(-pd * pd)));
       }
-      if (gridL.x >= 0.002) {
+      if (!car && gridL.x >= 0.002) {
         const hy = gridL.y, below = py - hy;
         take(Math.abs(below), 0, 1, gridL.w, gridL.x * 0.9);
         if (below > 1) {

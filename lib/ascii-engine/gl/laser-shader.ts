@@ -1,9 +1,13 @@
 /* ─── ASCII engine (GL) — laser layer ───────────────────────────────────────── */
 
-import { DataTexture, Vector2, Vector4, type Texture } from "three";
+import type { Texture } from "three";
+import { Vec2 as Vector2, Vec4 as Vector4 } from "../vec";
 
 /** max projected room segments per frame (lib/director/room.ts) */
 export const ROOM_SEGS = 32;
+
+/** max points of the car's silhouette (lib/director/car.ts) */
+export const CAR_HULL = 12;
 
 /**
  * The journey's background as an analog laser show written in glyphs: thin
@@ -54,11 +58,14 @@ export interface LaserUniforms {
   uSegs: { value: Vector4[] };
   uSegsB: { value: Vector4[] };
   uSegN: { value: number };
+  /** the car's silhouette on screen (convex hull, px) · its point count (0 = none) */
+  uCarHull: { value: Vector2[] };
+  uCarN: { value: number };
   /** shader transition: origin px (xy), radius px, ragged band px · (alpha, palette, —, —) */
   uWipe: { value: Vector4 };
   uWipeB: { value: Vector4 };
   /** 3D title: mask texture · center px (xy), width px, alpha · (palette, mask h/w, rotation, —) */
-  uTitleTex: { value: Texture };
+  uTitleTex: { value: Texture | null };
   uTitle: { value: Vector4 };
   uTitleB: { value: Vector4 };
 }
@@ -90,19 +97,16 @@ export function makeLaserUniforms(): LaserUniforms {
     uSegs: { value: Array.from({ length: ROOM_SEGS }, () => new Vector4()) },
     uSegsB: { value: Array.from({ length: ROOM_SEGS }, () => new Vector4()) },
     uSegN: { value: 0 },
+    uCarHull: { value: Array.from({ length: CAR_HULL }, () => new Vector2()) },
+    uCarN: { value: 0 },
     uWipe: { value: new Vector4() },
     uWipeB: { value: new Vector4() },
-    uTitleTex: { value: blank() },
+    uTitleTex: { value: null }, // the 3D tier binds its mask (ascii-renderer.ts)
     uTitle: { value: new Vector4() },
     uTitleB: { value: new Vector4(0, 0.25, 0, 0) },
   };
 }
 
-function blank(): Texture {
-  const t = new DataTexture(new Uint8Array(4), 1, 1);
-  t.needsUpdate = true;
-  return t;
-}
 
 export const laserChunk = /* glsl */ `
 uniform float uLaserMix;           // 0 = wave field, 1 = laser layer
@@ -130,6 +134,8 @@ uniform vec4  uRingL;              // weight, radius px, hue, —
 uniform vec4  uSegs[${ROOM_SEGS}];    // the room: projected segments a.xy, b.xy (px)
 uniform vec4  uSegsB[${ROOM_SEGS}];   // palette, weight at a, weight at b (depth fog), —
 uniform float uSegN;
+uniform vec2  uCarHull[${CAR_HULL}];  // the car's silhouette (px): convex, counter-clockwise
+uniform float uCarN;               // its point count (0 = no car)
 uniform vec4  uWipe;               // transition: origin px (xy), radius px, ragged band px
 uniform vec4  uWipeB;              // alpha, palette
 uniform sampler2D uTitleTex;       // the page title as a mask (white on black)
@@ -315,6 +321,19 @@ void roomL(inout Hit h, vec2 p) {
   }
 }
 
+// inside the car's silhouette (grown by about a glyph, so a dark halo parts
+// it from the rungs): the road behind it is hidden
+bool inCar(vec2 p) {
+  int n = int(uCarN + 0.5);
+  if (n < 3) return false;
+  for (int i = 0; i < ${CAR_HULL}; i++) {
+    if (i >= n) break;
+    vec2 a = uCarHull[i], b = uCarHull[i + 1 >= n ? 0 : i + 1];
+    if ((b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x) < -12.0 * length(b - a)) return false;
+  }
+  return true;
+}
+
 // shader transition: a ragged shockwave ring of strokes from the click, sparse
 // static inside it
 void wipeL(inout Hit h, vec2 p, vec2 cell) {
@@ -355,10 +374,11 @@ void titleL(inout Hit h, vec2 p, vec2 cell) {
 vec3 laserCell(vec2 cell, vec2 ctr) {
   vec2 p = ctr;
   Hit h = Hit(1e9, 1e9, vec2(0.0, 1.0), 0.0, 0.0);
-  scopeL(h, p);
+  bool car = inCar(p);
+  if (!car) scopeL(h, p);
   lissL(h, p);
   fanL(h, p);
-  gridL(h, p);
+  if (!car) gridL(h, p);
   orbitL(h, p);
   roomL(h, p);
   titleL(h, p, cell);

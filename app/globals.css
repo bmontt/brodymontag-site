@@ -106,7 +106,7 @@ html, body { overflow-x: clip; }
 }
 #timeline .timeline-panel { width: 100%; }
 
-#timeline.is-horizontal { height: 100dvh; overflow: hidden; }
+#timeline.is-horizontal { height: 100svh; overflow: hidden; }
 #timeline.is-horizontal .timeline-track {
   flex: 1 1 auto;
   flex-direction: row;
@@ -308,6 +308,42 @@ html, body { overflow-x: clip; }
 @media (prefers-reduced-motion: reduce) {
   .tp-line::after { transform: none; transition: none; animation: none; }
 }
+
+/* entrances (lib/enter.ts) — mount animations at framer-motion's values
+   (keyframes named mount-in: tw-animate-css already owns "enter") */
+@keyframes mount-in {
+  from { opacity: 0; translate: var(--ex, 0) var(--ey, 0); }
+}
+@keyframes mount-in-blur {
+  from { opacity: 0; translate: var(--ex, 0) var(--ey, 0); filter: blur(var(--eb, 0)); }
+}
+.enter { animation: mount-in var(--ed, 0.3s) var(--ee, ease-in-out) var(--edl, 0s) backwards; }
+.enter.enter-blur { animation-name: mount-in-blur; }
+/* a gate holds them at their start until it opens (the landing opens it at
+   hydration); under reduced motion the gated ones don't move at all */
+[data-gate]:not([data-ready]) .enter { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  [data-gate] .enter { animation: none; }
+}
+
+/* landing social icons: their glow on hover */
+.social-link { color: rgba(255, 255, 255, 0.28); transition: color 0.25s ease; }
+.social-link:hover { color: var(--glow); }
+
+/* show photos: color and a brighter edge on hover */
+.photo-hover {
+  filter: var(--photo-filter);
+  transition: filter 0.4s ease-in-out, border-color 0.4s ease-in-out;
+}
+.photo-hover:hover {
+  filter: grayscale(0) brightness(1) contrast(1);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* the background stages: pinned to the large viewport (lvh) — a fixed
+   inset-0 box would resize (and the WebGL canvas reallocate) every time a
+   mobile toolbar collapses or expands during a scroll */
+.stage-box { position: fixed; left: 0; right: 0; top: 0; height: 100vh; height: 100lvh; }
 
 /* the live dot beside each "now" line */
 .now-pulse { animation: now-pulse 2.4s ease-in-out infinite; }

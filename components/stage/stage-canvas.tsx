@@ -144,6 +144,11 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     [gl],
   );
   useEffect(() => () => ascii.dispose(), [ascii]);
+  // programs compile in parallel before the first frame (the 2D tier keeps
+  // painting until the stage is ready, then the crossfade)
+  useEffect(() => {
+    void ascii.compile(scene, camera as PerspectiveCamera);
+  }, [ascii, scene, camera]);
 
   useEffect(() => {
     ascii.setSize(size.width, size.height, dpr, cell.w, cell.h);
@@ -443,6 +448,7 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     }
 
     gl.info.reset(); // count every pass this frame, not just the last one
+    if (!ascii.compiled) return;
     ascii.render(scene, cam);
     if (!firstFrame.current && ascii.ready) {
       firstFrame.current = true;
@@ -463,6 +469,9 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
         fps: Math.round((sa.frames * 1000) / (now - sa.since)),
         focus: { route: `${st.focus.route.kind}:${st.focus.route.index}`, hover: st.focus.hover, fly: !!st.focus.fly },
         dent: +uniforms.uDent.value.z.toFixed(2),
+        // the laser layer: projected segments this frame (room + car), year track
+        segs: ascii.laser.uSegN.value,
+        tl: +st.timelineProgress.toFixed(3),
       };
     }
     if ((onStats || debugOn) && now - sa.since > 500) {
