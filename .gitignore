@@ -45,3 +45,4 @@ media-archive/
 # playwright
 /test-results/
 /playwright-report/
+/e2e/_*

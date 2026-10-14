@@ -17,6 +17,7 @@
 import { useSyncExternalStore } from "react";
 import { chapters } from "@/lib/chapters";
 import { journey } from "@/lib/journey-store";
+import { scrollToId } from "@/components/smooth-scroll";
 
 export default function TimelineNav() {
   // re-renders only on discrete chapter index change
@@ -27,7 +28,7 @@ export default function TimelineNav() {
   );
 
   function scrollTo(id: string) {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    scrollToId(id);
     // focus the chapter heading for a11y (tabIndex={-1} on chapter headings)
     // hero uses id="hero" section directly; its heading id would be "hero-heading"
     const headingEl = document.getElementById(`${id}-heading`);

@@ -6,10 +6,12 @@
 
 import StageRoot from "@/components/stage/stage-root";
 import HumanMachineToggle from "@/components/human-machine-toggle";
+import SmoothScroll from "@/components/smooth-scroll";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <SmoothScroll />
       <StageRoot />
       {children}
       <HumanMachineToggle mode="human" />
