@@ -22,20 +22,20 @@ export default function TimelineSection() {
       className="relative"
       style={{ minHeight: `${chapter.heightVh}dvh` }}
     >
-      {/* heading rail — stays pinned at the top of the section during scroll */}
-      <div className="z-20 shrink-0 px-6 py-5 md:px-12">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-6">
-          <h2
-            id="timeline-heading"
-            tabIndex={-1}
-            className="font-mono text-xs uppercase tracking-widest text-iridescent-dim outline-none"
-          >
-            {chapter.heading}
-          </h2>
-          <span className="shrink-0 font-mono text-xs tabular-nums text-foreground/30">
-            {chapter.yearLabel}
+      {/* heading — bold white display type like the other chapters, smaller so
+          the pinned year track keeps the viewport */}
+      <div className="z-20 shrink-0 px-6 pt-10 pb-4 md:px-12 md:pt-14">
+        <h2
+          id="timeline-heading"
+          tabIndex={-1}
+          className="mx-auto max-w-5xl font-sans font-medium leading-[0.95] tracking-[-0.04em] text-foreground outline-none"
+          style={{ fontSize: "clamp(2rem, 4.5vw, 4rem)" }}
+        >
+          <span className="sr-only">{chapter.heading.split(" — ")[0]} — </span>
+          <span data-display className="block">
+            {chapter.heading.split(" — ").pop()}
           </span>
-        </div>
+        </h2>
       </div>
 
       {/* year track — vertical by default, horizontal once `is-horizontal` is set */}

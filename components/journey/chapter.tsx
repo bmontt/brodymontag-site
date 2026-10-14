@@ -1,8 +1,8 @@
 // ── chapter ───────────────────────────────────────────────────────────────────
 // Server component — no client hooks needed. Renders the structural frame for
 // each scrollytelling chapter: a tall section that the controller attaches
-// ScrollTriggers to, a sticky heading rail, and a flowing z-20 reading layer for
-// entry children.
+// ScrollTriggers to, and a flowing z-20 reading layer that opens with the
+// chapter's oversized heading.
 //
 // data-chapter: selector the controller uses to find all chapter sections.
 // id="${id}-heading": focused by TimelineNav click (tabIndex={-1} makes it
@@ -19,6 +19,7 @@ interface ChapterProps {
 
 /** "the build — systems, models, tools." → "systems, models, tools." */
 const displayLine = (heading: string) => heading.split(" — ").pop()!;
+const headingPrefix = (heading: string) => (heading.includes(" — ") ? heading.split(" — ")[0] : "");
 
 export default function Chapter({
   id,
@@ -29,6 +30,7 @@ export default function Chapter({
 }: ChapterProps) {
   // backdrop numeral — the era's year, drifting behind the vessel (z-0)
   const ghostText = yearLabel.match(/\d{4}/g)?.pop();
+  const prefix = headingPrefix(heading);
 
   return (
     <section
@@ -59,37 +61,24 @@ export default function Chapter({
           </div>
         </div>
       )}
-      {/* sticky heading rail — stays at top of viewport while section scrolls */}
-      <div className="sticky top-0 z-20 bg-background/60 backdrop-blur-sm px-6 py-5 md:px-12">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-6">
-          <h2
-            id={`${id}-heading`}
-            tabIndex={-1}
-            className="font-mono text-xs tracking-widest text-iridescent-dim uppercase outline-none"
-          >
-            {heading}
-          </h2>
-          {yearLabel && (
-            <span className="font-mono text-xs text-foreground/30 tabular-nums shrink-0">
-              {yearLabel}
-            </span>
-          )}
-        </div>
-      </div>
-
       {/* reading layer — entries flow here; GSAP reveals animate these */}
-      <div className="relative z-20 px-6 pb-24 pt-8 md:px-12">
-        {/* display line — the chapter's one oversized typographic moment, set
-            against the tiny mono rail above (docs/design-inspiration.md #6).
-            Decorative: the h2 already carries the same words. */}
-        <p
-          data-display
-          aria-hidden="true"
-          className="mx-auto mb-16 max-w-5xl font-sans font-medium leading-[0.92] tracking-[-0.045em] text-foreground/90 md:mb-24"
+      <div className="relative z-20 px-6 pb-24 pt-24 md:px-12 md:pt-32">
+        {/* heading — the chapter's one oversized typographic moment (bold white
+            Neue Haas; docs/design-inspiration.md #6). It scrolls with the
+            content (no sticky rail to overlap it). Screen readers get the full
+            heading via the visually hidden prefix; [data-display] is what the
+            controller splits for the entrance. */}
+        <h2
+          id={`${id}-heading`}
+          tabIndex={-1}
+          className="mx-auto mb-16 max-w-5xl font-sans font-medium leading-[0.92] tracking-[-0.045em] text-foreground outline-none md:mb-24"
           style={{ fontSize: "clamp(2.75rem, 9vw, 8.5rem)" }}
         >
-          {displayLine(heading)}
-        </p>
+          {prefix && <span className="sr-only">{prefix} — </span>}
+          <span data-display className="block">
+            {displayLine(heading)}
+          </span>
+        </h2>
         {children}
       </div>
     </section>

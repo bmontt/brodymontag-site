@@ -135,7 +135,7 @@ export default function JourneyController() {
       // per-chapter choreography (independent of the global trigger). Each
       // standard section gets a one-shot CINEMATIC ENTRANCE the first time it
       // scrolls into view, layered for an on-brand "terminal coming alive" feel:
-      //   1. heading       — SplitText line-mask rise (premium typography reveal)
+      //   1. heading       — SplitText word rise out of line masks, + scroll drift
       //   2. [data-scramble] labels — ScrambleText decode (terminal decrypt)
       //   3. [data-reveal] cards    — alternating slide + rise + micro-rotate
       //   • [data-ghost] backdrop numeral drifts horizontally (scrubbed parallax)
@@ -168,20 +168,8 @@ export default function JourneyController() {
           scrollTrigger: { trigger: section, start: "top 72%", toggleActions: "play none none none" },
         });
 
-        // 1. heading — split into masked lines, rise each from below
-        const heading = document.getElementById(`${chapter.id}-heading`);
-        let split: SplitText | null = null;
-        if (heading) {
-          split = new SplitText(heading, { type: "lines", mask: "lines", linesClass: "split-line" });
-          entrance.from(
-            split.lines,
-            { yPercent: 120, duration: 0.7, ease: "power3.out", stagger: 0.12 },
-            0,
-          );
-        }
-
-        // 1b. display line — words rise out of their line masks, then drift
-        //     sideways a touch with the scroll (kinetic scale contrast)
+        // 1. heading display — words rise out of their line masks, then drift
+        //    sideways a touch with the scroll (kinetic scale contrast)
         const display = section.querySelector<HTMLElement>("[data-display]");
         let displaySplit: SplitText | null = null;
         if (display) {
@@ -239,7 +227,6 @@ export default function JourneyController() {
         cleanup.push(() => {
           entrance.scrollTrigger?.kill();
           entrance.kill();
-          split?.revert();
           displaySplit?.revert();
         });
       });
