@@ -39,33 +39,14 @@ export default function MusicPage() {
         {/* ── music ─────────────────────────────────────────────────── */}
         <Chapter {...ch} figure opener={flag("openers") ? { index: "02", title: "music", tone: "text-shimmer", now: flag("now") ? nowLines().music : undefined } : undefined}>
           <div className="flex flex-col gap-16">
-            {/* untitled, edge to edge — the set film rises out of the background */}
-            <PromoFilm film={content.music.film} />
-
-            {upcomingShows.length > 0 && (
-              <div data-reveal>
-                <SectionLabel>next up</SectionLabel>
-                <div className="flex flex-col gap-1">
-                  {upcomingShows.map((e) => (
-                    <EntryCard key={e.id} entry={e} />
-                  ))}
-                </div>
-              </div>
-            )}
-
+            {/* untitled, edge to edge — the set film rises out of the background,
+                with the artists supported right beneath it */}
             <div>
-              <SectionLabel>gigs</SectionLabel>
-              <div className="flex flex-col gap-1">
-                {pastShows.map((e) => (
-                  <div key={e.id} data-reveal data-stage-id={`show:${e.id}`}>
-                    <EntryCard entry={e} />
-                  </div>
-                ))}
-              </div>
+              <PromoFilm film={content.music.film} />
               {/* supported these artists — credit strip */}
               <div
                 data-reveal
-                className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-5"
+                className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-5"
               >
                 <span className="font-mono text-xs text-foreground/25 shrink-0">
                   {content.music.shows.supportedLabel}
@@ -95,6 +76,28 @@ export default function MusicPage() {
                     </span>
                   ),
                 )}
+              </div>
+            </div>
+
+            {upcomingShows.length > 0 && (
+              <div data-reveal>
+                <SectionLabel>next up</SectionLabel>
+                <div className="flex flex-col gap-1">
+                  {upcomingShows.map((e) => (
+                    <EntryCard key={e.id} entry={e} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <SectionLabel>gigs</SectionLabel>
+              <div className="flex flex-col gap-1">
+                {pastShows.map((e) => (
+                  <div key={e.id} data-reveal data-stage-id={`show:${e.id}`}>
+                    <EntryCard entry={e} />
+                  </div>
+                ))}
               </div>
             </div>
 

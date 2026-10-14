@@ -13,14 +13,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
-import Link from "next/link";
 
 interface Film {
   src: string;
   poster: string;
+  /** read to screen readers (aria-label); not shown */
   caption: string;
-  credit: string;
-  href?: string;
 }
 
 // both axes feathered, intersected: the film fades out on all four sides
@@ -183,16 +181,6 @@ export default function PromoFilm({ film }: { film: Film }) {
           aria-label={film.caption}
         />
       </div>
-      <figcaption className="-mt-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 font-mono text-xs">
-        {film.href ? (
-          <Link href={film.href} className="text-foreground/45 transition-colors hover:text-foreground/90">
-            {film.caption} ↗
-          </Link>
-        ) : (
-          <span className="text-foreground/45">{film.caption}</span>
-        )}
-        <span className="text-foreground/25">{film.credit}</span>
-      </figcaption>
       {mounted &&
         createPortal(
           <div
