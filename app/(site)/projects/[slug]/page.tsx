@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { enterStyle } from "@/lib/enter";
 import SiteNav from "@/components/nav";
 import BackLink from "@/components/back-link";
+import { SECTION_HEADING, SECTION_SIZE } from "@/components/journey/section-bits";
 import { projects } from "@/lib/projects";
 
 function AsciiRule({ className = "" }: { className?: string }) {
@@ -37,12 +38,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           <BackLink href="/software" />
 
           {/* section header */}
-          <div
-            className="enter mb-12 font-mono text-sm text-foreground/28 overflow-hidden whitespace-nowrap"
-            style={enterStyle({ x: -12, dur: 0.6 })}
+          <p
+            className={`enter mb-6 ${SECTION_HEADING} text-foreground/45`}
+            style={{ ...enterStyle({ x: -12, dur: 0.6 }), fontSize: SECTION_SIZE.sm }}
           >
-            {`┌─ // project ${"─".repeat(120)}┐`}
-          </div>
+            project
+          </p>
 
           {/* headline row */}
           <div
@@ -118,7 +119,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             className="enter"
             style={enterStyle({ y: 10, dur: 0.5, delay: 0.45 })}
           >
-            <p className="font-mono text-xs text-foreground/35 mb-5">// highlights</p>
+            <h2 className={`mb-5 ${SECTION_HEADING}`} style={{ fontSize: SECTION_SIZE.sm }}>highlights</h2>
             <div className="flex flex-col gap-3">
               {project.highlights.map((h, i) => (
                 <div key={i} className="flex items-start gap-3">

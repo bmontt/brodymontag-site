@@ -16,6 +16,7 @@ import { releases } from "@/lib/releases-data";
 import { content } from "@/lib/content";
 import DeferredIframe from "@/components/deferred-iframe";
 import PromoFilm from "@/components/promo-film";
+import FullBleed from "@/components/full-bleed";
 
 // ── /music ────────────────────────────────────────────────────────────────────
 // The sound half: shows, supported artists, releases, the collective. The
@@ -43,39 +44,39 @@ export default function MusicPage() {
                 with the artists supported right beneath it */}
             <div>
               <PromoFilm film={content.music.film} />
-              {/* supported these artists — credit strip */}
-              <div
-                data-reveal
-                className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-5"
-              >
-                <span className="font-mono text-xs text-foreground/25 shrink-0">
-                  {content.music.shows.supportedLabel}
-                </span>
-                {(content.music.shows.supportedArtists as SupportedArtist[]).map((a) =>
-                  a.logo && a.w && a.h ? (
-                    <Image
-                      key={a.name}
-                      src={`/artistLogos/${a.logo}.webp`}
-                      alt={a.name}
-                      title={a.name}
-                      width={a.w}
-                      height={a.h}
-                      loading="lazy"
-                      className="w-auto object-contain opacity-50 transition-opacity duration-200 hover:opacity-95"
-                      style={{ height: logoHeight(a.w / a.h) }}
-                      sizes="160px"
-                    />
-                  ) : (
-                    // no logo file yet: a plain wordmark at the strip's cap height
-                    <span
-                      key={a.name}
-                      title={a.name}
-                      className="font-sans text-xl font-medium uppercase leading-none tracking-[0.08em] text-foreground/50 transition-opacity duration-200 hover:text-foreground/95"
-                    >
-                      {a.name}
-                    </span>
-                  ),
-                )}
+              {/* the artists supported: their own heading, then the logos edge to
+                  edge like the film above, centered and larger */}
+              <div className="mt-14">
+                <SectionLabel>{content.music.shows.supportedLabel}</SectionLabel>
+                <FullBleed>
+                  <div data-reveal className="flex flex-wrap items-center justify-center gap-x-8 gap-y-7 px-6 [--logo-scale:0.6] md:gap-x-14 md:gap-y-10 md:px-12 md:[--logo-scale:1]">
+                    {(content.music.shows.supportedArtists as SupportedArtist[]).map((a) =>
+                      a.logo && a.w && a.h ? (
+                        <Image
+                          key={a.name}
+                          src={`/artistLogos/${a.logo}.webp`}
+                          alt={a.name}
+                          title={a.name}
+                          width={a.w}
+                          height={a.h}
+                          loading="lazy"
+                          className="w-auto object-contain opacity-55 transition-opacity duration-200 hover:opacity-95"
+                          style={{ height: `calc(${logoHeight(a.w / a.h)}px * var(--logo-scale))` }}
+                          sizes="240px"
+                        />
+                      ) : (
+                        // no logo file yet: a plain wordmark at the strip's cap height
+                        <span
+                          key={a.name}
+                          title={a.name}
+                          className="font-sans text-xl md:text-3xl font-medium uppercase leading-none tracking-[0.08em] text-foreground/55 transition-opacity duration-200 hover:text-foreground/95"
+                        >
+                          {a.name}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                </FullBleed>
               </div>
             </div>
 
@@ -110,7 +111,7 @@ export default function MusicPage() {
                   </div>
                 ))}
                 <div data-reveal>
-                  <p data-scramble className="font-mono text-xs text-foreground/45 mb-3">// latest tracks</p>
+                  <SectionLabel size="sm">latest tracks</SectionLabel>
                   <div className="pill-iridescent border border-white/8 overflow-hidden">
                     <DeferredIframe
                       title="SoundCloud"

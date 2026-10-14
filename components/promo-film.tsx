@@ -13,6 +13,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
+import { useFullBleed } from "@/components/full-bleed";
 
 interface Film {
   src: string;
@@ -41,23 +42,9 @@ export default function PromoFilm({ film }: { film: Film }) {
   const started = useRef(false);
   const [mounted, setMounted] = useState(false);
 
-  // edge to edge: pull the film out of its column to the viewport's edges
-  // (the column sits in a grid beside the laser gutter, so measure, not 50vw)
-  useEffect(() => {
-    setMounted(true);
-    const s = slot.current;
-    const b = bleed.current;
-    if (!s || !b) return;
-    const fit = () => {
-      const left = s.getBoundingClientRect().left;
-      b.style.marginLeft = `${-left}px`;
-      b.style.width = `${document.documentElement.clientWidth}px`;
-    };
-    fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(document.documentElement);
-    return () => ro.disconnect();
-  }, []);
+  // edge to edge (components/full-bleed.tsx)
+  useFullBleed(slot, bleed);
+  useEffect(() => setMounted(true), []);
 
   // fetch the clip once it's near; play only while it's on screen
   useEffect(() => {

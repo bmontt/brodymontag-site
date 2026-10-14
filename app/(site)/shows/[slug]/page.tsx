@@ -4,6 +4,7 @@ import Image from "next/image";
 import { enterStyle } from "@/lib/enter";
 import SiteNav from "@/components/nav";
 import BackLink from "@/components/back-link";
+import { SECTION_HEADING, SECTION_SIZE } from "@/components/journey/section-bits";
 import { events } from "@/lib/brody-events";
 
 const PHOTO_FILTER = "grayscale(1) brightness(0.72) contrast(1.12)";
@@ -40,12 +41,12 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
           <BackLink href="/music" />
 
           {/* section header */}
-          <div
-            className="enter mb-12 font-mono text-sm text-foreground/28 overflow-hidden whitespace-nowrap"
-            style={enterStyle({ x: -12, dur: 0.6 })}
+          <p
+            className={`enter mb-6 ${SECTION_HEADING} text-foreground/45`}
+            style={{ ...enterStyle({ x: -12, dur: 0.6 }), fontSize: SECTION_SIZE.sm }}
           >
-            {`┌─ // show ${"─".repeat(120)}┐`}
-          </div>
+            show
+          </p>
 
           {/* headline row */}
           <div
