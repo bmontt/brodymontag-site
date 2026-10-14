@@ -107,3 +107,14 @@ test("adaptive quality: sustained slow frames step dpr down, then fall back to 2
   await expect.poll(() => tier(page), { timeout: 45_000 }).toBe("2d");
   await ctx.close();
 });
+
+test("a lost WebGL context drops back to the 2D tier, never a blank stage", async ({ page }) => {
+  await page.goto("/?tier=3d&debug");
+  await waitForStage(page);
+  await page.evaluate(() => {
+    const c = document.querySelector<HTMLCanvasElement>("[aria-hidden] canvas");
+    c?.getContext("webgl2")?.getExtension("WEBGL_lose_context")?.loseContext();
+  });
+  await expect.poll(() => tier(page)).toBe("2d");
+  await expect(page.locator("canvas")).not.toHaveCount(0);
+});
