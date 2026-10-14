@@ -122,7 +122,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   flex: 0 0 auto;
   width: min(85vw, 30rem);
   height: 100%;
+  min-height: 0;
 }
+/* the track takes the pinned section's remaining height, never its content's
+   (a long year once stretched every panel past the screen) */
+#timeline.is-horizontal .timeline-track { min-height: 0; }
 
 /* The shimmer — the sound scale: a pearlescent pastel that sweeps between
    sky blue and orchid (205°–315°) and back every 6s, never the full rainbow.

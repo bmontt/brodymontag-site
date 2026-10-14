@@ -12,8 +12,34 @@ import type { Event } from "@/lib/brody-events";
 import type { Release } from "@/lib/releases-data";
 import type { Project } from "@/lib/projects";
 import type { ExperienceEntry } from "@/lib/stack-data";
+import Link from "next/link";
 
-export default function EntryCard({ entry }: { entry: TimelineEntry }) {
+/** the timeline's row: kind, title and one line, linking to the full page */
+function CompactEntry({ entry }: { entry: TimelineEntry }) {
+  const src = entry.source as Partial<Event & Release & Project & ExperienceEntry>;
+  const [kind, line, href] =
+    entry.kind === "show" ? ["show", src.description, entry.href]
+    : entry.kind === "release" ? [src.type ?? "release", src.tags?.join(" · "), src.links?.[0]?.href]
+    : entry.kind === "project" ? [src.status === "wip" ? "project · in progress" : "project", src.tags?.join(" · "), entry.href]
+    : ["role", `${src.org} · ${src.period}`, src.href];
+  const body = (
+    <>
+      <span className="font-mono text-[11px] text-foreground/40">{kind}</span>
+      <span className="mt-0.5 block font-sans text-[15px] font-medium leading-snug text-foreground/90">{entry.title}</span>
+      {line && <span className="mt-0.5 block truncate font-mono text-[11px] text-foreground/45">{line}</span>}
+    </>
+  );
+  const cls = "block border-l border-white/10 py-1 pl-3 transition-colors hover:border-white/40";
+  if (!href) return <div className={cls}>{body}</div>;
+  return href.startsWith("/") ? (
+    <Link href={href} className={cls}>{body}</Link>
+  ) : (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>{body}</a>
+  );
+}
+
+export default function EntryCard({ entry, compact = false }: { entry: TimelineEntry; compact?: boolean }) {
+  if (compact) return <CompactEntry entry={entry} />;
   switch (entry.kind) {
     case "show":
       return <ShowCard event={entry.source as Event} />;
