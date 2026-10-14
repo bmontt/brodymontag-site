@@ -3,23 +3,24 @@
 // continuous piece across the whole scroll — a story told by two signals:
 //
 //   TECH  — the white-grey-black scale (code, systems, structure)
-//   SOUND — the red scale, black → deep red → white-hot (music, heat, release)
+//   SOUND — the iridescent shimmer, dark → luminous → white-hot (music, heat,
+//           release) — the same 4.2s hue cycle as the site's pills
 //
 //   hero      apart     two faint traces share the rule under the name — a grey
-//                       one and a deep-red one, out of phase, barely alive. They
+//                       one and a dim shimmering one, out of phase, barely alive. They
 //                       quicken as you read, then twist into the knot on the dive.
 //   code      clarity   TECH builds structure: a white Lissajous knot, shaded by
 //                       depth, held in the gutter beside the projects. SOUND
-//                       persists as a low red murmur along the floor.
-//   music     heat      SOUND takes the room: club fans in every red, kicking on
+//                       persists as a low shimmering murmur along the floor.
+//   music     heat      SOUND takes the room: shimmering club fans, kicking on
 //                       a 124 bpm pulse (the glitch hits on the kick). TECH is a
 //                       thin grey line on the floor.
 //   timeline  memory    a dim grey floor runs with the year track; one white and
-//                       one red rail converge on the vanishing point as the
+//                       one shimmering rail converge on the vanishing point as the
 //                       years pass. Tape-worn glitch.
 //   epilogue  union     beside the about text the two signals orbit as rings,
-//                       white and red, spiralling in as you read — they merge
-//                       white-hot, ring down through cooling reds, and resolve
+//                       white and shimmer, spiralling in as you read — they merge
+//                       white-hot, ring down as a fading shimmer, and resolve
 //                       into one calm trace at the end. No glitch left.
 //
 // Figures sit inside layout anchors (lib/laser-anchors.ts) when they exist —
@@ -158,7 +159,7 @@ export function createLaserDirector() {
       ur * lerp(0.36, 0.5, merge),
     );
     u.uOrbitB.value.set(ucx, ucy, TECH(0.95), SOUND(lerp(0.62, 0.9, merge)));
-    // ringdown: white-hot → cooling deep red as it spreads
+    // ringdown: white-hot → a fading shimmer as it spreads
     u.uRingL.value.set(we * smooth(0, 0.05, ring) * (1 - ring), ring * Math.hypot(W, H) * 0.75, SOUND(lerp(0.98, 0.3, ring)), 0);
     const resolve = we * smooth(0.55, 1, ring); // the one calm trace at the very end
 
@@ -170,14 +171,14 @@ export function createLaserDirector() {
     const breathe = 0.75 + 0.25 * Math.sin(time * 0.8);
     const heroW = wh * (1 - fold);
     const reqs: ScopeReq[] = [
-      // hero: grey + deep red, apart, out of phase
+      // hero: grey + a dim shimmer, apart, out of phase
       { w: heroW, wb: heroW * 0.85, base: heroBase, amp: H * lerp(0.006, 0.05, life) * breathe, cyc: lerp(1.5, 4, lh),
         harm: life, a: TECH(lerp(0.45, 0.7, life)), b: SOUND(lerp(0.35, 0.55, life)), ratio: 1.5 },
       // code: SOUND murmurs low along the floor
       { w: 0, wb: 0.35 * wc, base: H * 0.93, amp: H * 0.012, cyc: 6, harm: 0.4, a: 0, b: SOUND(0.3), ratio: 1 },
       // music: TECH is a thin grey line on the floor
       { w: 0.3 * wm, wb: 0, base: H * 0.95, amp: H * 0.006, cyc: 9, harm: 0.2, a: TECH(0.35), b: 0, ratio: 1 },
-      // the end: one signal, white-hot red, slow and calm
+      // the end: one signal, white-hot shimmer, slow and calm
       { w: resolve, wb: 0, base: H * 0.62, amp: H * 0.03, cyc: 1.2, harm: 0, a: SOUND(0.97), b: 0, ratio: 1 },
     ];
     const sc = reqs.reduce((best, r) => (Math.max(r.w, r.wb) > Math.max(best.w, best.wb) ? r : best));
@@ -206,7 +207,7 @@ export function createLaserDirector() {
     u.uLissB.value.set(lissSpin, kr, TECH(lerp(0.75, 0.98, smooth(0, 0.3, lc))), 0.35 + 0.25 * Math.sin(time * 0.2));
     u.uLissC.value.set(kx, ky);
 
-    // ── music: red fans from the gutter's floor ─────────────────────────
+    // ── music: shimmering fans from the gutter's floor ──────────────────
     const ma = x.anchor("music");
     const fx = ma ? ma.x + ma.w / 2 : W * 0.5;
     const fy = ma ? Math.min(Math.max(ma.y + ma.h, H * 0.55), H * 1.04) : H * 1.04;
@@ -218,9 +219,9 @@ export function createLaserDirector() {
       0.36 * Math.sin(time * (0.55 + 0.6 * hoverSound) + lm * 7),
     );
     u.uFanB.value.set(fx, fy, SOUND(lerp(0.55, 0.75, lm) + 0.15 * beat), H * 1.3);
-    u.uFanC.value.set(0.42, 0, 0, 0); // beams span the red scale, edge to edge
+    u.uFanC.value.set(0.42, 0, 0, 0); // beams span the sound scale, edge to edge
 
-    // ── timeline: grey floor, a white and a red rail converging ─────────
+    // ── timeline: grey floor, a white and a shimmering rail converging ──
     const tp = x.timelineProgress >= 0 ? x.timelineProgress : local("timeline");
     const vx = W * (0.5 + 0.18 * (0.5 - tp));
     u.uGridL.value.set(wt * 0.7, H * 0.56, tp * 14 + time * 0.12, TECH(0.32));

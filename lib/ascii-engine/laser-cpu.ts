@@ -20,8 +20,23 @@ export interface LaserCell {
   pal: number;
 }
 
-/** palette coordinate → [r, g, b] 0–255; mirrors laserColor in ascii-shaders.ts */
-export function laserRgb(v: number): [number, number, number] {
+/** degrees per second of the shimmer's hue cycle (globals.css: one turn / 4.2s) */
+export const SHIMMER_DEG_S = 360 / 4.2;
+
+function hsl2rgb(h: number, sat: number, l: number): [number, number, number] {
+  const a = sat * Math.min(l, 1 - l);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+  };
+  return [f(0), f(8), f(4)];
+}
+
+/**
+ * palette coordinate → [r, g, b] 0–255; mirrors laserColor in ascii-shaders.ts.
+ * `hue` (degrees) only matters on the sound scale (the shimmer).
+ */
+export function laserRgb(v: number, hue = 0): [number, number, number] {
   const sm = (a: number, b: number, x: number) => {
     const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
     return t * t * (3 - 2 * t);
@@ -31,9 +46,9 @@ export function laserRgb(v: number): [number, number, number] {
     return [l * 255, l * 255, l * 255];
   }
   const t = (v - 0.5) * 2;
-  const k = sm(0, 0.7, t), hot = sm(0.8, 1, t);
-  const r = 0.22 + (0.95 - 0.22) * k, g = 0.06 * k, b = 0.01 + 0.04 * k;
-  return [(r + (1 - r) * hot) * 255, (g + (0.82 - g) * hot) * 255, (b + (0.78 - b) * hot) * 255];
+  const iri = hsl2rgb(hue, 0.7, 0.16 + (0.74 - 0.16) * sm(0, 0.75, t));
+  const hot = 0.7 * sm(0.85, 1, t);
+  return [0, 1, 2].map((i) => (iri[i] + (1 - iri[i]) * hot) * 255) as [number, number, number];
 }
 
 const TAU = Math.PI * 2;

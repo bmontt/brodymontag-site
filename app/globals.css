@@ -5,8 +5,9 @@
 
 :root {
   /* two scales (docs/design-inspiration.md): tech is white-grey-black, sound
-     is red. The default accent is tech-white; #music and .theme-sound swap
-     in the red one. --sheen-* drive the shimmer classes below. */
+     is the iridescent shimmer (a pastel whose hue circles every 4.2s). The
+     default accent is tech-white; #music and .theme-sound swap in a pastel.
+     --sheen-* drive the shimmer classes below. */
   --background: oklch(0.13 0 0);
   --foreground: oklch(0.90 0 0);
   --accent: oklch(0.93 0 0);
@@ -27,11 +28,10 @@
   --radius: 0.25rem;
 }
 
-/* the sound scale: the music chapter and show pages speak in red */
+/* the sound scale: the music chapter and show pages shimmer */
 #music,
 .theme-sound {
-  --accent: oklch(0.63 0.21 27);
-  --sheen-c: 0.15;
+  --accent: oklch(0.84 0.07 315);
 }
 
 @theme inline {
@@ -121,9 +121,37 @@ html, body { overflow-x: clip; }
   height: 100%;
 }
 
-/* Sheen — the old iridescent classes, now monochrome: a slow lightness
-   breath on the tech scale (grey ↔ white), or on the red scale inside #music /
-   .theme-sound (--sheen-c). Class names kept so markup didn't churn. */
+/* The shimmer — a pastel hue circling every 4.2s. It is the sound scale
+   (the laser layer's music signal uses the same cycle). --pill-hue animates
+   per element; --iri-h inherits, for small subtrees that share one cycle
+   (.iri-cycle: platform cards, the hero links). */
+@property --pill-hue {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes pill-hue-cycle {
+  to { --pill-hue: 360deg; }
+}
+@property --iri-h {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: true;
+}
+@keyframes iri-cycle {
+  to { --iri-h: 360deg; }
+}
+.iri-cycle {
+  animation: iri-cycle 4.2s linear infinite;
+}
+.text-shimmer {
+  color: oklch(0.84 0.09 var(--pill-hue));
+  animation: pill-hue-cycle 4.2s linear infinite;
+}
+
+/* Sheen — the iridescent classes on the tech scale: a slow lightness breath
+   (grey ↔ white). Inside #music / .theme-sound they shimmer instead (below).
+   Class names kept so markup didn't churn. */
 @property --sheen-l {
   syntax: "<number>";
   initial-value: 0.8;
@@ -158,13 +186,22 @@ html, body { overflow-x: clip; }
   background-color: oklch(var(--sheen-l) var(--sheen-c) var(--sheen-h) / 0.7);
   animation: sheen 4.2s ease-in-out infinite;
 }
+:is(#music, .theme-sound) :is(.pill-iridescent, .text-iridescent-stroke, .text-iridescent, .text-iridescent-dim, .bg-iridescent) {
+  --sheen-c: 0.06;
+  --sheen-h: var(--pill-hue);
+  animation: pill-hue-cycle 4.2s linear infinite, sheen 4.2s ease-in-out infinite;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .pill-iridescent,
   .text-iridescent-stroke,
   .text-iridescent,
   .text-iridescent-dim,
-  .bg-iridescent {
-    animation: none; /* --sheen-l rests at its initial 0.8 */
+  .bg-iridescent,
+  .text-shimmer,
+  .iri-cycle,
+  :is(#music, .theme-sound) :is(.pill-iridescent, .text-iridescent-stroke, .text-iridescent, .text-iridescent-dim, .bg-iridescent) {
+    animation: none; /* --sheen-l rests at 0.8; hues rest on their initial angle */
   }
+  .text-shimmer { color: oklch(0.84 0.09 300); }
 }

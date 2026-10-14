@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { PlatformData } from "@/lib/platform-data";
+import { glow } from "@/lib/glow";
 
 type Props = Omit<PlatformData, "id">;
 
@@ -35,7 +36,7 @@ export default function PlatformCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => setExpanded((v) => !v)}
-      className="relative overflow-hidden border border-white/8 transition-[border-color] duration-200 hover:border-white/20 cursor-pointer select-none"
+      className="iri-cycle relative overflow-hidden border border-white/8 transition-[border-color] duration-200 hover:border-white/20 cursor-pointer select-none"
     >
       {/* cursor glow */}
       <div
@@ -46,7 +47,7 @@ export default function PlatformCard({
           ["--my" as string]: "0px",
           opacity: hovered ? 1 : 0,
           transition: "opacity 0.35s ease",
-          background: `radial-gradient(circle 220px at var(--mx) var(--my), rgba(${glowRgb}, 0.10), transparent 72%)`,
+          background: `radial-gradient(circle 220px at var(--mx) var(--my), ${glow(glowRgb, 0.10)}, transparent 72%)`,
         }}
       />
 
@@ -59,18 +60,18 @@ export default function PlatformCard({
             <div
               className="flex items-center justify-center w-9 h-9 border border-white/10 shrink-0"
               style={{
-                background: `rgba(${glowRgb}, 0.06)`,
+                background: `${glow(glowRgb, 0.06)}`,
                 transition: "background 0.3s ease, border-color 0.3s ease",
                 ...(hovered && {
-                  background: `rgba(${glowRgb}, 0.12)`,
-                  borderColor: `rgba(${glowRgb}, 0.30)`,
+                  background: `${glow(glowRgb, 0.12)}`,
+                  borderColor: `${glow(glowRgb, 0.30)}`,
                 }),
               }}
             >
               <Icon
                 className="h-5 w-5"
                 style={{
-                  color: `rgba(${glowRgb}, ${hovered ? "0.95" : "0.65"})`,
+                  color: `${glow(glowRgb, hovered ? 0.95 : 0.65)}`,
                   transition: "color 0.3s ease",
                 }}
               />
@@ -134,13 +135,13 @@ export default function PlatformCard({
                   onClick={(e) => e.stopPropagation()}
                   className="mt-1.5 font-mono text-xs transition-colors"
                   style={{
-                    color: `rgba(${glowRgb}, 0.55)`,
+                    color: `${glow(glowRgb, 0.55)}`,
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.color = `rgba(${glowRgb}, 0.90)`;
+                    (e.currentTarget as HTMLElement).style.color = `${glow(glowRgb, 0.90)}`;
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.color = `rgba(${glowRgb}, 0.55)`;
+                    (e.currentTarget as HTMLElement).style.color = `${glow(glowRgb, 0.55)}`;
                   }}
                 >
                   view profile&nbsp;↗

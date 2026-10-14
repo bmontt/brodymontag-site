@@ -174,3 +174,10 @@ as the signature moment, and fold **#4–#6** into Phase 6 hardening.
     falls back to the 2D laser (`StageBoundary`). This had crashed the stage
     in a real browser.
   - The 2D tier draws the same story on the CPU (`laser-cpu.ts`).
+- **Update (later on 2026-10-14):** the sound scale is now the site's
+  **iridescent shimmer** instead of red. It's a pastel that circles hue once
+  every 4.2s, like the pills, and drifts along each beam. Tech stays
+  white-grey-black. This applies across the board: the laser layer (GPU and
+  CPU), `#music`/`.theme-sound` (shimmering sheen classes and a pastel accent),
+  the hero `>` (`.text-shimmer`), and music-platform glows (`"iridescent"` →
+  `lib/glow.ts`, animated by `.iri-cycle`).

@@ -168,12 +168,17 @@ vec3 hsl2rgb(float h, float s, float l) {
   return l - a * max(min(min(k - 3.0, 9.0 - k), 1.0), -1.0);
 }
 
-// laser palette coordinate → color: [0,0.5) tech greys, [0.5,1) sound reds
-vec3 laserColor(float v) {
+// laser palette coordinate → color. [0,0.5): the tech scale, black → grey →
+// white. [0.5,1): the sound scale — the site's shimmer (globals.css
+// pill-hue-cycle, one turn per 4.2s) as light: a pastel whose hue circles in
+// time and drifts along the beam, dark → luminous → a white-hot crest.
+const float SHIMMER_DEG_S = 360.0 / 4.2;
+vec3 laserColor(float v, vec2 cell) {
   if (v < 0.5) return vec3(mix(0.16, 1.0, v * 2.0));
   float t = (v - 0.5) * 2.0;
-  vec3 red = mix(vec3(0.22, 0.0, 0.01), vec3(0.95, 0.06, 0.05), smoothstep(0.0, 0.7, t));
-  return mix(red, vec3(1.0, 0.82, 0.78), smoothstep(0.8, 1.0, t));   // white-hot crest
+  float hue = mod(uTime * SHIMMER_DEG_S + cell.x * 2.4 + cell.y * 5.0, 360.0);
+  vec3 iri = hsl2rgb(hue, 0.7, mix(0.16, 0.74, smoothstep(0.0, 0.75, t)));
+  return mix(iri, vec3(1.0), 0.7 * smoothstep(0.85, 1.0, t));
 }
 
 // off = css px from the cell's top-left; slots are wider than cells
@@ -192,9 +197,9 @@ void shade(vec2 cell, vec2 off, inout vec3 col) {
     float lg = glyphAt(slot, off);
     float bloom = glyphAt(slot, off + vec2(1.0, 0.0)) + glyphAt(slot, off - vec2(1.0, 0.0))
                 + glyphAt(slot, off + vec2(0.0, 1.0)) + glyphAt(slot, off - vec2(0.0, 1.0));
-    vec3 lc = laserColor(c.w) * uLaserTone.x;
+    vec3 lc = laserColor(c.w, cell) * uLaserTone.x;
     col += lc * (lg * c.z + bloom * 0.07 * c.z);
-    col = mix(col, laserColor(c.w < 0.5 ? 0.499 : 0.999), lg * c.z * c.z * uLaserTone.y);  // hot core
+    col = mix(col, laserColor(c.w < 0.5 ? 0.499 : 0.999, cell), lg * c.z * c.z * uLaserTone.y);  // hot core
     return;
   }
   float baseAlpha = c.z;

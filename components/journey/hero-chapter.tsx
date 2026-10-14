@@ -14,6 +14,7 @@ import Typewriter from "@/components/typewriter";
 import TypedHeading from "@/components/typed-heading";
 import { ICONS } from "@/lib/platform-data";
 import { content } from "@/lib/content";
+import { glow } from "@/lib/glow";
 
 // ── constants ─────────────────────────────────────────────────────────────────
 
@@ -79,17 +80,13 @@ export default function HeroChapter() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 0.01 }}
         >
-          <motion.span
-            className="font-mono text-sm"
-            animate={
-              typingComplete
-                ? { color: ["#e2302a", "#b3201c", "#e2302a"] }  // the sound signal's red
-                : { color: "#e2302a99" }
-            }
-            transition={{ duration: 2.5, repeat: typingComplete ? Infinity : 0, ease: "easeInOut" }}
+          {/* the sound signal's shimmer (globals.css .text-shimmer) */}
+          <span
+            className="text-shimmer font-mono text-sm transition-opacity duration-700"
+            style={{ opacity: typingComplete ? 1 : 0.6 }}
           >
             &gt;
-          </motion.span>
+          </span>
           {typingComplete ? (
             <span className="font-mono text-sm subtitle-pulse">
               {content.hero.subtitle}
@@ -107,7 +104,7 @@ export default function HeroChapter() {
         </motion.div>
 
         <motion.div
-          className="mt-8 flex items-center gap-5"
+          className="iri-cycle mt-8 flex items-center gap-5"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: LINKS_APPEAR }}
@@ -122,7 +119,7 @@ export default function HeroChapter() {
               onMouseEnter={() => setHoveredHeroLink(id)}
               onMouseLeave={() => setHoveredHeroLink(null)}
               style={{
-                color: hoveredHeroLink === id ? `rgb(${glowRgb})` : "rgba(255,255,255,0.28)",
+                color: hoveredHeroLink === id ? glow(glowRgb, 1) : "rgba(255,255,255,0.28)",
                 transition: "color 0.25s ease",
               }}
             >
