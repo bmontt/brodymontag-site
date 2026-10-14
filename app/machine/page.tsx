@@ -1,10 +1,10 @@
 // ── /machine ──────────────────────────────────────────────────────────────────
 // The machine-readable face of the site: everything as plain text (lib/machine).
 // No stage, no canvas; fully server-rendered (works without JavaScript) — it sits outside the (site) route group.
+// Non-human visitors get it in place of the human pages (proxy.ts, lib/agent.ts).
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import HumanMachineToggle from "@/components/human-machine-toggle";
 import { machineText } from "@/lib/machine";
 
 export const metadata: Metadata = {
@@ -40,7 +40,6 @@ export default function MachinePage() {
       <pre className="mx-auto max-w-4xl whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-foreground/75 md:text-xs">
         {linkify(machineText())}
       </pre>
-      <HumanMachineToggle mode="machine" />
     </main>
   );
 }

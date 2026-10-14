@@ -103,7 +103,7 @@ test("adaptive quality: sustained slow frames step dpr down, then fall back to 2
   expect(await quality()).toBe("2");
   const cdp = await ctx.newCDPSession(page);
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 40 });
-  await expect.poll(quality, { timeout: 30_000 }).toBe("1.5");
+  await expect.poll(quality, { timeout: 30_000 }).not.toBe("2"); // 1.5, or already 1 between polls
   await expect.poll(() => tier(page), { timeout: 45_000 }).toBe("2d");
   await ctx.close();
 });

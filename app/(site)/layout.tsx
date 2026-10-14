@@ -5,7 +5,6 @@
 // segment; /lab stays outside it and brings its own stage.
 
 import StageRoot from "@/components/stage/stage-root";
-import HumanMachineToggle from "@/components/human-machine-toggle";
 import SmoothScroll from "@/components/smooth-scroll";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -14,7 +13,6 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <SmoothScroll />
       <StageRoot />
       {children}
-      <HumanMachineToggle mode="human" />
     </>
   );
 }
