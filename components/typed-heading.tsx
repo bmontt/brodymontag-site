@@ -52,6 +52,12 @@ function buildFrames(target: string, typos: Typo[]): Frame[] {
   return frames;
 }
 
+// Texts already typed during this visit. Module state lives as long as the
+// page does: client navigations keep it (coming back to the landing shows the
+// name at once), a full load starts empty (the name types out again). Empty on
+// the server, so the first load's hydration still starts from "".
+const typedThisVisit = new Set<string>();
+
 export default function TypedHeading({
   text,
   typos = [],
@@ -69,17 +75,20 @@ export default function TypedHeading({
   // SSR but true on the client under reduced motion, which would desync the
   // first render and throw a hydration mismatch (#418). Start empty to match
   // SSR; the effect below fills in the full text immediately when reduced.
-  const [displayed, setDisplayed] = useState("");
-  const [done, setDone] = useState(false);
+  const [displayed, setDisplayed] = useState(() => (typedThisVisit.has(text) ? text : ""));
+  const [done, setDone] = useState(() => typedThisVisit.has(text));
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (typedThisVisit.has(text) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      typedThisVisit.add(text);
       setDisplayed(text);
       setDone(true);
       onComplete?.();
       return;
     }
 
+    // counts as typed once it starts, so leaving mid-word doesn't replay it
+    typedThisVisit.add(text);
     const frames = buildFrames(text, typos);
     let idx = 0;
     let timer: ReturnType<typeof setTimeout>;
