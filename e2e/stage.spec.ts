@@ -38,7 +38,33 @@ test("reduced motion gets the 2D tier", async ({ browser }) => {
   const page = await ctx.newPage();
   await page.goto("/");
   await expect.poll(() => tier(page)).toBe("2d");
+  expect(await page.evaluate(() => document.documentElement.dataset.stageReason)).toBe("reduced-motion");
   await ctx.close();
+});
+
+// the 2D tier draws the same laser piece (CPU), not the retired wave field
+const litPixels = (page: import("@playwright/test").Page) =>
+  page.evaluate(() => {
+    const c = document.querySelector<HTMLCanvasElement>("[aria-hidden] canvas");
+    const ctx = c?.getContext("2d");
+    if (!c || !ctx) return -1;
+    const d = ctx.getImageData(0, 0, c.width, c.height).data;
+    let n = 0;
+    for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
+    return n;
+  });
+
+test("2D tier draws the laser layer, with motion and without", async ({ browser }) => {
+  for (const reducedMotion of ["no-preference", "reduce"] as const) {
+    const ctx = await browser.newContext({ reducedMotion });
+    const page = await ctx.newPage();
+    await page.goto("/?tier=2d");
+    await expect.poll(() => litPixels(page)).toBeGreaterThan(200);
+    // scroll into the code chapter: the knot appears
+    await page.evaluate(() => document.getElementById("code")?.scrollIntoView());
+    await expect.poll(() => litPixels(page)).toBeGreaterThan(200);
+    await ctx.close();
+  }
 });
 
 test("2D tier: project links navigate normally", async ({ page }) => {
@@ -112,8 +138,10 @@ test("a lost WebGL context drops back to the 2D tier, never a blank stage", asyn
   await page.goto("/?tier=3d&debug");
   await waitForStage(page);
   await page.evaluate(() => {
-    const c = document.querySelector<HTMLCanvasElement>("[aria-hidden] canvas");
-    c?.getContext("webgl2")?.getExtension("WEBGL_lose_context")?.loseContext();
+    // the stage's canvas — a 2D canvas answers getContext("webgl2") with null
+    for (const c of document.querySelectorAll("canvas")) {
+      c.getContext("webgl2")?.getExtension("WEBGL_lose_context")?.loseContext();
+    }
   });
   await expect.poll(() => tier(page)).toBe("2d");
   await expect(page.locator("canvas")).not.toHaveCount(0);

@@ -340,7 +340,9 @@ export default function JourneyController() {
             if (idx !== -1) journey.setChapter(idx);
           }
         },
-        { threshold: 0.4 },
+        // the chapter crossing the viewport's middle line — a visibility
+        // threshold would never fire for sections taller than the viewport
+        { rootMargin: "-50% 0px -50% 0px", threshold: 0 },
       );
       for (const s of sections) observer.observe(s);
 

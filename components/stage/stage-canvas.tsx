@@ -101,7 +101,7 @@ interface StageProps {
   /** first frame rendered with the glyph atlas in place (safe to crossfade) */
   onFirstFrame?: () => void;
   /** WebGL context lost — the caller should fall back to the 2D vessel */
-  onLost?: () => void;
+  onLost?: (reason: "context-lost" | "slow") => void;
 }
 
 function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, onLost }: StageProps) {
@@ -162,18 +162,20 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
   useEffect(() => {
     if (!onLost) return;
     const el = gl.domElement;
-    const lost = (e: Event) => { e.preventDefault(); onLost(); };
+    const lost = (e: Event) => { e.preventDefault(); onLost("context-lost"); };
     el.addEventListener("webglcontextlost", lost);
     return () => el.removeEventListener("webglcontextlost", lost);
   }, [gl, onLost]);
 
   // ── adaptive quality: step the pixel ratio down when frames run long ─────
-  // Measured in 2s windows (skipping the first 3s of shader compiles and any
-  // hidden-tab time). Thresholds sit below 30fps on purpose: browsers that
-  // cap at 30 (battery saver) keep full sharpness. Sustained < 28fps steps
-  // dpr 2 → 1.5 → 1; still < 20fps at dpr 1 hands back to the 2D tier.
+  // Measured in 2s windows, skipping the first 3s (shader compiles) and any
+  // window the browser throttled rather than the GPU: a hidden tab, or any
+  // frame gap over 250ms (occluded window, rAF paused, devtools, sleep).
+  // Thresholds sit below 30fps on purpose — battery-saver / energy-saver caps
+  // at 30 keep full sharpness. Two windows < 24fps step dpr 2 → 1.5 → 1;
+  // three more < 20fps at dpr 1 (and ≥ 10s in) hand back to the 2D tier.
   // ?quality=fixed disables it; <html data-stage-quality> mirrors the dpr.
-  const governor = useRef({ since: 0, frames: 0, slow: 0, start: 0, fixed: false });
+  const governor = useRef({ since: 0, last: 0, frames: 0, slow: 0, start: 0, fixed: false });
   useEffect(() => {
     governor.current.fixed = new URLSearchParams(window.location.search).get("quality") === "fixed";
     governor.current.start = performance.now();
@@ -184,8 +186,11 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
   useFrame(() => {
     const q = governor.current;
     const now = performance.now();
+    const gap = now - q.last;
+    q.last = now;
     if (q.fixed || parity || now - q.start < 3000) return;
-    if (document.hidden || q.since === 0) {
+    if (document.hidden || q.since === 0 || gap > 250) {
+      // throttled by the browser, not slow — start a fresh window
       q.since = now;
       q.frames = 0;
       return;
@@ -195,12 +200,12 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
     const fps = (q.frames * 1000) / (now - q.since);
     q.since = now;
     q.frames = 0;
-    const floor = dpr > 1 ? 28 : 20;
+    const floor = dpr > 1 ? 24 : 20;
     q.slow = fps < floor ? q.slow + 1 : 0;
-    if (q.slow < 2) return;
+    if (q.slow < (dpr > 1 ? 2 : 3)) return;
     q.slow = 0;
     if (dpr > 1) setDpr(dpr > 1.5 ? 1.5 : 1);
-    else onLost?.();
+    else if (now - q.start > 10_000) onLost?.("slow");
   });
 
   // ── pointer trail (same ring buffer semantics as the 2D vessel) ──────────
