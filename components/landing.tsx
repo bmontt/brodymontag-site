@@ -93,7 +93,7 @@ export default function Landing({ now }: { now: NowLines | null }) {
             >
               <Morph name={`title-${o.vt}`}>
                 <span
-                  className={`inline-block font-sans font-medium leading-[0.9] tracking-[-0.045em] transition-[letter-spacing] duration-500 group-hover:tracking-[-0.03em] group-focus-visible:tracking-[-0.03em] ${o.tone}`}
+                  className={`halo-none inline-block font-sans font-medium leading-[0.9] tracking-[-0.045em] transition-[letter-spacing] duration-500 group-hover:tracking-[-0.03em] group-focus-visible:tracking-[-0.03em] ${o.tone}`}
                   style={{ fontSize: o.size }}
                 >
                   {o.label}

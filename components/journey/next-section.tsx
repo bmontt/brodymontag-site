@@ -33,7 +33,7 @@ export default function NextSection({
         >
           <Morph name={`title-${id}`}>
             <span
-              className={`inline-block font-sans font-medium leading-[0.88] tracking-[-0.05em] transition-[letter-spacing] duration-500 group-hover:tracking-[-0.035em] ${tone}`}
+              className={`halo-none inline-block font-sans font-medium leading-[0.88] tracking-[-0.05em] transition-[letter-spacing] duration-500 group-hover:tracking-[-0.035em] ${tone}`}
               style={{ fontSize: "clamp(3rem, 11vw, 10rem)" }}
             >
               {word} <span className="inline-block transition-transform duration-500 group-hover:translate-x-3">→</span>
