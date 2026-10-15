@@ -25,8 +25,22 @@ const years = (period: string) => {
   return b === "present" || !b ? `${a}–now` : a === b ? a : `${a}–${b.slice(2)}`;
 };
 
-/** sideways nudges (% of the column) for the project cards, repeating */
-const SHIFT = [0, 6, 2, 8, 1, 5, 3, 7];
+/** a widget on alternating sides (wide screens), with the open lane beside it
+ *  marked for the laser knot to glide into (lib/director/laser.ts "gap-n") */
+function Alt({ n, id, stage, children }: { n: number; id?: string; stage?: string; children: React.ReactNode }) {
+  const right = n % 2 === 1;
+  return (
+    <div id={id} data-reveal data-stage-id={stage} className={`relative scroll-mt-28 md:w-[60%] ${right ? "md:self-end" : "md:self-start"}`}>
+      <div
+        aria-hidden="true"
+        data-laser-anchor={`gap-${n}`}
+        className="pointer-events-none absolute top-0 hidden h-full md:block"
+        style={{ [right ? "right" : "left"]: "calc(100% + 1.5rem)", width: "calc(66.6% - 1.5rem)" }}
+      />
+      {children}
+    </div>
+  );
+}
 
 export const metadata: Metadata = {
   title: "software",
@@ -40,8 +54,8 @@ export default function SoftwarePage() {
       <SiteNav />
       <main id="journey">
         {/* ── code · work · CS ─────────────────────────────────────── */}
-        <Chapter {...ch} figure opener={flag("openers") ? { back: "/", index: "01", title: "software", tone: "text-foreground", now: flag("now") ? nowLines().software : undefined } : undefined}>
-          <div className="flex flex-col gap-16">
+        <Chapter {...ch} opener={flag("openers") ? { back: "/", index: "01", title: "software", tone: "text-foreground", now: flag("now") ? nowLines().software : undefined } : undefined}>
+          <div className="mx-auto flex max-w-6xl flex-col gap-16">
             {/* the overview before the detail: every title as a tile, edge to
                 edge; pinned, they pour down into the cards below */}
             <FullBleed>
@@ -60,36 +74,35 @@ export default function SoftwarePage() {
               <SectionLabel>projects</SectionLabel>
               {/* an orderly column, each card nudged sideways on a fixed
                   pattern so they don't sit in one rigid line */}
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-6">
                 {projects.map((p, i) => (
-                  <div
-                    key={p.id}
-                    id={`project-${p.slug}`}
-                    data-reveal
-                    data-stage-id={`project:${p.id}`}
-                    className="scroll-mt-28 w-[92%] sm:w-[90%]"
-                    style={{ marginLeft: `${SHIFT[i % SHIFT.length]}%` }}
-                  >
+                  <Alt key={p.id} n={i} id={`project-${p.slug}`} stage={`project:${p.id}`}>
                     <ProjectCard project={p} />
-                  </div>
+                  </Alt>
                 ))}
               </div>
             </div>
 
             <div>
               <SectionLabel>experience</SectionLabel>
-              <div className="flex flex-col gap-4">
-                {experience.map((e) => (
-                  <div key={e.id} id={`role-${e.id}`} data-reveal className="scroll-mt-28">
+              <div className="flex flex-col gap-6">
+                {experience.map((e, i) => (
+                  <Alt key={e.id} n={projects.length + i} id={`role-${e.id}`}>
                     <ExperienceCard entry={e} />
-                  </div>
+                  </Alt>
                 ))}
               </div>
             </div>
 
-            <div id="stack" data-reveal className="scroll-mt-28">
+            <div id="stack" className="scroll-mt-28">
               <SectionLabel>stack</SectionLabel>
-              <StackGrid />
+              <div className="flex flex-col gap-6">
+                {stack.map((c, i) => (
+                  <Alt key={c.label} n={projects.length + experience.length + i}>
+                    <StackGrid categories={[c]} />
+                  </Alt>
+                ))}
+              </div>
             </div>
           </div>
         </Chapter>

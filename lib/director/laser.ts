@@ -187,6 +187,7 @@ export function createLaserDirector() {
 
     Object.assign(tgt, ZERO);
     let merge = 0, ring = 0, resolve = 0;
+    let gliding = false; // the knot is moving between gaps: a slower, smoother glide
     // about's road: assemble 0–1 as the timeline rises (the debris converging),
     // past = the timeline is behind you (the road stays), away = the drive-off
     let assemble = 0, pastTimeline = false, away = 0;
@@ -229,8 +230,30 @@ export function createLaserDirector() {
       const detail = x.page === "project";
       const rule = detail ? null : x.anchor("code-rule");
       if (rule) Object.assign(tgt, { sW: 1, sBase: rule.y + rule.h / 2, sAmp: H * 0.014, sCyc: 6, sHarm: 0.7, sA: TECH(0.75) });
+      // the open lane beside the nearest alternating widget (software page,
+      // wide screens): the knot glides into it, sized to the gap, its tilt
+      // turning with the side — morphing and squeezing through as you scroll
+      let gap: AnchorRect | null = null;
+      if (!detail) {
+        let best = Infinity;
+        for (let i = 0; i < 32; i++) {
+          const g = x.anchor(`gap-${i}`);
+          if (!g) continue;
+          const d = Math.abs(g.y + g.h / 2 - H * 0.5);
+          if (g.y < H && g.y + g.h > 0 && d < best) { best = d; gap = g; }
+        }
+      }
       const ca = detail ? null : x.anchor("code");
-      if (ca) {
+      if (gap) {
+        gliding = true;
+        const r = Math.max(Math.min(gap.w * 0.4, gap.h * 0.46, H * 0.3), M * 0.08);
+        const left = gap.x + gap.w / 2 < W / 2;
+        Object.assign(tgt, {
+          kW: 1, kX: gap.x + gap.w / 2,
+          kY: Math.min(Math.max(H * 0.5, gap.y + r * 1.1), gap.y + gap.h - r * 1.1),
+          kR: r, kTilt: left ? -0.3 + 0.2 * Math.sin(time * 0.3) : 0.6 + 0.2 * Math.sin(time * 0.3),
+        });
+      } else if (ca) {
         const r = Math.min(ca.w * 0.42, H * 0.28);
         // sticky inside its gutter: centered on screen while the gutter spans it
         Object.assign(tgt, { kW: 1, kX: ca.x + ca.w / 2, kY: Math.min(Math.max(H * 0.5, ca.y + r * 1.15), ca.y + ca.h - r * 1.15), kR: r });
@@ -247,7 +270,7 @@ export function createLaserDirector() {
       const nx = nextVis("next-music");
       if (nx && nx.v > 0) Object.assign(tgt, { fW: 0.7 * nx.v, fX: nx.r.x + nx.r.w * 0.3, fY: nx.r.y + nx.r.h + H * 0.12, fSpread: 0.8, fLen: H * 0.6, fCount: 5, fPal: SOUND(0.62) });
       const hoverProject = x.hover?.startsWith("project:") ? 1 : 0;
-      Object.assign(tgt, { kPal: TECH(0.95), kTilt: 0.35 + 0.6 * p, bright: detail ? 0.9 : 1, hot: 0.18 + 0.25 * hoverProject });
+      Object.assign(tgt, { kPal: TECH(0.95), kTilt: gap ? tgt.kTilt : 0.35 + 0.6 * p, bright: detail ? 0.9 : 1, hot: 0.18 + 0.25 * hoverProject });
     } else if (x.page === "music" || x.page === "show") {
       const detail = x.page === "show";
       const rule = detail ? null : x.anchor("music-rule");
@@ -386,7 +409,7 @@ export function createLaserDirector() {
         const wk = WEIGHT_OF[k];
         // a figure that was invisible takes its place instead of sliding in
         if (wk && cur[wk] < 0.02) cur[k] = tgt[k];
-        else cur[k] += (tgt[k] - cur[k]) * (1 - Math.exp(-(SLOW.has(k) ? 5 : glide) * dt));
+        else cur[k] += (tgt[k] - cur[k]) * (1 - Math.exp(-(SLOW.has(k) ? 5 : gliding && k[0] === "k" ? 3.2 : glide) * dt));
       }
     }
 

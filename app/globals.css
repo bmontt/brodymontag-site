@@ -432,3 +432,37 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 main :where(p, li, h3, h4, dd, dt, td) {
   text-shadow: 0 0 10px oklch(0.13 0 0 / 0.85), 0 0 3px oklch(0.13 0 0 / 0.9);
 }
+
+/* ── transition accents: one short flourish as each section heading arrives
+   (journey-controller adds .tp-on), different per page, never during content */
+.tp-accent::before, .tp-accent::after { content: ""; position: absolute; pointer-events: none; opacity: 0; }
+/* software: a white scan bar sweeps across the heading */
+#code .tp-accent.tp-on::before {
+  top: -12%; bottom: -12%; left: 0; width: 2px;
+  background: oklch(1 0 0); box-shadow: 0 0 14px 2px oklch(1 0 0 / 0.7);
+  animation: tp-scan 0.6s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+@keyframes tp-scan {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(min(55vw, 26rem)); }
+}
+/* music: the heading's tracking settles in under a brief pearl glow */
+#music .tp-accent.tp-on { animation: tp-settle 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+@keyframes tp-settle {
+  from { letter-spacing: 0.08em; text-shadow: 0 0 22px oklch(0.84 0.1 300 / 0.85); }
+}
+/* about: an underline drawn in from both ends, white meeting pearl */
+#epilogue .tp-accent.tp-on::before, #epilogue .tp-accent.tp-on::after {
+  bottom: -0.35em; height: 1px; width: 50%;
+  animation: tp-draw 0.9s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+#epilogue .tp-accent.tp-on::before { left: 0; background: oklch(1 0 0 / 0.9); transform-origin: left; }
+#epilogue .tp-accent.tp-on::after { right: 0; background: oklch(0.84 0.09 300 / 0.9); transform-origin: right; }
+@keyframes tp-draw {
+  0% { opacity: 1; transform: scaleX(0); }
+  55% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0.25; transform: scaleX(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tp-accent.tp-on, .tp-accent.tp-on::before, .tp-accent.tp-on::after { animation: none !important; opacity: 0; }
+}
