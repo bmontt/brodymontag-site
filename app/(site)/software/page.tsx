@@ -9,6 +9,7 @@ import ExperienceCard from "@/components/cards/experience-card";
 import StackGrid from "@/components/cards/stack-grid";
 import { SectionLabel, SiteFooter } from "@/components/journey/section-bits";
 import NextSection from "@/components/journey/next-section";
+import WidgetSlide from "@/components/journey/widget-slide";
 import { nowLines } from "@/lib/now";
 import { flag } from "@/lib/flags";
 import { getChapter } from "@/lib/chapters";
@@ -17,7 +18,8 @@ import { experience, stack } from "@/lib/stack-data";
 
 // ── /software ─────────────────────────────────────────────────────────────────
 // The tech half: projects, experience, stack. White-grey-black; the laser
-// layer holds a white knot in the gutter (lib/director/laser.ts, "software").
+// layer holds a white network behind the widgets (lib/director/laser.ts,
+// "software"), re-wiring into each project's shape as it comes up.
 
 /** "June 2025 — present" → "2025–now"; "2021 — 2025" → "2021–25" */
 const years = (period: string) => {
@@ -25,18 +27,13 @@ const years = (period: string) => {
   return b === "present" || !b ? `${a}–now` : a === b ? a : `${a}–${b.slice(2)}`;
 };
 
-/** a widget on alternating sides (wide screens), with the open lane beside it
- *  marked for the laser knot to glide into (lib/director/laser.ts "gap-n") */
+/** a widget on alternating sides (wide screens); it slides in and out from
+ *  its own side as you scroll (WidgetSlide), and the laser network reads it to
+ *  take its project's shape and sink behind it (lib/director/software-figure.ts) */
 function Alt({ n, id, stage, children }: { n: number; id?: string; stage?: string; children: React.ReactNode }) {
   const right = n % 2 === 1;
   return (
-    <div id={id} data-reveal data-stage-id={stage} className={`relative scroll-mt-28 md:w-[60%] ${right ? "md:self-end" : "md:self-start"}`}>
-      <div
-        aria-hidden="true"
-        data-laser-anchor={`gap-${n}`}
-        className="pointer-events-none absolute top-0 hidden h-full md:block"
-        style={{ [right ? "right" : "left"]: "calc(100% + 1.5rem)", width: "calc(66.6% - 1.5rem)" }}
-      />
+    <div id={id} data-slide={right ? "right" : "left"} data-stage-id={stage} className={`relative scroll-mt-28 md:w-[60%] ${right ? "md:self-end" : "md:self-start"}`}>
       {children}
     </div>
   );
@@ -52,6 +49,7 @@ export default function SoftwarePage() {
   return (
     <JourneyRoot>
       <SiteNav />
+      <WidgetSlide />
       <main id="journey">
         {/* ── code · work · CS ─────────────────────────────────────── */}
         <Chapter {...ch} opener={flag("openers") ? { back: "/", index: "01", title: "software", tone: "text-foreground", now: flag("now") ? nowLines().software : undefined } : undefined}>
