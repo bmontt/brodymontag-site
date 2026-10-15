@@ -157,14 +157,18 @@ export function createAboutScene() {
     // swelling, clears the horizon and settles onto it at the vanishing point —
     // a sun the road runs into, setting a little further through the years.
     // It's at infinity, so it rides the horizon as the camera tilts to the road.
+    // The year panels' text runs across it, so it stays dim; on phones, where
+    // they sit right across the horizon, it's also smaller, further set (nearer
+    // a half disc) and its bands two rows apart — the text over it stays clear
+    // and it still reads as a sunset.
     if (x.sun > 0) {
-      const e = x.sun;
+      const e = x.sun, small = x.compact;
       const lift = smooth(0, 0.55, e), settle = smooth(0.45, 1, e);
-      const R = lerp(x.ringR, Math.min(H * 0.17, x.W * 0.22), smooth(0, 0.8, e));
-      const clear = hy - 1.25 * R, rest = hy - R * (0.45 - 0.3 * x.sunSet);
-      u.uSun.value.set(lerp(x.ox, vx, lift), lerp(lerp(x.oy, clear, lift), rest, settle), R, 0.8 * t * smooth(0, 0.1, e));
+      const R = lerp(x.ringR, Math.min(H * 0.17, x.W * (small ? 0.19 : 0.22)), smooth(0, 0.8, e));
+      const clear = hy - 1.25 * R, rest = hy - R * (small ? 0.3 - 0.25 * x.sunSet : 0.45 - 0.3 * x.sunSet);
+      u.uSun.value.set(lerp(x.ox, vx, lift), lerp(lerp(x.oy, clear, lift), rest, settle), R, (small ? 0.65 : 0.72) * t * smooth(0, 0.1, e));
       // the floor hides what's below the horizon once it's out over it
-      u.uSunB.value.set(lift >= 1 ? hy : 1e5, smooth(0.3, 0.9, e), x.time * 0.35, 0);
+      u.uSunB.value.set(lift >= 1 ? hy : 1e5, smooth(0.3, 0.9, e) * (small ? 0.6 : 0.72), x.time * 0.35, small ? 2 : 1);
       u.uSunC.value.set(...x.sunPal);
     } else u.uSun.value.w = 0;
 

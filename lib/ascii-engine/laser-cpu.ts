@@ -330,7 +330,7 @@ export function laserFrame(
         if (L <= sun.z + 60) {
           take(Math.abs(L - sun.z), L > 1e-3 ? qx / L : 0, L > 1e-3 ? qy / L : 1, sunC.z, sun.w);
           if (sunB.y >= 0.002 && L <= sun.z) {
-            const d = 2 * sun.z, v = Math.min(1, Math.max(0, (qy + sun.z) / d)), rows = d / ch;
+            const d = 2 * sun.z, v = Math.min(1, Math.max(0, (qy + sun.z) / d)), rows = d / (ch * Math.max(sunB.w, 1));
             const uu = rows * (v - 0.43 * v * v) - sunB.z, du = (rows * (1 - 0.86 * v)) / d;
             const k = Math.floor(uu + 0.5);
             const hue = ((k % 2) + 2) % 2 < 0.5 ? sunC.x + (sunC.y - sunC.x) * v : sunC.z + (sunC.w - sunC.z) * v;

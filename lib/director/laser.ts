@@ -554,7 +554,8 @@ export function createLaserDirector() {
     // ── mood ────────────────────────────────────────────────────────────
     out.brightness = c.bright;
     out.hot = c.hot;
-    out.burst = x.page === "about" ? 0.5 * Math.exp(-Math.max(0, time - fuseAt) * 3.5) : 0;
+    // the fusion's flash, stepped back with the rest of the stage (it lights the whole grid)
+    out.burst = x.page === "about" ? 0.5 * c.bright * Math.exp(-Math.max(0, time - fuseAt) * 3.5) : 0;
     u.uLaserTime.value = time;
     return out;
   };

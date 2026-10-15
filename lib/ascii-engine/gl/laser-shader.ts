@@ -67,7 +67,8 @@ export interface LaserUniforms {
   uSheetC: { value: Vector4 };
   uSheetD: { value: Vector4 };
   /** the sun (about): center px (xy), radius px, weight · the horizon px (nothing below it),
-   *  bands 0–1, band phase, — · band palettes: white top, white bottom, pearl top, pearl bottom */
+   *  bands 0–1, band phase, glyph rows between the top bands (≥ 1) · band palettes: white top,
+   *  white bottom, pearl top, pearl bottom */
   uSun: { value: Vector4 };
   uSunB: { value: Vector4 };
   uSunC: { value: Vector4 };
@@ -158,7 +159,7 @@ uniform vec4  uSheetB;             // the two wells: A (X, Z), B (X, Z)
 uniform vec4  uSheetC;             // ripple phase rad, ripple wavenumber rad/unit, ringdown front radius, ringdown height
 uniform vec4  uSheetD;             // crest palettes (alternate rings), the pair's center (X, Z)
 uniform vec4  uSun;                // the sun (about): center px (xy), radius px, weight
-uniform vec4  uSunB;               // horizon y px (nothing below it), bands 0–1, band phase, —
+uniform vec4  uSunB;               // horizon y px (nothing below it), bands 0–1, band phase, glyph rows between the top bands (≥ 1)
 uniform vec4  uSunC;               // band palettes: white top, white bottom, pearl top, pearl bottom
 uniform vec4  uSegs[${ROOM_SEGS}];    // the room: projected segments a.xy, b.xy (px)
 uniform vec4  uSegsB[${ROOM_SEGS}];   // palette, weight at a, weight at b (depth fog), packet (0 = none, 1 + t along it; < 0: a node, see roomL)
@@ -366,8 +367,8 @@ void sunL(inout Hit h, vec2 p) {
   if (uSunB.y < 0.002 || L > uSun.z) return;
   float d = 2.0 * uSun.z;
   float v = clamp((q.y + uSun.z) / d, 0.0, 1.0);                     // 0 top → 1 bottom
-  float rows = d / uCell.y;
-  // bands at whole u: a row apart at the top, opening out below
+  float rows = d / (uCell.y * max(uSunB.w, 1.0));
+  // bands at whole u: a row apart at the top (or uSunB.w rows), opening out below
   float u = rows * (v - 0.43 * v * v) - uSunB.z;
   float du = rows * (1.0 - 0.86 * v) / d;
   float k = floor(u + 0.5);
