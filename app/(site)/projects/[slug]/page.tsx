@@ -106,7 +106,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             {paragraphs.map((para, i) => (
               <p
                 key={i}
-                className="font-sans text-base text-foreground/78 leading-relaxed"
+                className="copy"
               >
                 {para}
               </p>

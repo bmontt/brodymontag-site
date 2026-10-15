@@ -71,6 +71,24 @@
   --text-lg: 1.21875rem; /* 19.5px (18) */
   --text-xl: 1.34375rem; /* 21.5px (20) */
   --text-2xl: 1.59375rem; /* 25.5px (24) */
+  /* running text (sentences, bios, descriptions, bullets) gets a reading
+     size of its own, growing with the screen; labels, meta, counters and
+     pills stay on the small mono steps above */
+  --text-body: clamp(1.0625rem, 1rem + 0.2vw, 1.125rem); /* 17 → 18px */
+  --text-body--line-height: 1.65;
+  --text-body-sm: clamp(1rem, 0.95rem + 0.15vw, 1.0625rem); /* 16 → 17px: cards, lists */
+  --text-body-sm--line-height: 1.6;
+}
+
+/* the reading layer under the mono labels: the prose face at a reading size
+   and near-full contrast. copy for page paragraphs, copy-sm inside cards and
+   lists. A leading-* class still tightens the line height where space is
+   short (sub-widgets). */
+@utility copy {
+  @apply font-sans text-body text-pretty text-foreground/88;
+}
+@utility copy-sm {
+  @apply font-sans text-body-sm text-pretty text-foreground/88;
 }
 
 @layer base {

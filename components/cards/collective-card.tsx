@@ -18,19 +18,19 @@ export default function CollectiveCard() {
         </p>
         <div className="flex flex-col gap-3 pl-3 border-l border-white/10">
           {(collective.meta as Meta[]).map(({ label, value, href }) => (
-            <div key={label} className="grid gap-y-0.5 sm:grid-cols-[7rem_1fr] sm:gap-x-6">
-              <span className="font-mono text-xs text-foreground/50">{label}</span>
+            <div key={label} className="grid gap-y-0.5 sm:grid-cols-[7rem_1fr] sm:items-baseline sm:gap-x-6">
+              <span className="font-mono text-xs text-foreground/60">{label}</span>
               {href ? (
                 <a
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-xs text-foreground/80 hover:text-accent/80 transition-colors"
+                  className="copy-sm hover:text-accent/80 transition-colors"
                 >
-                  {value}&nbsp;↗
+                  {value}&nbsp;<span aria-hidden="true" className="font-mono opacity-60">↗</span>
                 </a>
               ) : (
-                <span className="font-mono text-xs text-foreground/80">{value}</span>
+                <span className="copy-sm">{value}</span>
               )}
             </div>
           ))}
@@ -51,14 +51,14 @@ export default function CollectiveCard() {
                   href={aff.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-xs text-foreground/85 hover:text-accent/80 transition-colors"
+                  className="copy-sm hover:text-accent/80 transition-colors"
                 >
-                  {aff.value}&nbsp;↗
+                  {aff.value}&nbsp;<span aria-hidden="true" className="font-mono opacity-60">↗</span>
                 </a>
               ) : (
-                <p className="font-mono text-xs text-foreground/85">{aff.value}</p>
+                <p className="copy-sm">{aff.value}</p>
               )}
-              <p className="font-mono text-xs text-foreground/45 mt-0.5">{aff.note}</p>
+              <p className="font-mono text-xs text-foreground/60 mt-0.5">{aff.note}</p>
             </div>
           </div>
         ))}
@@ -66,8 +66,8 @@ export default function CollectiveCard() {
 
       {/* scene */}
       <div>
-        <p className="font-mono text-xs text-foreground/50 mb-3">scene</p>
-        <p className="font-mono text-xs text-foreground/70 leading-relaxed">
+        <p className="font-mono text-xs text-foreground/60 mb-3">scene</p>
+        <p className="copy-sm">
           {collective.scene}
         </p>
       </div>

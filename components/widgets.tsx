@@ -34,7 +34,7 @@ export function SubWidgets({ items, cols = 2 }: { items: string[]; cols?: 2 | 3 
       {items.map((t, i) => (
         <li
           key={i}
-          className={`subwidget px-3.5 py-2.5 font-sans text-[14.5px] leading-snug text-foreground/85 ${i % 2 === 1 ? "sm:mt-1.5" : ""}`}
+          className={`subwidget px-3.5 py-2.5 copy-sm leading-snug ${i % 2 === 1 ? "sm:mt-1.5" : ""}`}
           style={{ animationDelay: `${-((i * 1.9) % 7)}s` }}
         >
           {renderInline(t)}
@@ -71,7 +71,7 @@ export function StatWidgets({ stats, cols = 3 }: { stats: { label: string; value
         >
           <p className="font-sans text-xl font-medium leading-none tracking-[-0.02em] text-foreground tabular-nums md:text-2xl">{s.value}</p>
           <p className="mt-1.5 font-mono text-2xs text-foreground/70">{s.label}</p>
-          {s.note && <p className="mt-0.5 font-sans text-2xs leading-snug text-foreground/52">{s.note}</p>}
+          {s.note && <p className="mt-0.5 font-sans text-xs leading-snug text-foreground/65">{s.note}</p>}
         </li>
       ))}
     </ul>

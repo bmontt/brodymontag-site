@@ -36,7 +36,7 @@ export default function ProjectCard({ project }: { project: Project }) {
             </>
           }
         />
-        <p className="font-sans text-sm leading-relaxed text-foreground/78">{project.description}</p>
+        <p className="copy-sm">{project.description}</p>
         {project.stats ? (
           <>
             <StatWidgets stats={project.stats.slice(0, 3)} />

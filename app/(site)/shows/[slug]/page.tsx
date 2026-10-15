@@ -88,19 +88,19 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
                   }]
                 : []),
             ].map(({ label, value, href }: { label: string; value: string; href?: string }) => (
-              <div key={label} className="grid grid-cols-[6.5rem_1fr] gap-x-8">
+              <div key={label} className="grid grid-cols-[6.5rem_1fr] items-baseline gap-x-8">
                 <span className="font-mono text-xs text-foreground/52">{label}</span>
                 {href ? (
                   <a
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-mono text-xs text-foreground/80 hover:text-accent/80 transition-colors"
+                    className="copy-sm hover:text-accent/80 transition-colors"
                   >
-                    {value}&nbsp;↗
+                    {value}&nbsp;<span aria-hidden="true" className="font-mono opacity-60">↗</span>
                   </a>
                 ) : (
-                  <span className="font-mono text-xs text-foreground/80">{value}</span>
+                  <span className="copy-sm">{value}</span>
                 )}
               </div>
             ))}
@@ -113,11 +113,11 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
             className="enter"
             style={enterStyle({ y: 10, dur: 0.5, delay: 0.35 })}
           >
-            <p className="font-sans text-base text-foreground/78 leading-relaxed mb-6">
+            <p className="copy mb-6">
               {event.context}
             </p>
             {event.setlistNote && (
-              <p className="font-mono text-xs text-foreground/55 pl-3 border-l border-white/10">
+              <p className="copy-sm pl-3 border-l border-white/10">
                 {event.setlistNote}
               </p>
             )}
