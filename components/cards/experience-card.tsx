@@ -24,7 +24,7 @@ export default function ExperienceCard({ entry }: { entry: ExperienceEntry }) {
           </>
         }
       />
-      <p className="font-sans text-sm leading-relaxed text-foreground/65">{entry.description}</p>
+      <p className="font-sans text-sm leading-relaxed text-foreground/78">{entry.description}</p>
       {entry.highlights && <SubWidgets items={entry.highlights} />}
       <TagRow tags={entry.tags} />
     </Widget>

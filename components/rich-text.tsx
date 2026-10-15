@@ -17,7 +17,7 @@ export function renderInline(text: string): ReactNode[] {
         href={m[2]}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-foreground/85 underline underline-offset-4 decoration-white/20 hover:decoration-accent/50 transition-colors"
+        className="text-foreground/90 underline underline-offset-4 decoration-white/20 hover:decoration-accent/50 transition-colors"
       >
         {m[1]}
       </a>

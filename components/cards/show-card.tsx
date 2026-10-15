@@ -14,9 +14,9 @@ export default function ShowCard({ event }: { event: Event }) {
         </span>
         <div className="flex items-start gap-4">
           <div className="flex-1">
-            <p className="font-mono text-sm text-foreground/85 group-hover:text-foreground/95 leading-snug transition-colors duration-150">
+            <p className="font-mono text-sm text-foreground/90 group-hover:text-foreground/95 leading-snug transition-colors duration-150">
               {event.title.toLowerCase()}
-              <span className="ml-2 text-foreground/28 opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-xs">→</span>
+              <span className="ml-2 text-foreground/42 opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-xs">→</span>
             </p>
             {event.description && (
               <p className="font-mono text-xs text-muted-foreground mt-0.5">

@@ -10,7 +10,7 @@ import { projects } from "@/lib/projects";
 function AsciiRule({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`font-mono text-xs text-foreground/12 overflow-hidden whitespace-nowrap ${className}`}
+      className={`font-mono text-xs text-foreground/28 overflow-hidden whitespace-nowrap ${className}`}
     >
       {"─".repeat(300)}
     </div>
@@ -40,7 +40,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
           {/* section header */}
           <p
-            className={`enter mb-6 ${SECTION_HEADING} text-foreground/45`}
+            className={`enter mb-6 ${SECTION_HEADING} text-foreground/60`}
             style={{ ...enterStyle({ x: -12, dur: 0.6 }), fontSize: SECTION_SIZE.sm }}
           >
             project
@@ -61,7 +61,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               className={`font-mono text-xs px-2 py-0.5 border ${
                 project.status === "wip"
                   ? "text-accent/75 border-accent/25"
-                  : "text-foreground/45 border-white/12"
+                  : "text-foreground/60 border-white/12"
               }`}
             >
               {project.status === "wip" ? "in progress" : "live"}
@@ -76,19 +76,19 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             style={enterStyle({ y: 10, dur: 0.45, delay: 0.25 })}
           >
             <div className="grid grid-cols-[6.5rem_1fr] gap-x-8">
-              <span className="font-mono text-xs text-foreground/38">stack</span>
-              <span className="font-mono text-xs text-foreground/70">
+              <span className="font-mono text-xs text-foreground/52">stack</span>
+              <span className="font-mono text-xs text-foreground/80">
                 {project.tags.map((t) => t.toLowerCase()).join(" · ")}
               </span>
             </div>
             {project.githubUrl && (
               <div className="grid grid-cols-[6.5rem_1fr] gap-x-8">
-                <span className="font-mono text-xs text-foreground/38">source</span>
+                <span className="font-mono text-xs text-foreground/52">source</span>
                 <a
                   href={project.githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-xs text-foreground/70 hover:text-accent/80 transition-colors"
+                  className="font-mono text-xs text-foreground/80 hover:text-accent/80 transition-colors"
                 >
                   {project.githubUrl.replace("https://", "")}&nbsp;↗
                 </a>
@@ -106,7 +106,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             {paragraphs.map((para, i) => (
               <p
                 key={i}
-                className="font-sans text-base text-foreground/65 leading-relaxed"
+                className="font-sans text-base text-foreground/78 leading-relaxed"
               >
                 {para}
               </p>
@@ -119,7 +119,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           {project.stats && (
             <div className="enter mb-14" style={enterStyle({ y: 10, dur: 0.5, delay: 0.4 })}>
               <h2 className={`mb-1 ${SECTION_HEADING}`} style={{ fontSize: SECTION_SIZE.sm }}>results</h2>
-              {project.statsAsOf && <p className="font-mono text-xs text-foreground/40">as of {project.statsAsOf.toLowerCase()}</p>}
+              {project.statsAsOf && <p className="font-mono text-xs text-foreground/55">as of {project.statsAsOf.toLowerCase()}</p>}
               <StatWidgets stats={project.stats} cols={4} />
             </div>
           )}
@@ -137,8 +137,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
       <footer className="relative z-10 border-t border-white/5 px-6 py-8">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <p className="font-mono text-xs text-foreground/28">© 2026 brody montag</p>
-          <p className="font-mono text-xs text-foreground/28">brodymontag.com</p>
+          <p className="font-mono text-xs text-foreground/42">© 2026 brody montag</p>
+          <p className="font-mono text-xs text-foreground/42">brodymontag.com</p>
         </div>
       </footer>
     </div>

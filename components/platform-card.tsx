@@ -76,16 +76,16 @@ export default function PlatformCard({
               />
             </div>
             <div>
-              <p className="font-mono text-xs text-foreground/85 tracking-wide">{name}</p>
-              <p className="font-mono text-xs text-foreground/38 mt-0.5">{handle}</p>
+              <p className="font-mono text-xs text-foreground/90 tracking-wide">{name}</p>
+              <p className="font-mono text-xs text-foreground/52 mt-0.5">{handle}</p>
             </div>
           </div>
           {stat && (
             <div className="text-right">
-              <p className="font-mono text-xl font-light text-foreground/80 leading-none">
+              <p className="font-mono text-xl font-light text-foreground/88 leading-none">
                 {stat.value}
               </p>
-              <p className="font-mono text-xs text-foreground/28 mt-1">{stat.label}</p>
+              <p className="font-mono text-xs text-foreground/42 mt-1">{stat.label}</p>
             </div>
           )}
         </div>
@@ -113,12 +113,12 @@ export default function PlatformCard({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="font-mono text-xs text-foreground/62 hover:text-accent/80 transition-colors text-right"
+                      className="font-mono text-xs text-foreground/74 hover:text-accent/80 transition-colors text-right"
                     >
                       {d.value}&nbsp;↗
                     </a>
                   ) : (
-                    <span className="font-mono text-xs text-foreground/62 text-right">
+                    <span className="font-mono text-xs text-foreground/74 text-right">
                       {d.value}
                     </span>
                   )}
@@ -147,7 +147,7 @@ export default function PlatformCard({
         </div>
 
         {/* expand hint */}
-        <p className="mt-3 font-mono text-xs text-foreground/18">
+        <p className="mt-3 font-mono text-xs text-foreground/34">
           {expanded ? "collapse ↑" : "expand ↓"}
         </p>
       </div>

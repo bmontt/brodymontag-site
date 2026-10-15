@@ -65,7 +65,7 @@ export default function TimelineSection() {
                   {g.year}
                 </p>
               ) : (
-                <p data-reveal className="mb-4 font-mono text-xs tabular-nums text-foreground/35 md:mb-6">
+                <p data-reveal className="mb-4 font-mono text-xs tabular-nums text-foreground/50 md:mb-6">
                   {g.year}, continued
                 </p>
               )}
@@ -79,7 +79,7 @@ export default function TimelineSection() {
                   ))}
                 </div>
               ) : (
-                <p data-reveal className="font-mono text-xs text-foreground/25">
+                <p data-reveal className="font-mono text-xs text-foreground/40">
                   — quiet year, heads down —
                 </p>
               )}

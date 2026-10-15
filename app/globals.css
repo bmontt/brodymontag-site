@@ -317,7 +317,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 }
 
 /* landing social icons: their glow on hover */
-.social-link { color: rgba(255, 255, 255, 0.28); transition: color 0.25s ease; }
+.social-link { color: rgba(255, 255, 255, 0.45); transition: color 0.25s ease; }
 .social-link:hover { color: var(--glow); }
 
 /* show photos: color and a brighter edge on hover */

@@ -13,7 +13,7 @@ export default function StackGrid({ categories = stack }: { categories?: StackCa
             {category.items.map((item, i) => (
               <span
                 key={item}
-                className="pill pill-iridescent cursor-default rounded-full border border-white/10 px-2.5 py-0.5 font-mono text-[11px] text-foreground/70"
+                className="pill pill-iridescent cursor-default rounded-full border border-white/10 px-2.5 py-0.5 font-mono text-[11px] text-foreground/80"
                 style={{ animationDelay: `${-((i * 1.37) % 4.2)}s` }}
               >
                 {item}

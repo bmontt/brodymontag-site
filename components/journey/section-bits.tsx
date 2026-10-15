@@ -13,7 +13,7 @@ export const logoHeight = (ratio: number) => Math.round(Math.min(72, Math.max(28
 
 export function AsciiRule({ className = "" }: { className?: string }) {
   return (
-    <div className={`font-mono text-xs text-foreground/15 overflow-hidden whitespace-nowrap ${className}`}>
+    <div className={`font-mono text-xs text-foreground/30 overflow-hidden whitespace-nowrap ${className}`}>
       {"─".repeat(300)}
     </div>
   );
@@ -38,8 +38,8 @@ export function SiteFooter() {
   return (
     <footer className="relative z-20 border-t border-white/5 px-6 py-8 md:px-12">
       <div className="mx-auto flex max-w-5xl items-center justify-between">
-        <p className="font-mono text-xs text-foreground/35">{content.meta.copyright}</p>
-        <p className="font-mono text-xs text-foreground/35">{content.meta.domain}</p>
+        <p className="font-mono text-xs text-foreground/50">{content.meta.copyright}</p>
+        <p className="font-mono text-xs text-foreground/50">{content.meta.domain}</p>
       </div>
     </footer>
   );

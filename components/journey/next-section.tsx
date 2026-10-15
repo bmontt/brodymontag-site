@@ -39,7 +39,7 @@ export default function NextSection({
               {word} <span className="inline-block transition-transform duration-500 group-hover:translate-x-3">→</span>
             </span>
           </Morph>
-          <span className="mt-4 block font-mono text-xs text-foreground/40 group-hover:text-foreground/70">{caption}</span>
+          <span className="mt-4 block font-mono text-xs text-foreground/55 group-hover:text-foreground/70">{caption}</span>
         </Link>
       </div>
     </section>

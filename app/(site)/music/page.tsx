@@ -75,7 +75,7 @@ export default function MusicPage() {
                         <span
                           key={a.name}
                           title={a.name}
-                          className="font-sans text-xl md:text-3xl font-medium uppercase leading-none tracking-[0.08em] text-foreground/55 transition-opacity duration-200 hover:text-foreground/95"
+                          className="font-sans text-xl md:text-3xl font-medium uppercase leading-none tracking-[0.08em] text-foreground/70 transition-opacity duration-200 hover:text-foreground/95"
                         >
                           {a.name}
                         </span>

@@ -25,7 +25,7 @@ export default function SiteNav() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 bg-linear-to-b from-background via-background/85 to-transparent px-6 pt-5 pb-9 md:px-12" style={{ viewTransitionName: "site-nav" }}>
       <nav aria-label="site" className="mx-auto flex max-w-6xl items-baseline justify-between font-mono text-xs">
-        <Link href="/" className="-my-2.5 py-2.5 text-foreground/55 transition-colors hover:text-foreground">
+        <Link href="/" className="-my-2.5 py-2.5 text-foreground/70 transition-colors hover:text-foreground">
           brody montag
         </Link>
         <div className="flex items-baseline gap-6">

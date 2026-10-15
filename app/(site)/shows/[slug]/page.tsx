@@ -12,7 +12,7 @@ const PHOTO_FILTER = "grayscale(1) brightness(0.72) contrast(1.12)";
 function AsciiRule({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`font-mono text-xs text-foreground/12 overflow-hidden whitespace-nowrap ${className}`}
+      className={`font-mono text-xs text-foreground/28 overflow-hidden whitespace-nowrap ${className}`}
     >
       {"─".repeat(300)}
     </div>
@@ -42,7 +42,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
 
           {/* section header */}
           <p
-            className={`enter mb-6 ${SECTION_HEADING} text-foreground/45`}
+            className={`enter mb-6 ${SECTION_HEADING} text-foreground/60`}
             style={{ ...enterStyle({ x: -12, dur: 0.6 }), fontSize: SECTION_SIZE.sm }}
           >
             show
@@ -59,11 +59,11 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
             >
               {event.venue}
             </h1>
-            <span className="font-mono text-sm text-foreground/40">{event.date}</span>
+            <span className="font-mono text-sm text-foreground/55">{event.date}</span>
           </div>
 
           <p
-            className="enter font-mono text-sm text-foreground/50 mb-10"
+            className="enter font-mono text-sm text-foreground/65 mb-10"
             style={enterStyle({ dur: 0.4, delay: 0.2 })}
           >
             {event.city}
@@ -90,18 +90,18 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
                 : []),
             ].map(({ label, value, href }: { label: string; value: string; href?: string }) => (
               <div key={label} className="grid grid-cols-[6.5rem_1fr] gap-x-8">
-                <span className="font-mono text-xs text-foreground/38">{label}</span>
+                <span className="font-mono text-xs text-foreground/52">{label}</span>
                 {href ? (
                   <a
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-mono text-xs text-foreground/70 hover:text-accent/80 transition-colors"
+                    className="font-mono text-xs text-foreground/80 hover:text-accent/80 transition-colors"
                   >
                     {value}&nbsp;↗
                   </a>
                 ) : (
-                  <span className="font-mono text-xs text-foreground/70">{value}</span>
+                  <span className="font-mono text-xs text-foreground/80">{value}</span>
                 )}
               </div>
             ))}
@@ -114,11 +114,11 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
             className="enter"
             style={enterStyle({ y: 10, dur: 0.5, delay: 0.35 })}
           >
-            <p className="font-sans text-base text-foreground/65 leading-relaxed mb-6">
+            <p className="font-sans text-base text-foreground/78 leading-relaxed mb-6">
               {event.context}
             </p>
             {event.setlistNote && (
-              <p className="font-mono text-xs text-foreground/40 pl-3 border-l border-white/10">
+              <p className="font-mono text-xs text-foreground/55 pl-3 border-l border-white/10">
                 {event.setlistNote}
               </p>
             )}
@@ -166,7 +166,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-xs text-foreground/40 hover:text-foreground/75 transition-colors"
+                  className="font-mono text-xs text-foreground/55 hover:text-foreground/75 transition-colors"
                 >
                   {label}&nbsp;↗
                 </a>
@@ -178,8 +178,8 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
 
       <footer className="relative z-10 border-t border-white/5 px-6 py-8">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <p className="font-mono text-xs text-foreground/28">© 2026 brody montag</p>
-          <p className="font-mono text-xs text-foreground/28">brodymontag.com</p>
+          <p className="font-mono text-xs text-foreground/42">© 2026 brody montag</p>
+          <p className="font-mono text-xs text-foreground/42">brodymontag.com</p>
         </div>
       </footer>
     </div>

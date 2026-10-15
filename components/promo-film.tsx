@@ -150,7 +150,7 @@ export default function PromoFilm({ film }: { film: Film }) {
             aria-label={`play the film: ${film.caption}`}
             className="absolute inset-0 z-10 flex items-center justify-center"
           >
-            <span className="flex items-center gap-3 rounded-full border border-white/25 bg-black/40 px-5 py-2.5 font-mono text-xs text-foreground/80 backdrop-blur-sm transition-colors hover:border-white/50 hover:text-foreground">
+            <span className="flex items-center gap-3 rounded-full border border-white/25 bg-black/40 px-5 py-2.5 font-mono text-xs text-foreground/88 backdrop-blur-sm transition-colors hover:border-white/50 hover:text-foreground">
               <span aria-hidden="true">▶</span> play film
             </span>
           </button>

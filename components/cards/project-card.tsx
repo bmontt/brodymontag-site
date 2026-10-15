@@ -17,18 +17,18 @@ export default function ProjectCard({ project }: { project: Project }) {
           title={
             <>
               {project.name}
-              <span className="ml-2 text-base text-foreground/30 opacity-0 transition-opacity duration-150 group-hover:opacity-100">→</span>
+              <span className="ml-2 text-base text-foreground/45 opacity-0 transition-opacity duration-150 group-hover:opacity-100">→</span>
             </>
           }
           right={
             <>
-              <span className={project.status === "wip" ? "text-accent/85" : "text-foreground/40"}>{project.status === "wip" ? "in progress" : "live"}</span>
+              <span className={project.status === "wip" ? "text-accent/85" : "text-foreground/55"}>{project.status === "wip" ? "in progress" : "live"}</span>
               {project.githubUrl && (
                 <a
                   href={project.githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="pointer-events-auto relative z-10 text-foreground/50 transition-colors hover:text-foreground/90"
+                  className="pointer-events-auto relative z-10 text-foreground/65 transition-colors hover:text-foreground/90"
                 >
                   ↗ github
                 </a>
@@ -36,11 +36,11 @@ export default function ProjectCard({ project }: { project: Project }) {
             </>
           }
         />
-        <p className="font-sans text-sm leading-relaxed text-foreground/65">{project.description}</p>
+        <p className="font-sans text-sm leading-relaxed text-foreground/78">{project.description}</p>
         {project.stats ? (
           <>
             <StatWidgets stats={project.stats.slice(0, 3)} />
-            {project.statsAsOf && <p className="mt-2 font-mono text-[11px] text-foreground/35">as of {project.statsAsOf.toLowerCase()}</p>}
+            {project.statsAsOf && <p className="mt-2 font-mono text-[11px] text-foreground/50">as of {project.statsAsOf.toLowerCase()}</p>}
           </>
         ) : (
           <SubWidgets items={project.highlights.slice(0, 3)} cols={3} />

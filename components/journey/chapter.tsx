@@ -92,12 +92,12 @@ export default function Chapter({
         <div data-laser-anchor="opener" className="relative z-20 flex min-h-svh flex-col justify-center px-6 pt-20 md:px-12">
           <div className="mx-auto w-full max-w-6xl">
             {opener.back && (
-              <Link href={opener.back} className="-my-2.5 mb-5.5 inline-flex items-center gap-2 py-2.5 font-mono text-xs text-foreground/45 transition-colors duration-200 hover:text-foreground/85">
+              <Link href={opener.back} className="-my-2.5 mb-5.5 inline-flex items-center gap-2 py-2.5 font-mono text-xs text-foreground/60 transition-colors duration-200 hover:text-foreground/85">
                 ← back
               </Link>
             )}
-            <p className="mb-6 font-mono text-xs text-foreground/40">
-              {opener.index} <span className="text-foreground/20">/</span> {opener.title}
+            <p className="mb-6 font-mono text-xs text-foreground/55">
+              {opener.index} <span className="text-foreground/36">/</span> {opener.title}
             </p>
             <Morph name={`title-${id}`}>
               <h1
@@ -110,7 +110,7 @@ export default function Chapter({
             <h2
               id={`${id}-heading`}
               tabIndex={-1}
-              className="mt-8 max-w-3xl font-sans font-light leading-[1.05] tracking-[-0.03em] text-foreground/80 outline-none"
+              className="mt-8 max-w-3xl font-sans font-light leading-[1.05] tracking-[-0.03em] text-foreground/88 outline-none"
               style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}
             >
               {prefix && <span className="sr-only">{prefix} — </span>}
@@ -119,9 +119,9 @@ export default function Chapter({
               </span>
             </h2>
             {figure && <div aria-hidden="true" data-laser-anchor={`${id}-rule`} className="mt-10 h-8 w-full" />}
-            {opener.now && <p className="mt-6 font-mono text-xs text-foreground/45">{opener.now}</p>}
+            {opener.now && <p className="mt-6 font-mono text-xs text-foreground/60">{opener.now}</p>}
           </div>
-          <p aria-hidden="true" className="absolute bottom-8 left-1/2 -translate-x-1/2 font-mono text-xs text-foreground/30">
+          <p aria-hidden="true" className="absolute bottom-8 left-1/2 -translate-x-1/2 font-mono text-xs text-foreground/45">
             scroll ↓
           </p>
         </div>

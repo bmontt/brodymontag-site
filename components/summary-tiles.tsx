@@ -56,7 +56,7 @@ export default function SummaryTiles({ groups }: { groups: TileGroup[] }) {
           <section key={g.title} aria-label={g.title}>
             <div data-tile-head className="mb-1 flex items-baseline justify-between border-b border-white/15 pb-2">
               <h3 className="font-sans text-lg font-medium tracking-[-0.02em] text-foreground">{g.title}</h3>
-              <span className="font-mono text-[11px] tabular-nums text-foreground/40">{String(g.tiles.length).padStart(2, "0")}</span>
+              <span className="font-mono text-[11px] tabular-nums text-foreground/55">{String(g.tiles.length).padStart(2, "0")}</span>
             </div>
             <ol>
               {g.tiles.map((t, i) => (
@@ -65,9 +65,9 @@ export default function SummaryTiles({ groups }: { groups: TileGroup[] }) {
                     href={t.href}
                     className="group grid grid-cols-[1.75rem_1fr_auto] items-baseline gap-x-2 border-b border-white/[0.07] py-2 transition-colors hover:border-white/20"
                   >
-                    <span className="font-mono text-[11px] tabular-nums text-foreground/30">{String(i + 1).padStart(2, "0")}</span>
-                    <span className="truncate font-sans text-[15px] text-foreground/80 transition-colors group-hover:text-foreground">{t.label}</span>
-                    {t.meta && <span className="font-mono text-[11px] text-foreground/40">{t.meta}</span>}
+                    <span className="font-mono text-[11px] tabular-nums text-foreground/45">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="truncate font-sans text-[15px] text-foreground/88 transition-colors group-hover:text-foreground">{t.label}</span>
+                    {t.meta && <span className="font-mono text-[11px] text-foreground/55">{t.meta}</span>}
                   </a>
                 </li>
               ))}

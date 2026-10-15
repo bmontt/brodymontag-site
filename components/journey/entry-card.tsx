@@ -24,9 +24,9 @@ function CompactEntry({ entry }: { entry: TimelineEntry }) {
     : ["role", `${src.org} · ${src.period}`, src.href];
   const body = (
     <>
-      <span className="font-mono text-[11px] text-foreground/40">{kind}</span>
+      <span className="font-mono text-[11px] text-foreground/55">{kind}</span>
       <span className="mt-0.5 block font-sans text-[15px] font-medium leading-snug text-foreground/90">{entry.title}</span>
-      {line && <span className="mt-0.5 block truncate font-mono text-[11px] text-foreground/45">{line}</span>}
+      {line && <span className="mt-0.5 block truncate font-mono text-[11px] text-foreground/60">{line}</span>}
     </>
   );
   const cls = "block border-l border-white/10 py-1 pl-3 transition-colors hover:border-white/40";

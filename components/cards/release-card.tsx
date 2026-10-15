@@ -5,10 +5,10 @@ export default function ReleaseCard({ release }: { release: Release }) {
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-4 mb-2">
-        <span className="font-mono text-sm text-foreground/85">
+        <span className="font-mono text-sm text-foreground/90">
           {release.title}
         </span>
-        <span className="font-mono text-xs text-foreground/35">
+        <span className="font-mono text-xs text-foreground/50">
           {release.date} · {release.type}
         </span>
       </div>
@@ -16,7 +16,7 @@ export default function ReleaseCard({ release }: { release: Release }) {
         {release.tags.map((t, i) => (
           <span
             key={t}
-            className="pill pill-iridescent cursor-default font-mono text-xs text-foreground/35 border border-white/8 px-2 py-0.5"
+            className="pill pill-iridescent cursor-default font-mono text-xs text-foreground/50 border border-white/8 px-2 py-0.5"
             style={{ animationDelay: `${-((i * 1.53) % 4.2)}s` }}
           >
             {t}
@@ -24,7 +24,7 @@ export default function ReleaseCard({ release }: { release: Release }) {
         ))}
       </div>
       {release.description && (
-        <p className="font-sans text-sm text-foreground/55 leading-relaxed pl-3 border-l border-white/10 mb-4">
+        <p className="font-sans text-sm text-foreground/70 leading-relaxed pl-3 border-l border-white/10 mb-4">
           {release.description}
         </p>
       )}
@@ -35,7 +35,7 @@ export default function ReleaseCard({ release }: { release: Release }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-xs text-foreground/50 hover:text-accent/80 transition-colors"
+            className="font-mono text-xs text-foreground/65 hover:text-accent/80 transition-colors"
           >
             {platform}&nbsp;↗
           </a>

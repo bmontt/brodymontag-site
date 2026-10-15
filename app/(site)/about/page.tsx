@@ -39,8 +39,8 @@ export default function AboutPage() {
                 <div className="mb-10 flex flex-col gap-3" data-reveal>
                   {content.about.meta.map(({ label, value }, i) => (
                     <div key={i} className="grid gap-y-0.5 sm:grid-cols-[6.5rem_1fr] sm:gap-x-8">
-                      <span className="font-mono text-xs text-foreground/45">{label}</span>
-                      <span className="font-mono text-xs text-foreground/75">{value}</span>
+                      <span className="font-mono text-xs text-foreground/60">{label}</span>
+                      <span className="font-mono text-xs text-foreground/85">{value}</span>
                     </div>
                   ))}
                 </div>
@@ -58,7 +58,7 @@ export default function AboutPage() {
                     <p
                       key={i}
                       data-reveal
-                      className="font-sans text-base text-foreground/65 leading-relaxed"
+                      className="font-sans text-base text-foreground/78 leading-relaxed"
                     >
                       {renderInline(para)}
                     </p>
@@ -74,7 +74,7 @@ export default function AboutPage() {
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-mono text-xs text-foreground/45 hover:text-foreground/85 transition-colors"
+                      className="font-mono text-xs text-foreground/60 hover:text-foreground/85 transition-colors"
                     >
                       {label}
                     </a>
@@ -95,7 +95,7 @@ export default function AboutPage() {
                   className="pill-iridescent h-44 w-36 border border-white/10 object-cover object-top grayscale brightness-[0.72] contrast-[1.12]"
                   sizes="144px"
                 />
-                <p className="font-mono text-xs text-foreground/25">
+                <p className="font-mono text-xs text-foreground/40">
                   {content.about.photoCaption}
                 </p>
               </div>
@@ -120,12 +120,12 @@ export default function AboutPage() {
               <div className="flex flex-col gap-4" data-reveal>
                 {content.contact.items.map(({ label, value, href }) => (
                   <div key={label} className="grid gap-y-0.5 sm:grid-cols-[6.5rem_1fr] sm:gap-x-8">
-                    <span className="font-mono text-xs text-foreground/45 pt-0.5">
+                    <span className="font-mono text-xs text-foreground/60 pt-0.5">
                       {label}
                     </span>
                     <a
                       href={href}
-                      className="font-mono text-sm text-foreground/75 hover:text-accent/85 transition-colors"
+                      className="font-mono text-sm text-foreground/85 hover:text-accent/85 transition-colors"
                     >
                       {value}
                     </a>

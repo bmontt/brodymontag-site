@@ -37,7 +37,7 @@ function linkify(text: string) {
 export default function MachinePage() {
   return (
     <main className="min-h-screen bg-background px-4 pb-24 pt-10 md:px-10">
-      <pre className="mx-auto max-w-4xl whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-foreground/75 md:text-xs">
+      <pre className="mx-auto max-w-4xl whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-foreground/85 md:text-xs">
         {linkify(machineText())}
       </pre>
     </main>
