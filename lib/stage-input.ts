@@ -4,9 +4,10 @@
 // state (the frame loop reads them every frame; nothing re-renders).
 //
 //   pointer  cursor position, −1…1 (room parallax, title tilt)
-//   knot     where the director last drew the knot (screen px), for grabbing
-//   drag     the knot's spin/tilt added by the user, with inertia — grab it
-//            with the mouse (flag: drag) and fling it
+//   knot     where the director last drew the software figure (screen px) —
+//            the network, a knot once — for grabbing
+//   drag     its spin/tilt added by the user, with inertia — grab it with the
+//            mouse (flag: drag) and fling it
 
 export const pointer = { x: 0, y: 0 };
 export const knot = { x: 0, y: 0, r: 0, w: 0 };

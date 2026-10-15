@@ -25,7 +25,8 @@ export const CAR_HULL = 12;
  *   [0.5, 1)  sound — the site's pearlescent shimmer (sky blue ↔ orchid), dark → luminous → white-hot
  * (the compose pass maps it; see laserColor in ascii-shaders.ts). Figures:
  *   scope  — an oscilloscope trace (hero)
- *   liss   — a spinning 3D Lissajous knot (hero dive → the build)
+ *   segs   — segments projected from 3D on the CPU: the room, the car, and
+ *            the software page's network (lib/director/software-figure.ts)
  *   fan    — club fan beams sweeping from the floor (monty)
  *   grid   — a perspective laser floor that runs with the year track (timeline)
  *   orbit  — two beam rings in a decaying binary orbit, then the ringdown (merger)
@@ -41,9 +42,6 @@ export interface LaserUniforms {
   uScopeB: { value: Vector4 };
   uScopeC: { value: Vector4 };
   uScopeD: { value: Vector4 };
-  uLiss: { value: Vector4 };
-  uLissB: { value: Vector4 };
-  uLissC: { value: Vector2 };
   uFan: { value: Vector4 };
   uFanB: { value: Vector4 };
   uFanC: { value: Vector4 };
@@ -54,7 +52,9 @@ export interface LaserUniforms {
   uOrbitB: { value: Vector4 };
   uOrbitC: { value: Vector4 };
   uRingL: { value: Vector4 };
-  /** the 3D room: projected segments (a.xy, b.xy px) + (palette, weight at a, weight at b, —) */
+  /** projected segments (a.xy, b.xy px) + (palette, weight at a, weight at b, packet): the room,
+   *  the car, the software figure. packet 0 = none, 1 + t = a pulse at t along it, < 0 = a node
+   *  (a diamond: center xy, half-size zw) */
   uSegs: { value: Vector4[] };
   uSegsB: { value: Vector4[] };
   uSegN: { value: number };
@@ -81,9 +81,6 @@ export function makeLaserUniforms(): LaserUniforms {
     uScopeB: { value: new Vector4() },
     uScopeC: { value: new Vector4() },
     uScopeD: { value: new Vector4(-1, 1, 0, 0) },
-    uLiss: { value: new Vector4() },
-    uLissB: { value: new Vector4() },
-    uLissC: { value: new Vector2() },
     uFan: { value: new Vector4() },
     uFanB: { value: new Vector4() },
     uFanC: { value: new Vector4() },
@@ -118,9 +115,6 @@ uniform vec4  uScope;              // weight, amplitude px, cycles across the vi
 uniform vec4  uScopeB;             // baseline y px, hue 0–1, harmonics 0–1, hue of the second trace
 uniform vec4  uScopeC;             // second trace: weight, phase offset, frequency ratio, amplitude ratio
 uniform vec4  uScopeD;             // split x px (< 0 = none: both traces span the view), flatten width px
-uniform vec4  uLiss;               // weight, a, b, phase
-uniform vec4  uLissB;              // spin rad, radius px, hue, tilt rad
-uniform vec2  uLissC;              // center px
 uniform vec4  uFan;                // weight, beam count, spread rad, sweep rad
 uniform vec4  uFanB;               // origin px (xy), hue, length px
 uniform vec4  uFanC;               // hue spread across the beams, far fade 0–1, pulse position (0 origin … 1 tip), pulse strength
@@ -132,7 +126,7 @@ uniform vec4  uOrbitB;             // center px (xy), hue A, hue B
 uniform vec4  uOrbitC;             // hoop spin A rad, hoop spin B rad, roundness (1 = plain circles), —
 uniform vec4  uRingL;              // weight, radius px, hue, —
 uniform vec4  uSegs[${ROOM_SEGS}];    // the room: projected segments a.xy, b.xy (px)
-uniform vec4  uSegsB[${ROOM_SEGS}];   // palette, weight at a, weight at b (depth fog), —
+uniform vec4  uSegsB[${ROOM_SEGS}];   // palette, weight at a, weight at b (depth fog), packet (0 = none, 1 + t along it; < 0: a node, see roomL)
 uniform float uSegN;
 uniform vec2  uCarHull[${CAR_HULL}];  // the car's silhouette (px): convex, counter-clockwise
 uniform float uCarN;               // its point count (0 = no car)
@@ -151,15 +145,6 @@ void take(inout Hit h, float dpx, vec2 n, float hue, float w) {
   float dc = dpx * length(n / uCell);
   float score = dc - 1.5 * w;
   if (score < h.score) { h.score = score; h.d = dc; h.n = n; h.hue = hue; h.w = w; }
-}
-
-// nearest point on segment ab → (distance px, normal) folded into best
-void segMin(vec2 p, vec2 a, vec2 b, inout float best, inout vec2 bn) {
-  vec2 ab = b - a;
-  float t = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
-  vec2 dv = p - (a + ab * t);
-  float d = length(dv);
-  if (d < best) { best = d; bn = d > 1e-3 ? dv / d : normalize(vec2(-ab.y, ab.x) + 1e-5); }
 }
 
 float scopeF(float x, float ph, float fr, float amp) {
@@ -187,35 +172,6 @@ void scopeL(inout Hit h, vec2 p) {
   if (uScope.x < 0.002 && uScopeC.x < 0.002) return;
   if (uScope.x > 0.002) traceL(h, p, uScope.w, 1.0, 1.0, uScopeB.y, uScope.x, -1.0);
   if (uScopeC.x > 0.002) traceL(h, p, uScope.w + uScopeC.y, uScopeC.z, uScopeC.w, uScopeB.w, uScopeC.x, 1.0);
-}
-
-vec3 lissPt(float t) {
-  vec3 q = vec3(sin(uLiss.y * t + uLiss.w), sin(uLiss.z * t), cos(uLiss.y * t + uLiss.w * 0.5));
-  float c = cos(uLissB.x), s = sin(uLissB.x);
-  q = vec3(c * q.x + s * q.z, q.y, -s * q.x + c * q.z);            // spin about y
-  float ct = cos(uLissB.w), st = sin(uLissB.w);
-  q = vec3(q.x, ct * q.y - st * q.z, st * q.y + ct * q.z);         // tilt about x
-  return vec3(uLissC + q.xy * uLissB.y * (2.6 / (2.6 + q.z)), q.z); // perspective, + depth
-}
-
-void lissL(inout Hit h, vec2 p) {
-  if (uLiss.x < 0.002 || uLissB.y < 1.0) return;
-  if (distance(p, uLissC) > uLissB.y * 1.9 + 80.0) return;         // outside figure + haze
-  float best = 1e9, bz = 0.0, bi = 0.0; vec2 bn = vec2(0.0, 1.0);
-  vec3 a = lissPt(0.0);
-  for (int i = 1; i <= 120; i++) {
-    vec3 b = lissPt(float(i) * (6.2831853 / 120.0));
-    float before = best;
-    segMin(p, a.xy, b.xy, best, bn);
-    if (best < before) { bz = a.z; bi = float(i - 1); }
-    a = b;
-  }
-  // far strands sink toward black and thin out, so the near ones cross in
-  // front — monochrome depth; two lights run along the curve, like a galvo
-  // drawing it
-  float far = (bz + 1.0) * 0.5;
-  float run = fract((uLaserTime * 0.08 - bi / 120.0) * 2.0);
-  take(h, best, bn, uLissB.z * mix(1.0, 0.4, far), uLiss.x * mix(1.0, 0.6, far) * (0.78 + 0.5 * exp(-run * 9.0)));
 }
 
 void fanL(inout Hit h, vec2 p) {
@@ -312,12 +268,29 @@ void roomL(inout Hit h, vec2 p) {
     if (i >= n) break;
     vec4 sg = uSegs[i];
     vec4 sb = uSegsB[i];
+    if (sb.w < -0.5) {
+      // a node (packet < 0): a diamond's outline around sg.xy, half-width
+      // sg.z, half-height sg.w (px) — ╱╲ over ╲╱
+      vec2 q = p - sg.xy;
+      if (abs(q.x) > sg.z + 70.0 || abs(q.y) > sg.w + 70.0) continue;
+      vec2 ea = vec2(sg.z, 0.0), e = vec2(-sg.z, sg.w);
+      float t = clamp(dot(abs(q) - ea, e) / max(dot(e, e), 1e-4), 0.0, 1.0);
+      vec2 dv = abs(q) - (ea + e * t);
+      float d = length(dv);
+      vec2 n = (d > 1e-3 ? dv / d : normalize(vec2(sg.w, sg.z) + 1e-5)) * vec2(q.x < 0.0 ? -1.0 : 1.0, q.y < 0.0 ? -1.0 : 1.0);
+      take(h, d, n, sb.x, sb.y);
+      continue;
+    }
     vec2 ab = sg.zw - sg.xy;
     float t = clamp(dot(p - sg.xy, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
     vec2 dv = p - (sg.xy + ab * t);
     float d = length(dv);
     if (d > 70.0) continue;
-    take(h, d, d > 1e-3 ? dv / d : normalize(vec2(-ab.y, ab.x) + 1e-5), sb.x, mix(sb.y, sb.z, t));
+    float w = mix(sb.y, sb.z, t);
+    // a packet riding the segment (w = 1 + its position along it): a bright
+    // pulse a couple of glyphs long
+    if (sb.w > 0.5) { float pd = (t - (sb.w - 1.0)) * length(ab) / 16.0; w *= 1.0 + 2.2 * exp(-pd * pd); }
+    take(h, d, d > 1e-3 ? dv / d : normalize(vec2(-ab.y, ab.x) + 1e-5), sb.x, w);
   }
 }
 
@@ -376,7 +349,6 @@ vec3 laserCell(vec2 cell, vec2 ctr) {
   Hit h = Hit(1e9, 1e9, vec2(0.0, 1.0), 0.0, 0.0);
   bool car = inCar(p);
   if (!car) scopeL(h, p);
-  lissL(h, p);
   fanL(h, p);
   if (!car) gridL(h, p);
   orbitL(h, p);
