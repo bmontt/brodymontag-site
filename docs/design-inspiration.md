@@ -150,7 +150,8 @@ as the signature moment, and fold **#4–#6** into Phase 6 hardening.
     beside the about text: the timeline's floor seen from higher up, a well
     under each ring, ripples rolling out past the screen. They fuse white-hot
     (a one-shot flash), the ringdown races out over the sheet, and it lies
-    level: the timeline's road (`lib/director/about-scene.ts`).
+    level: the timeline's road. What they fused into settles on its horizon as
+    a banded sun the road runs into (`lib/director/about-scene.ts`).
   - Mood (brightness, white-hot core, glitch) is set per chapter in
     `lib/director/laser.ts`.
 - **Figures live in the layout.** `figure` chapters (code, music) split into a

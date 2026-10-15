@@ -10,16 +10,18 @@
 // together.
 // At "Let's work together." they plunge and fuse; the ringdown's ring races out
 // over the sheet and past you, and the sheet goes still behind it — level, the
-// road's floor. As the timeline rises the camera tilts up to the road's
-// horizon and the fusion's debris lands on it as the rails and the car.
+// road's floor. What they fused into lifts off it and settles onto the horizon
+// as a sun, banded white and pearl. As the timeline rises the camera tilts up
+// to the road's horizon and the fusion's debris lands on it as the rails and
+// the car, which drives off into the sun at the end.
 //
 // The sheet is the floor primitive itself (laser-shader.ts gridL → sheetL),
 // level when its wells and ripples are at rest, so the hand-off to the road is
 // the same lines under the same horizon. This module damps the sheet's state,
 // projects the pair into it — the floor's own perspective (car.ts): the camera
 // one unit above the floor, a point at height Y and depth Z drawn at
-// y = hy + depth·(1 − Y)/Z — and writes the placed hoops (uOrbitD) and the
-// sheet (uSheet*). The director (laser.ts) still tells the story: where the
+// y = hy + depth·(1 − Y)/Z — and writes the placed hoops (uOrbitD), the
+// sheet (uSheet*) and the sun (uSun*). The director (laser.ts) still tells the story: where the
 // pair is on screen, how tight the orbit, when they fuse.
 
 import type { LaserUniforms } from "@/lib/ascii-engine/gl/laser-shader";
@@ -56,7 +58,9 @@ export function pairDistance(H: number, hy: number, y: number, ring: number) {
 }
 
 export interface SceneInput {
+  W: number;
   H: number;
+  time: number;
   dt: number; // s (0 = reduced motion: no easing, a still frame)
   /** this is the about page (the sheet and the placed hoops fade in) */
   on: boolean;
@@ -76,6 +80,12 @@ export interface SceneInput {
   merge: number;
   /** s since they fused (< 0: not yet) */
   ringAge: number;
+  /** 0 → 1: the merged hoop becoming the sun on the horizon */
+  sun: number;
+  /** how far the sun has set (0 as it arrives, ~1 by "now", a little more on the drive-off) */
+  sunSet: number;
+  /** the sun's band palettes: white top, white bottom, pearl top, pearl bottom */
+  sunPal: [number, number, number, number];
   /** a narrow screen: a lighter sheet, under the text */
   compact: boolean;
   /** crest palettes: the white arm, the pearl arm */
@@ -101,6 +111,7 @@ export function createAboutScene() {
     if (s.on < 0.005) {
       s.on = 0;
       u.uOrbitC.value.w = 0;
+      u.uSun.value.w = 0;
       u.uSheet.value.set(0, 0, 0, 0);
       u.uSheetC.value.set(0, 0, 0, 0);
       return H * 0.56;
@@ -141,6 +152,21 @@ export function createAboutScene() {
     );
     u.uOrbit.value.w = lerp(x.ringR * (1 + 0.14 * z), pa[2], t);
     u.uOrbitC.value.w = Math.max(lerp(x.ringR * (1 - 0.14 * z), pb[2], t), 0.5);
+
+    // the remnant: once they've fused the merged hoop lifts off the sheet,
+    // swelling, clears the horizon and settles onto it at the vanishing point —
+    // a sun the road runs into, setting a little further through the years.
+    // It's at infinity, so it rides the horizon as the camera tilts to the road.
+    if (x.sun > 0) {
+      const e = x.sun;
+      const lift = smooth(0, 0.55, e), settle = smooth(0.45, 1, e);
+      const R = lerp(x.ringR, Math.min(H * 0.17, x.W * 0.22), smooth(0, 0.8, e));
+      const clear = hy - 1.25 * R, rest = hy - R * (0.45 - 0.3 * x.sunSet);
+      u.uSun.value.set(lerp(x.ox, vx, lift), lerp(lerp(x.oy, clear, lift), rest, settle), R, 0.8 * t * smooth(0, 0.1, e));
+      // the floor hides what's below the horizon once it's out over it
+      u.uSunB.value.set(lift >= 1 ? hy : 1e5, smooth(0.3, 0.9, e), x.time * 0.35, 0);
+      u.uSunC.value.set(...x.sunPal);
+    } else u.uSun.value.w = 0;
 
     const ringFront = fused ? x.ringAge * RING_C : 0;
     const ring = fused ? 1.2 * Math.exp(-x.ringAge * 0.5) * (1 - smooth(4, 6, x.ringAge)) * t : 0;

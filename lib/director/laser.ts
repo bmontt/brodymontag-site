@@ -33,13 +33,14 @@
 //                        comes on screen they spiral in beside it, fuse
 //                        white-hot (a one-shot flash) and explode, the
 //                        ringdown racing out over the sheet and leaving it
-//                        level. Their glyphs scatter (some past the screen's
-//                        edges), hang, then fly back together as the camera
-//                        tilts up to the road's horizon — into it, the road's
-//                        two rails and the car. Lamp posts stream past beside
-//                        the road through the years; the car holds just ahead
-//                        until "start over" comes up, then drives off over the
-//                        horizon.
+//                        level. The remnant lifts off and settles onto the
+//                        horizon as a sun; their glyphs scatter (some past the
+//                        screen's edges), hang, then fly back together as the
+//                        camera tilts up to the road's horizon — into it, the
+//                        road's two rails and the car. Lamp posts stream past
+//                        beside the road through the years; the car holds just
+//                        ahead until "start over" comes up, then drives off
+//                        into the setting sun.
 //   detail    an echo    a project page keeps its faint network, a show page faint fans.
 //
 // Every figure parameter is damped toward its page's target, so moving between
@@ -204,7 +205,7 @@ export function createLaserDirector() {
     // past = the timeline is behind you (the road stays), away = the drive-off
     let assemble = 0, pastTimeline = false, away = 0;
     // about's sheet: how far reading has carried you over it (rungs), how far the camera has tilted up to the road
-    let travel = 0, tilt = 0;
+    let travel = 0, tilt = 0, sun = 0;
     let orbitRate = 0.6, ecc = 0.15; // rad/s at rest, orbit eccentricity
     // section openers: the figure starts large in the opening screen, then is
     // carried into its gutter as the opener scrolls away
@@ -358,6 +359,8 @@ export function createLaserDirector() {
       }
       lastMerge = merge;
       ring = merge >= 0.97 ? (still ? 1 : clamp01((time - fuseAt) / 2.4)) : 0;
+      // the remnant leaves the line for the horizon and sets there as a sun (about-scene.ts)
+      sun = merge >= 0.97 ? (still ? 1 : smooth(0.25, 3.4, time - fuseAt)) : 0;
       const fused = smooth(0.88, 1, merge);
       // the road: assembled by the time the timeline pins, and kept after it
       // (the pin's progress resets once it releases) through "start over"
@@ -376,8 +379,8 @@ export function createLaserDirector() {
       orbitRate = Math.min(0.7 * Math.pow(a0 / Math.max(a, a0 * 0.04), 1.5), 18);
       ecc = 0.24 * (1 - merge);
       Object.assign(tgt, {
-        // one hoop stays beside the line once they've fused, breathing slowly
-        oW: (1 - 0.2 * fused) * (1 - floor), oX: ucx, oY: ucy,
+        // one hoop beside the line once they've fused, breathing, until the sun takes it over
+        oW: (1 - 0.2 * fused) * (1 - floor) * (sun > 0 ? 0 : 1), oX: ucx, oY: ucy,
         oSep: a * sc, oR: U * lerp(0.36, 0.42, merge) * sc * (1 + 0.035 * fused * Math.sin(time * 1.4)),
         oA: fused > 0.5 ? SOUND(0.97) : TECH(0.95), oB: SOUND(lerp(0.62, 0.9, merge)),
         // the ringdown runs out over the sheet (about-scene.ts), not as a ring on the glass
@@ -470,10 +473,11 @@ export function createLaserDirector() {
     u.uRails.value.set(c.gRails, c.gGap, TECH(0.95), SOUND(0.8));
     // about: the floor as a sheet of spacetime, the pair placed on it (about-scene.ts)
     const hy = scene(u, {
-      H, dt, on: x.page === "about", road: tilt, vx: roadVx,
+      W, H, time, dt, on: x.page === "about", road: tilt, vx: roadVx,
       ox: c.oX, oy: c.oY, dist: u.uOrbit.value.y, ringR: c.oR, phase: orbitPhase, rate: orbitRate,
       merge, ringAge: ring > 0 ? (still ? 10 : time - fuseAt) : -1, compact: W < 768,
       palA: TECH(0.8), palB: SOUND(0.72),
+      sun, sunSet: tp + 0.4 * away, sunPal: [TECH(0.98), TECH(0.62), SOUND(0.98), SOUND(0.66)],
     });
 
     const feat = x.features ?? { room: false, wipe: false, titles: false };

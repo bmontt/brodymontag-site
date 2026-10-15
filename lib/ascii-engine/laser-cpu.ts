@@ -94,6 +94,7 @@ export function laserFrame(
   const gridL = u.uGridL.value, gridB = u.uGridB.value, rails = u.uRails.value;
   const orbit = u.uOrbit.value, orbitB = u.uOrbitB.value, orbitC = u.uOrbitC.value, orbitD = u.uOrbitD.value, ringL = u.uRingL.value;
   const sheet = u.uSheet.value, sheetB = u.uSheetB.value, sheetC = u.uSheetC.value, sheetD = u.uSheetD.value;
+  const sun = u.uSun.value, sunB = u.uSunB.value, sunC = u.uSunC.value;
   const H = u.uView.value.y;
 
   // ── per-frame precompute ──────────────────────────────────────────────────
@@ -323,6 +324,20 @@ export function laserFrame(
         hoop(px, py, orbitB.x - ox, orbitB.y - oy, orbit.w * (1 - 0.14 * oz), orbitC.y, -orbitC.y * 0.29, orbitC.z, orbitB.w, orbit.x * (1 - 0.3 * oz));
       }
       if (ringL.x >= 0.002) circle(px, py, orbitB.x, orbitB.y, ringL.y, ringL.z, ringL.x);
+      // the sun: rim and banded disc, nothing below the horizon (laser-shader.ts sunL)
+      if (!car && sun.w >= 0.002 && py <= sunB.x) {
+        const qx = px - sun.x, qy = py - sun.y, L = Math.sqrt(qx * qx + qy * qy);
+        if (L <= sun.z + 60) {
+          take(Math.abs(L - sun.z), L > 1e-3 ? qx / L : 0, L > 1e-3 ? qy / L : 1, sunC.z, sun.w);
+          if (sunB.y >= 0.002 && L <= sun.z) {
+            const d = 2 * sun.z, v = Math.min(1, Math.max(0, (qy + sun.z) / d)), rows = d / ch;
+            const uu = rows * (v - 0.43 * v * v) - sunB.z, du = (rows * (1 - 0.86 * v)) / d;
+            const k = Math.floor(uu + 0.5);
+            const hue = ((k % 2) + 2) % 2 < 0.5 ? sunC.x + (sunC.y - sunC.x) * v : sunC.z + (sunC.w - sunC.z) * v;
+            take(Math.abs(uu - k) / du, 0, 1, hue, sun.w * sunB.y * (0.75 - 0.3 * v));
+          }
+        }
+      }
       // the room, the car, the software figure: projected segments (lib/director)
       for (let i = 0; i < nSeg; i++) {
         if (px < segBox[i * 4] || px > segBox[i * 4 + 1] || py < segBox[i * 4 + 2] || py > segBox[i * 4 + 3]) continue;

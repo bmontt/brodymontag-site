@@ -32,6 +32,7 @@ export const CAR_HULL = 12;
  *            on about first a sheet of spacetime, its wells, ripples and ringdown
  *            (lib/director/about-scene.ts)
  *   orbit  — two beam rings in a decaying binary orbit, then the ringdown (merger)
+ *   sun    — what they fuse into: a banded disc setting on the road's horizon (about)
  */
 
 export interface LaserUniforms {
@@ -65,6 +66,11 @@ export interface LaserUniforms {
   uSheetB: { value: Vector4 };
   uSheetC: { value: Vector4 };
   uSheetD: { value: Vector4 };
+  /** the sun (about): center px (xy), radius px, weight · the horizon px (nothing below it),
+   *  bands 0–1, band phase, — · band palettes: white top, white bottom, pearl top, pearl bottom */
+  uSun: { value: Vector4 };
+  uSunB: { value: Vector4 };
+  uSunC: { value: Vector4 };
   /** projected segments (a.xy, b.xy px) + (palette, weight at a, weight at b, packet): the room,
    *  the car, the software figure. packet 0 = none, 1 + t = a pulse at t along it, < 0 = a node
    *  (a diamond: center xy, half-size zw) */
@@ -109,6 +115,9 @@ export function makeLaserUniforms(): LaserUniforms {
     uSheetB: { value: new Vector4() },
     uSheetC: { value: new Vector4() },
     uSheetD: { value: new Vector4() },
+    uSun: { value: new Vector4() },
+    uSunB: { value: new Vector4(1e5, 0, 0, 0) },
+    uSunC: { value: new Vector4() },
     uSegs: { value: Array.from({ length: ROOM_SEGS }, () => new Vector4()) },
     uSegsB: { value: Array.from({ length: ROOM_SEGS }, () => new Vector4()) },
     uSegN: { value: 0 },
@@ -148,6 +157,9 @@ uniform vec4  uSheet;              // the floor as spacetime (floor units): well
 uniform vec4  uSheetB;             // the two wells: A (X, Z), B (X, Z)
 uniform vec4  uSheetC;             // ripple phase rad, ripple wavenumber rad/unit, ringdown front radius, ringdown height
 uniform vec4  uSheetD;             // crest palettes (alternate rings), the pair's center (X, Z)
+uniform vec4  uSun;                // the sun (about): center px (xy), radius px, weight
+uniform vec4  uSunB;               // horizon y px (nothing below it), bands 0–1, band phase, —
+uniform vec4  uSunC;               // band palettes: white top, white bottom, pearl top, pearl bottom
 uniform vec4  uSegs[${ROOM_SEGS}];    // the room: projected segments a.xy, b.xy (px)
 uniform vec4  uSegsB[${ROOM_SEGS}];   // palette, weight at a, weight at b (depth fog), packet (0 = none, 1 + t along it; < 0: a node, see roomL)
 uniform float uSegN;
@@ -341,6 +353,28 @@ void gridL(inout Hit h, vec2 p) {
   }
 }
 
+// the sun (about): the two signals, fused, setting on the road's horizon — a
+// rim and a disc of horizontal bands, white and pearl by turns, a glyph row
+// apart at the top and opening out toward the horizon like a retro sunset.
+// The floor hides everything below the horizon.
+void sunL(inout Hit h, vec2 p) {
+  if (uSun.w < 0.002 || p.y > uSunB.x) return;
+  vec2 q = p - uSun.xy;
+  float L = length(q);
+  if (L > uSun.z + 60.0) return;
+  take(h, abs(L - uSun.z), L > 1e-3 ? q / L : vec2(0.0, 1.0), uSunC.z, uSun.w);
+  if (uSunB.y < 0.002 || L > uSun.z) return;
+  float d = 2.0 * uSun.z;
+  float v = clamp((q.y + uSun.z) / d, 0.0, 1.0);                     // 0 top → 1 bottom
+  float rows = d / uCell.y;
+  // bands at whole u: a row apart at the top, opening out below
+  float u = rows * (v - 0.43 * v * v) - uSunB.z;
+  float du = rows * (1.0 - 0.86 * v) / d;
+  float k = floor(u + 0.5);
+  float hue = mod(k, 2.0) < 0.5 ? mix(uSunC.x, uSunC.y, v) : mix(uSunC.z, uSunC.w, v);
+  take(h, abs(u - k) / du, vec2(0.0, 1.0), hue, uSun.w * uSunB.y * (0.75 - 0.3 * v));
+}
+
 void circleL(inout Hit h, vec2 p, vec2 c, float r, float hue, float w) {
   vec2 dv = p - c;
   float L = length(dv);
@@ -474,6 +508,7 @@ vec3 laserCell(vec2 cell, vec2 ctr) {
   fanL(h, p);
   if (!car) gridL(h, p);
   orbitL(h, p);
+  if (!car) sunL(h, p);
   roomL(h, p);
   titleL(h, p, cell);
   wipeL(h, p, cell);
