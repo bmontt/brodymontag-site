@@ -3,6 +3,7 @@ import JourneyRoot from "@/components/journey/journey-root";
 import Chapter from "@/components/journey/chapter";
 import SiteNav from "@/components/nav";
 import ProjectCard from "@/components/cards/project-card";
+import ProjectDeck from "@/components/project-deck";
 import ExperienceCard from "@/components/cards/experience-card";
 import StackGrid from "@/components/cards/stack-grid";
 import { SectionLabel, SiteFooter } from "@/components/journey/section-bits";
@@ -33,13 +34,13 @@ export default function SoftwarePage() {
           <div className="flex flex-col gap-16">
             <div>
               <SectionLabel>projects</SectionLabel>
-              <div className="flex flex-col gap-4">
+              <ProjectDeck>
                 {projects.map((p) => (
-                  <div key={p.id} data-reveal data-stage-id={`project:${p.id}`}>
+                  <div key={p.id} data-stage-id={`project:${p.id}`}>
                     <ProjectCard project={p} />
                   </div>
                 ))}
-              </div>
+              </ProjectDeck>
             </div>
 
             <div>
