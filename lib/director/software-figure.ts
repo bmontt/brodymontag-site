@@ -5,13 +5,16 @@
 // as one arrives. It reads as what the page is about (systems, models), in the
 // same strokes, white scale, depth shading and fog as every other figure.
 //
-// It re-wires as you read: beside each project the graph takes that project's
-// shape (Prism splits one signal into four stems, venture routes money through
-// an allocator to a gate, the decision tree, the kickball diamond…), and
-// between them the nodes glide, split and merge into the next. The network
-// faces the card it sits beside — its flow runs toward the project — so it
-// turns around as it crosses from one side to the other. Small (the landing,
-// phones) it folds down to a simpler graph; growing into the page it unfolds.
+// It holds one place behind the page's widgets, sticky on screen, turning in
+// depth, and re-wires as you read: with each project in the middle of the
+// screen the graph takes that project's shape (Prism splits one signal into
+// four stems, venture routes money through an allocator to a gate, the
+// decision tree, the kickball diamond…), contracting between two projects as
+// its nodes split and merge into the next, expanding as the next one settles.
+// Behind a card its strokes sink low, so the text reads over it and the
+// network shows bright in the open lane beside each card — depth, not
+// clutter. Small (the landing, phones) it folds down to a simpler graph;
+// growing into the page it unfolds.
 //
 // Built in unit space (y up, z away from you), turned and projected on the CPU
 // each frame into the laser layer's segment slots (laser-shader.ts roomL — a
@@ -30,15 +33,16 @@ export interface FigureInput {
   /** a phase that runs faster when stirred (hover, scroll, a picked transition): the packets' clock */
   phase: number;
   dt: number; // s (0 = reduced motion: fully formed, no glides)
-  /** which graph: a layout key (gapKey / pageKey), "" for the page's own */
+  /** which graph: a layout key (readWidgets' focus, pageKey), "" for the page's own */
   key: string;
   /** a narrow screen: always the folded-down graph */
   compact: boolean;
+  /** screen rects (x0, y0, x1, y1) the figure sinks behind — the widgets */
+  quiet?: Widgets;
 }
 
-/** facings (yaw): inputs on the left, flowing right — and the mirror, flowing left */
+/** facing (yaw): inputs on the left, flowing right, seen three-quarters */
 export const FLOWS_RIGHT = -0.45;
-export const FLOWS_LEFT = -(Math.PI - 0.45);
 
 type V3 = [number, number, number];
 /** a node: where it sits, its rank (input 0 → output) — or, turning in a ring
@@ -240,18 +244,37 @@ function graphFor(key: string, small: boolean): Graph {
 
 // ── which graph a place asks for ─────────────────────────────────────────────
 
-const gapKeys = new Map<number, { el: Element | null; key: string }>();
-/** the key of the n-th gap's widget ("project-prism", "role-…", or "gap-n") */
-export function gapKey(n: number): string {
-  if (typeof document === "undefined") return `gap-${n}`;
-  const c = gapKeys.get(n);
-  if (c && c.el?.isConnected) return c.key;
-  const el = document.querySelector(`[data-laser-anchor="gap-${n}"]`);
-  const id = el?.parentElement?.id;
-  const key = id || `gap-${n}`;
-  gapKeys.set(n, { el, key });
-  return key;
+/** the software page's alternating widgets as they stand on screen */
+export interface Widgets {
+  n: number;
+  /** on-screen rects, x0 y0 x1 y1 (px, slide included) */
+  rects: Float32Array;
+  /** the id of the widget nearest the middle of the screen ("project-prism"…), "" for none */
+  focus: string;
+  /** 0 with a widget centered on screen → 1 halfway between two */
+  between: number;
+  /** where the last widget ends (px; −∞ for none): the figure leaves with it */
+  last: number;
 }
+
+let widgetEls: HTMLElement[] = [];
+/** read the [data-slide] widgets (cached until they leave the document) */
+export function readWidgets(H: number, out: Widgets): Widgets {
+  out.n = 0; out.focus = ""; out.between = 1; out.last = -Infinity;
+  if (typeof document === "undefined") return out;
+  if (!widgetEls.length || !widgetEls[0].isConnected) widgetEls = Array.from(document.querySelectorAll<HTMLElement>("[data-slide]"));
+  let best = Infinity;
+  for (const el of widgetEls) {
+    const r = el.getBoundingClientRect();
+    out.last = Math.max(out.last, r.bottom);
+    if (r.bottom < 0 || r.top > H || r.height < 2) continue;
+    if (out.n * 4 < out.rects.length) out.rects.set([r.left, r.top, r.right, r.bottom], out.n++ * 4);
+    const d = Math.abs(r.top + r.height / 2 - H / 2);
+    if (d < best) { best = d; out.focus = el.id; out.between = clamp01(d / (r.height / 2 + 12)); }
+  }
+  return out;
+}
+export const makeWidgets = (): Widgets => ({ n: 0, rects: new Float32Array(32 * 4), focus: "", between: 1, last: -Infinity });
 
 /** a project page asks for its own project's graph */
 export function pageKey(): string {
@@ -327,6 +350,18 @@ export function createSoftwareFigure() {
       px = f.x + x1 * f.r * s; py = f.y - y2 * f.r * s; pz = z2;
     };
     const fog = (z: number) => clamp01((z + 1) * 0.5);
+    // behind a widget the strokes sink (a soft 28 px edge), so the text reads over them
+    const qv = f.quiet;
+    const quiet = (x: number, y: number) => {
+      if (!qv) return 1;
+      let inside = 0;
+      for (let i = 0; i < qv.n; i++) {
+        const r = qv.rects;
+        const d = Math.min(x - r[i * 4], r[i * 4 + 2] - x, y - r[i * 4 + 1], r[i * 4 + 3] - y);
+        if (d > -28) inside = Math.max(inside, clamp01((d + 28) / 56));
+      }
+      return 1 - 0.7 * inside;
+    };
 
     // ── packets: waves through the graph, a step at a time ────────────────
     // each edge's packet rides it from source to target in its step's slot of
@@ -370,7 +405,7 @@ export function createSoftwareFigure() {
       const far = fog(pz), h = inT ? heat[i] * e : 0;
       const sz = nodeHH * (0.4 + 0.6 * g) * (1 + 0.12 * h);
       segs.set([px, py, sz * 0.38, sz], n * 4);
-      const w = f.w * vis * g * (1 - 0.45 * far) * (0.92 + 0.7 * h);
+      const w = f.w * vis * g * (1 - 0.45 * far) * (0.92 + 0.7 * h) * quiet(px, py);
       segsB.set([Math.min(0.499, f.pal * (1 - 0.55 * far) + 0.1 * h), w, w, -1], n * 4);
       n++;
     }
@@ -396,9 +431,11 @@ export function createSoftwareFigure() {
       if (ge > 0.98) { bx -= ux * gapPx; by -= uy * gapPx; }
       const fa = fog(az), fb = fog(bz);
       const w = f.w * 0.48 * weight;
+      // an edge crossing a card sinks along its whole length, not just at its ends
+      const qm = quiet((sx + bx) / 2, (sy2 + by) / 2), qa = Math.min(quiet(sx, sy2), qm), qb = Math.min(quiet(bx, by), qm);
       const pt = packets && ge > 0.98 ? packetOn(g, k, step) : -1;
       segs.set([sx, sy2, bx, by], n * 4);
-      segsB.set([f.pal * 0.78 * (1 - 0.5 * (fa + fb) * 0.5), w * (1 - 0.5 * fa), w * (1 - 0.5 * fb), pt >= 0 ? 1 + pt : 0], n * 4);
+      segsB.set([f.pal * 0.78 * (1 - 0.5 * (fa + fb) * 0.5), w * (1 - 0.5 * fa) * qa, w * (1 - 0.5 * fb) * qb, pt >= 0 ? 1 + pt : 0], n * 4);
       n++;
     };
     for (let k = 0; k < to.edges.length; k++) edge(to, k, from === to ? 1 : e, true);
