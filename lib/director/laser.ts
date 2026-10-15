@@ -11,13 +11,14 @@
 //   home      the split  the rule under the name carries both signals — white
 //                        on the left half, pearl on the right — flattening to
 //                        meet in the middle. Each choice has its figure asleep
-//                        behind it (the knot behind software, fans rising
+//                        behind it (the network behind software, fans rising
 //                        under music, two rings flanking "about me"); hovering
 //                        a choice wakes it and puts the other two to sleep;
 //                        picking one bursts it.
-//   software  clarity    a white trace under the heading; a white knot held in
-//                        the gutter beside the projects, shaded by depth,
-//                        tilting as you read down, a light running along it.
+//   software  clarity    a white trace under the heading; a white network
+//                        (software-figure.ts) turning in depth, packets running
+//                        through it, gliding into the lane beside each project
+//                        and re-wiring into that project's shape.
 //   music     heat       a pearl trace pulsing on a 124 bpm kick under the
 //                        heading; shimmering fans rising in the gutter, a pulse
 //                        running up every beam on the kick. Seen from any other
@@ -33,11 +34,11 @@
 //                        car. Lamp posts stream past beside the road through
 //                        the years; the car holds just ahead until "start
 //                        over" comes up, then drives off over the horizon.
-//   detail    an echo    a project page keeps a faint knot, a show page faint fans.
+//   detail    an echo    a project page keeps its faint network, a show page faint fans.
 //
 // Every figure parameter is damped toward its page's target, so moving between
-// pages morphs the background (the knot behind "software" glides into the
-// software page's gutter) instead of cutting it. Figures sit in layout anchors
+// pages morphs the background (the network behind "software" glides into the
+// software page's opener) instead of cutting it. Figures sit in layout anchors
 // (lib/laser-anchors.ts) — the text wraps around them — with free fallbacks on
 // phones. Everything is a function of scroll, anchors and a slow clock.
 
@@ -46,6 +47,7 @@ import type { AnchorRect } from "@/lib/laser-anchors";
 import type { StageRouteKind } from "@/lib/journey-store";
 import { buildRoom } from "./room";
 import { buildCar, buildRoadside } from "./car";
+import { createSoftwareFigure, FLOWS_LEFT, FLOWS_RIGHT, gapKey, pageKey } from "./software-figure";
 import { drag, knot, pointer, stepDrag } from "@/lib/stage-input";
 import { flag } from "@/lib/flags";
 import { CAR_HULL, ROOM_SEGS } from "@/lib/ascii-engine/gl/laser-shader";
@@ -119,8 +121,8 @@ export interface LaserOutput {
 interface Frame {
   // scope: up to two traces on one baseline; split ≥ 0 puts A left of it, B right
   sW: number; sWB: number; sBase: number; sAmp: number; sCyc: number; sHarm: number; sA: number; sB: number; sSplit: number;
-  // knot
-  kW: number; kX: number; kY: number; kR: number; kPal: number; kTilt: number;
+  // the software figure (the knot, once): kYaw faces it, so its flow runs toward a project
+  kW: number; kX: number; kY: number; kR: number; kPal: number; kTilt: number; kYaw: number;
   // fans
   fW: number; fX: number; fY: number; fSpread: number; fLen: number; fPal: number; fCount: number; fFade: number;
   // orbit + ring
@@ -134,7 +136,7 @@ interface Frame {
 
 const ZERO: Frame = {
   sW: 0, sWB: 0, sBase: 0, sAmp: 0, sCyc: 3, sHarm: 0, sA: 0, sB: 0.5, sSplit: -1,
-  kW: 0, kX: 0, kY: 0, kR: 1, kPal: 0.45, kTilt: 0.35,
+  kW: 0, kX: 0, kY: 0, kR: 1, kPal: 0.45, kTilt: 0.35, kYaw: FLOWS_RIGHT,
   fW: 0, fX: 0, fY: 0, fSpread: 0.8, fLen: 1, fPal: 0.8, fCount: 6, fFade: 1,
   oW: 0, oX: 0, oY: 0, oSep: 0, oR: 1, oA: 0.47, oB: 0.8,
   rW: 0, rR: 0, rPal: 0.9,
@@ -163,6 +165,7 @@ export function createLaserDirector() {
   const segs = new Float32Array(ROOM_SEGS * 4);
   const segsB = new Float32Array(ROOM_SEGS * 4);
   const hull = new Float32Array(CAR_HULL * 2);
+  const figure = createSoftwareFigure();
 
   return function update(u: LaserUniforms, x: LaserInput): LaserOutput {
     const { time, viewW: W, viewH: H, p } = x;
@@ -188,6 +191,7 @@ export function createLaserDirector() {
     Object.assign(tgt, ZERO);
     let merge = 0, ring = 0, resolve = 0;
     let gliding = false; // the knot is moving between gaps: a slower, smoother glide
+    let figKey = ""; // which graph the software figure takes (software-figure.ts)
     // about's road: assemble 0–1 as the timeline rises (the debris converging),
     // past = the timeline is behind you (the road stays), away = the drive-off
     let assemble = 0, pastTimeline = false, away = 0;
@@ -231,8 +235,8 @@ export function createLaserDirector() {
       const rule = detail ? null : x.anchor("code-rule");
       if (rule) Object.assign(tgt, { sW: 1, sBase: rule.y + rule.h / 2, sAmp: H * 0.014, sCyc: 6, sHarm: 0.7, sA: TECH(0.75) });
       // the open lane beside the nearest alternating widget (software page,
-      // wide screens): the knot glides into it, sized to the gap, its tilt
-      // turning with the side — morphing and squeezing through as you scroll
+      // wide screens): the network glides into it, sized to the gap, turning
+      // to face the card — re-wiring and squeezing through as you scroll
       let gap: AnchorRect | null = null;
       if (!detail) {
         let best = Infinity;
@@ -240,18 +244,20 @@ export function createLaserDirector() {
           const g = x.anchor(`gap-${i}`);
           if (!g) continue;
           const d = Math.abs(g.y + g.h / 2 - H * 0.5);
-          if (g.y < H && g.y + g.h > 0 && d < best) { best = d; gap = g; }
+          if (g.y < H && g.y + g.h > 0 && d < best) { best = d; gap = g; figKey = gapKey(i); }
         }
-      }
+      } else figKey = pageKey(); // a project page: that project's own graph
       const ca = detail ? null : x.anchor("code");
       if (gap) {
         gliding = true;
-        const r = Math.max(Math.min(gap.w * 0.4, gap.h * 0.46, H * 0.3), M * 0.08);
+        // the network is wider than tall: it fills the lane at about r × 0.8 up and down
+        const r = Math.max(Math.min(gap.w * 0.42, gap.h * 0.6, H * 0.32), M * 0.08);
         const left = gap.x + gap.w / 2 < W / 2;
         Object.assign(tgt, {
           kW: 1, kX: gap.x + gap.w / 2,
-          kY: Math.min(Math.max(H * 0.5, gap.y + r * 1.1), gap.y + gap.h - r * 1.1),
-          kR: r, kTilt: left ? -0.3 + 0.2 * Math.sin(time * 0.3) : 0.6 + 0.2 * Math.sin(time * 0.3),
+          kY: Math.min(Math.max(H * 0.5, gap.y + r * 0.85), gap.y + gap.h - r * 0.85),
+          // facing the widget: its flow runs into the card, so it turns around crossing sides
+          kR: r, kTilt: 0.35 + 0.2 * Math.sin(time * 0.3), kYaw: left ? FLOWS_RIGHT : FLOWS_LEFT,
         });
       } else if (ca) {
         const r = Math.min(ca.w * 0.42, H * 0.28);
@@ -261,7 +267,7 @@ export function createLaserDirector() {
         Object.assign(tgt, { kW: detail ? 0.4 : 0.6, kX: W * 0.8, kY: H * 0.45, kR: M * (detail ? 0.22 : 0.3) });
       }
       if (inOpener > 0) {
-        // the opener: a big knot to the right of the title
+        // the opener: a big network to the right of the title
         tgt.kW = 1;
         tgt.kX = lerp(tgt.kX, W * 0.72, inOpener);
         tgt.kY = lerp(tgt.kY, opCy, inOpener);
@@ -422,10 +428,7 @@ export function createLaserDirector() {
 
     const spinUp = x.hover?.startsWith("project:") || x.hover === "nav:software" ? 1 : 0;
     lissSpin += dt * (0.3 + 0.9 * spinUp + 4 * flyKnot + Math.min(Math.abs(x.velocity) / 2500, 1.5));
-    u.uLiss.value.set(c.kW * 0.95, 3, 2, time * 0.22 + p * 6);
-    u.uLissB.value.set(lissSpin + (x.drag?.spin ?? 0), c.kR, c.kPal, c.kTilt + 0.2 * Math.sin(time * 0.2) + (x.drag?.tilt ?? 0));
     out.knot.x = c.kX; out.knot.y = c.kY; out.knot.r = c.kR; out.knot.w = c.kW;
-    u.uLissC.value.set(c.kX, c.kY);
 
     u.uFan.value.set(c.fW, Math.round(c.fCount), c.fSpread, 0.36 * Math.sin(time * 0.55 + p * 7));
     u.uFanB.value.set(c.fX, c.fY, c.fPal, c.fLen);
@@ -480,6 +483,14 @@ export function createLaserDirector() {
     }, segs, segsB, nSeg);
     // the fusion's debris: scattered glyphs that fly back together into the road
     if (x.page === "about" && ring > 0) nSeg = debris(segs, segsB, nSeg, { W, H, time, still, fuseAt, fuseX, fuseY, assemble, M });
+    // the software figure: the network, where the knot was — swaying about its
+    // facing, tilting as you read, spun by a grab
+    nSeg = figure({
+      x: c.kX, y: c.kY, r: c.kR, w: c.kW * 0.95,
+      yaw: c.kYaw + 0.38 * Math.sin(lissSpin * 0.4) + (x.drag?.spin ?? 0),
+      tilt: 0.2 + 0.3 * (c.kTilt - 0.35) + 0.08 * Math.sin(time * 0.2) + (x.drag?.tilt ?? 0),
+      pal: c.kPal, phase: lissSpin, dt, key: figKey,
+    }, segs, segsB, nSeg);
     for (let i = 0; i < car.hullN; i++) u.uCarHull.value[i].fromArray(hull, i * 2);
     u.uCarN.value = car.hullN;
     for (let i = 0; i < nSeg; i++) {

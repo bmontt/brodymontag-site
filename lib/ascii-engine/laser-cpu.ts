@@ -6,8 +6,8 @@ import type { LaserUniforms } from "./gl/laser-shader";
  * The same per-cell laser evaluation as laser-shader.ts, for the 2D canvas
  * tier (reduced motion, low-end devices, lost WebGL). Fed by the same director
  * (lib/director/laser.ts) through the same uniform objects, so both tiers
- * draw one piece. The CPU path precomputes the Lissajous polyline and fan rays
- * once per frame instead of per cell, and rejects cells far from each figure.
+ * draw one piece. The CPU path precomputes the fan rays once per frame instead
+ * of per cell, and rejects cells far from each figure.
  */
 
 export const LASER_STROKES = ["─", "│", "╲", "╱"] as const;
@@ -90,7 +90,6 @@ export function laserFrame(
   if (mix < 0.002) return;
 
   const scope = u.uScope.value, scopeB = u.uScopeB.value, scopeC = u.uScopeC.value, scopeD = u.uScopeD.value;
-  const liss = u.uLiss.value, lissB = u.uLissB.value, lissC = u.uLissC.value;
   const fan = u.uFan.value, fanB = u.uFanB.value, fanC = u.uFanC.value;
   const gridL = u.uGridL.value, gridB = u.uGridB.value, rails = u.uRails.value;
   const orbit = u.uOrbit.value, orbitB = u.uOrbitB.value, orbitC = u.uOrbitC.value, ringL = u.uRingL.value;
@@ -103,23 +102,6 @@ export function laserFrame(
       + Math.sin(x * k * 2.31 - ph * 1.37) * 0.28 * scopeB.z
       + Math.sin(x * k * 5.7 + ph * 2.1) * 0.1 * scopeB.z);
   };
-  const SEG = 72;
-  const lx = new Float32Array(SEG + 1), ly = new Float32Array(SEG + 1), lz = new Float32Array(SEG + 1);
-  const lissOn = liss.x >= 0.002 && lissB.y >= 1;
-  if (lissOn) {
-    const cs = Math.cos(lissB.x), sn = Math.sin(lissB.x), ct = Math.cos(lissB.w), st = Math.sin(lissB.w);
-    for (let i = 0; i <= SEG; i++) {
-      const t = (i / SEG) * TAU;
-      let qx = Math.sin(liss.y * t + liss.w), qy = Math.sin(liss.z * t), qz = Math.cos(liss.y * t + liss.w * 0.5);
-      const rx = cs * qx + sn * qz, rz = -sn * qx + cs * qz;
-      qx = rx; qz = rz;
-      const ty = ct * qy - st * qz, tz = st * qy + ct * qz;
-      const pr = 2.6 / (2.6 + tz);
-      lx[i] = lissC.x + qx * lissB.y * pr;
-      ly[i] = lissC.y + ty * lissB.y * pr;
-      lz[i] = tz;
-    }
-  }
   const nFan = fan.x >= 0.002 ? Math.round(fan.y) : 0;
   const fx = new Float32Array(Math.max(nFan, 1)), fy = new Float32Array(Math.max(nFan, 1));
   for (let i = 0; i < nFan; i++) {
@@ -212,14 +194,6 @@ export function laserFrame(
       };
       if (!car && scope.x >= 0.002) trace(scope.w, 1, 1, scopeB.y, scope.x, -1);
       if (!car && scopeC.x >= 0.002) trace(scope.w + scopeC.y, scopeC.z, scopeC.w, scopeB.w, scopeC.x, 1);
-      if (lissOn && Math.hypot(px - lissC.x, py - lissC.y) <= lissB.y * 1.9 + 80) {
-        segBest = 1e9; segCount = 0;
-        for (let i = 0; i < SEG; i++) seg(px, py, lx[i], ly[i], lx[i + 1], ly[i + 1]);
-        // far strands sink toward black and thin out; two lights run along it
-        const far = (lz[segIdx] + 1) * 0.5;
-        const run = (((time * 0.08 - segIdx / SEG) * 2) % 1 + 1) % 1;
-        take(segBest, segNx, segNy, lissB.z * (1 - 0.6 * far), liss.x * (1 - 0.4 * far) * (0.78 + 0.5 * Math.exp(-run * 9)));
-      }
       if (nFan > 0) {
         segBest = 1e9; segCount = 0;
         for (let i = 0; i < nFan; i++) seg(px, py, fanB.x, fanB.y, fx[i], fy[i]);
@@ -257,15 +231,29 @@ export function laserFrame(
         hoop(px, py, orbitB.x - ox, orbitB.y - oy, orbit.w * (1 - 0.14 * oz), orbitC.y, -orbitC.y * 0.29, orbitC.z, orbitB.w, orbit.x * (1 - 0.3 * oz));
       }
       if (ringL.x >= 0.002) circle(px, py, orbitB.x, orbitB.y, ringL.y, ringL.z, ringL.x);
-      // the room: projected segments (lib/director/room.ts)
+      // the room, the car, the software figure: projected segments (lib/director)
       for (let i = 0; i < nSeg; i++) {
         const sg = segs[i], sb = segsB[i];
+        if (sb.w < -0.5) {
+          // a node: a diamond's outline (laser-shader.ts roomL)
+          const qx = px - sg.x, qy = py - sg.y, ax = Math.abs(qx), ay = Math.abs(qy);
+          if (ax > sg.z + 70 || ay > sg.w + 70) continue;
+          const ex = -sg.z, ey = sg.w;
+          const t = Math.min(1, Math.max(0, ((ax - sg.z) * ex + ay * ey) / Math.max(ex * ex + ey * ey, 1e-4)));
+          const dx = ax - (sg.z + ex * t), dy = ay - ey * t, d = Math.hypot(dx, dy);
+          const L = Math.hypot(sg.w, sg.z) || 1;
+          take(d, (d > 1e-3 ? dx / d : sg.w / L) * (qx < 0 ? -1 : 1), (d > 1e-3 ? dy / d : sg.z / L) * (qy < 0 ? -1 : 1), sb.x, sb.y);
+          continue;
+        }
         const abx = sg.z - sg.x, aby = sg.w - sg.y;
         const t = Math.min(1, Math.max(0, ((px - sg.x) * abx + (py - sg.y) * aby) / Math.max(abx * abx + aby * aby, 1e-4)));
         const dx = px - (sg.x + abx * t), dy = py - (sg.y + aby * t), d = Math.hypot(dx, dy);
         if (d > 70) continue;
         const L = Math.hypot(abx, aby) || 1;
-        take(d, d > 1e-3 ? dx / d : -aby / L, d > 1e-3 ? dy / d : abx / L, sb.x, sb.y + (sb.z - sb.y) * t);
+        let w = sb.y + (sb.z - sb.y) * t;
+        // a packet riding the segment (laser-shader.ts roomL)
+        if (sb.w > 0.5) { const pd = ((t - (sb.w - 1)) * L) / 16; w *= 1 + 2.2 * Math.exp(-pd * pd); }
+        take(d, d > 1e-3 ? dx / d : -aby / L, d > 1e-3 ? dy / d : abx / L, sb.x, w);
       }
       // the 3D title: outline strokes from the mask gradient, sparse fill
       if (titleOn) {
