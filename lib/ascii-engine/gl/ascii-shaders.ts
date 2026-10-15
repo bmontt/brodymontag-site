@@ -198,7 +198,9 @@ void shade(vec2 cell, vec2 off, inout vec3 col) {
                 + glyphAt(slot, off + vec2(0.0, 1.0)) + glyphAt(slot, off - vec2(0.0, 1.0));
     vec3 lc = laserColor(c.w, cell) * uLaserTone.x;
     col += lc * (lg * c.z + bloom * 0.07 * c.z);
-    col = mix(col, laserColor(c.w < 0.5 ? 0.499 : 0.999, cell), lg * c.z * c.z * uLaserTone.y);  // hot core
+    // hot core, dimmed with the stage like the stroke itself, so a strong stroke
+    // can't whiten back to full brightness behind text
+    col = mix(col, laserColor(c.w < 0.5 ? 0.499 : 0.999, cell) * uLaserTone.x, lg * c.z * c.z * uLaserTone.y);
     return;
   }
   float baseAlpha = c.z;
