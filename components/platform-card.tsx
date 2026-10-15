@@ -1,5 +1,11 @@
 "use client";
 
+// ── platform card ─────────────────────────────────────────────────────────────
+// A presence card: details always open, and the whole card links to the
+// profile. Stretched-link pattern — an overlay <a> covers the card, and the
+// detail links sit above it (their own z, pointer events back on), so there
+// are no nested anchors.
+
 import { useRef, useState, useCallback } from "react";
 import type { PlatformData } from "@/lib/platform-data";
 import { glow } from "@/lib/glow";
@@ -18,7 +24,6 @@ export default function PlatformCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
-  const [expanded, setExpanded] = useState(false);
 
   const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const rect = cardRef.current?.getBoundingClientRect();
@@ -34,9 +39,17 @@ export default function PlatformCard({
       onMouseMove={handleMove}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={() => setExpanded((v) => !v)}
-      className="iri-cycle relative overflow-hidden border border-white/8 transition-[border-color] duration-200 hover:border-white/20 cursor-pointer select-none"
+      className="iri-cycle relative overflow-hidden border border-white/8 transition-[border-color] duration-200 hover:border-white/20 has-[a:focus-visible]:border-white/30"
     >
+      {/* the card's own link: covers it, under the content */}
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`${name} — ${handle}`}
+        className="absolute inset-0 z-10 outline-none"
+      />
+
       {/* cursor glow */}
       <div
         ref={glowRef}
@@ -50,8 +63,8 @@ export default function PlatformCard({
         }}
       />
 
-      {/* content */}
-      <div className="relative z-10 p-5">
+      {/* content: clicks fall through to the card's link, except on detail links */}
+      <div className="pointer-events-none relative z-20 p-5">
         {/* logo row — icon is the visual anchor */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3.5">
@@ -90,65 +103,41 @@ export default function PlatformCard({
           )}
         </div>
 
-        {/* expandable details — the row animates 0fr ↔ 1fr (height 0 ↔ auto),
-            0.22s ease-in-out; inert while closed */}
-        <div
-          className="grid transition-[grid-template-rows,opacity] duration-[220ms] ease-in-out"
-          style={{ gridTemplateRows: expanded ? "1fr" : "0fr", opacity: expanded ? 1 : 0 }}
-          inert={!expanded}
-        >
-          <div className="min-h-0 overflow-hidden">
-            <div className="pt-3 mt-1 border-t border-white/8 flex flex-col gap-2.5">
-              {details.map((d) => (
-                <div
-                  key={d.label}
-                  className="flex items-baseline justify-between gap-4"
+        {/* details, always open */}
+        <div className="pt-3 mt-1 border-t border-white/8 flex flex-col gap-2.5">
+          {details.map((d) => (
+            <div
+              key={d.label}
+              className="flex items-baseline justify-between gap-4"
+            >
+              <span className="font-mono text-xs text-foreground/45 shrink-0">
+                {d.label}
+              </span>
+              {d.href ? (
+                <a
+                  href={d.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pointer-events-auto relative z-30 font-mono text-xs text-foreground/80 hover:text-accent/80 transition-colors text-right"
                 >
-                  <span className="font-mono text-xs text-foreground/32 shrink-0">
-                    {d.label}
-                  </span>
-                  {d.href ? (
-                    <a
-                      href={d.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="font-mono text-xs text-foreground/74 hover:text-accent/80 transition-colors text-right"
-                    >
-                      {d.value}&nbsp;↗
-                    </a>
-                  ) : (
-                    <span className="font-mono text-xs text-foreground/74 text-right">
-                      {d.value}
-                    </span>
-                  )}
-                </div>
-              ))}
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="mt-1.5 font-mono text-xs transition-colors"
-                style={{
-                  color: `${glow(glowRgb, 0.55)}`,
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.color = `${glow(glowRgb, 0.90)}`;
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.color = `${glow(glowRgb, 0.55)}`;
-                }}
-              >
-                view profile&nbsp;↗
-              </a>
+                  {d.value}&nbsp;↗
+                </a>
+              ) : (
+                <span className="font-mono text-xs text-foreground/80 text-right">
+                  {d.value}
+                </span>
+              )}
             </div>
-          </div>
+          ))}
         </div>
 
-        {/* expand hint */}
-        <p className="mt-3 font-mono text-xs text-foreground/34">
-          {expanded ? "collapse ↑" : "expand ↓"}
+        {/* where the card goes (the card itself is the link) */}
+        <p
+          aria-hidden="true"
+          className="mt-4 font-mono text-xs transition-colors duration-300"
+          style={{ color: `${glow(glowRgb, hovered ? 0.9 : 0.55)}` }}
+        >
+          view profile&nbsp;↗
         </p>
       </div>
     </div>
