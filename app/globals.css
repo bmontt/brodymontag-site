@@ -426,3 +426,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   main a:not([class*="absolute"]):not([class*="block"]):not([class*="flex"]):not([class*="grid"]),
   footer a { padding-block: 0.6rem; }
 }
+
+/* a soft dark halo behind reading text: where a laser crosses copy it fades
+   out around the letters (drawn once at paint; no per-frame cost) */
+main :where(p, li, h3, h4, dd, dt, td) {
+  text-shadow: 0 0 10px oklch(0.13 0 0 / 0.85), 0 0 3px oklch(0.13 0 0 / 0.9);
+}

@@ -65,6 +65,8 @@ export const TRANSITION_MS = 280;
  *  screen side, clamped, and they fade out as they reach it */
 /** phone widths: the laser layer's brightness over content, and over the road */
 const PHONE_DIM = 0.28;
+/** wider screens: the stage over content, past the openers (the figures mostly sit in a gutter there) */
+const DESK_DIM = 0.7;
 const PHONE_DIM_ROAD = 0.6;
 /** …and over an opener, where the figure crosses the title on a narrow screen */
 const PHONE_DIM_OPENER = 0.62;
@@ -360,9 +362,19 @@ export function createLaserDirector() {
     //    less so: it's a scene, but the year cards still sit over it); the
     //    landing and the openers keep it at full strength. Damped like any
     //    mood, so it fades rather than snaps.
-    if (W < 768 && x.page !== "home") {
+    if (x.page !== "home") {
       const road = x.page === "about" && (x.timelineProgress >= 0 || pastTimeline);
-      tgt.bright *= lerp(road ? PHONE_DIM_ROAD : PHONE_DIM, PHONE_DIM_OPENER, inOpener);
+      const phone = W < 768;
+      const content = road ? (phone ? PHONE_DIM_ROAD : 0.8) : phone ? PHONE_DIM : DESK_DIM;
+      tgt.bright *= lerp(content, phone ? PHONE_DIM_OPENER : 1, inOpener);
+    }
+    // the supported strip (music): the logos hold the screen, the stage
+    // steps back while they're in view
+    const sup = x.anchor("supported");
+    if (sup) {
+      const mid = sup.y + sup.h / 2;
+      const seen = 1 - smooth(H * 0.35, H * 0.75, Math.abs(mid - H / 2));
+      tgt.bright *= lerp(1, 0.3, seen);
     }
 
     // ── damp toward the page's targets ─────────────────────────────────

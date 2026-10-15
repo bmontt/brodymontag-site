@@ -49,6 +49,7 @@ export default function MusicPage() {
               <div className="mt-20">
                 <h3 className="sr-only">{content.music.shows.supportedLabel}</h3>
                 <FullBleed className="relative">
+                  <div aria-hidden="true" data-laser-anchor="supported" className="pointer-events-none absolute inset-0" />
                   {/* the word stands behind the logos, towering and faint, and
                       rises into place as they scroll in: backing the artists,
                       which is what "support" means here (globals.css .backing-word) */}
