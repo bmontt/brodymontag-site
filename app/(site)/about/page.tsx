@@ -14,10 +14,10 @@ import { flag } from "@/lib/flags";
 import { content } from "@/lib/content";
 
 // ── /about ────────────────────────────────────────────────────────────────────
-// Where the halves meet: the about text (the two signals orbit inside the
-// circle it wraps, fuse, and ring down), presence and contact, then the
-// 2021 → now timeline as a coda — a floor whose white and pearl rails
-// converge (lib/director/laser.ts, "about").
+// Where the halves meet: the about text (beside it the two signals orbit on a
+// sheet of spacetime, fuse, and ring down), presence and contact, then the
+// 2021 → now timeline as a coda — the same floor, level now, whose white and
+// pearl rails converge (lib/director/laser.ts, "about"; about-scene.ts).
 
 export const metadata: Metadata = {
   title: "about",
@@ -45,15 +45,9 @@ export default function AboutPage() {
                   ))}
                 </div>
 
-                {/* the paragraphs wrap around the union: a circular float the
-                    two signals orbit inside (lib/director/laser.ts) */}
-                <div className="max-w-2xl [&>p+p]:mt-5">
-                  <div
-                    aria-hidden="true"
-                    data-laser-anchor="union"
-                    className="float-right ml-8 mb-4 hidden aspect-square rounded-full md:block"
-                    style={{ width: "clamp(200px, 22vw, 300px)", shapeOutside: "circle(50%)", shapeMargin: "20px" }}
-                  />
+                {/* reading this carries you over the sheet toward the two
+                    signals orbiting beside it (lib/director/about-scene.ts) */}
+                <div data-laser-anchor="union" className="max-w-2xl [&>p+p]:mt-5">
                   {content.about.paragraphs.map((para, i) => (
                     <p
                       key={i}

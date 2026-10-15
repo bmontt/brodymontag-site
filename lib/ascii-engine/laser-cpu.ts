@@ -92,7 +92,9 @@ export function laserFrame(
   const scope = u.uScope.value, scopeB = u.uScopeB.value, scopeC = u.uScopeC.value, scopeD = u.uScopeD.value;
   const fan = u.uFan.value, fanB = u.uFanB.value, fanC = u.uFanC.value;
   const gridL = u.uGridL.value, gridB = u.uGridB.value, rails = u.uRails.value;
-  const orbit = u.uOrbit.value, orbitB = u.uOrbitB.value, orbitC = u.uOrbitC.value, ringL = u.uRingL.value;
+  const orbit = u.uOrbit.value, orbitB = u.uOrbitB.value, orbitC = u.uOrbitC.value, orbitD = u.uOrbitD.value, ringL = u.uRingL.value;
+  const sheet = u.uSheet.value, sheetB = u.uSheetB.value, sheetC = u.uSheetC.value, sheetD = u.uSheetD.value;
+  const sun = u.uSun.value, sunB = u.uSunB.value, sunC = u.uSunC.value;
   const H = u.uView.value.y;
 
   // ── per-frame precompute ──────────────────────────────────────────────────
@@ -111,6 +113,10 @@ export function laserFrame(
     fy[i] = fanB.y + Math.sin(ang) * fanB.w;
   }
   const ox = Math.cos(orbit.z) * orbit.y, oy = Math.sin(orbit.z) * 0.42 * orbit.y;
+  // hoops placed in a scene (about's sheet): their own centers and radii
+  const placed = orbitC.w > 0;
+  const pz = placed ? (orbit.w - orbitC.w) / Math.max(orbit.w + orbitC.w, 1) : 0;
+  const pwA = Math.min(1.6, Math.max(0.4, 1 + 2 * pz)), pwB = Math.min(1.6, Math.max(0.4, 1 - 2 * pz));
   const oz = Math.sin(orbit.z) * Math.min(1, Math.max(0, orbit.y / Math.max(orbit.w, 1)));
   const nSeg = Math.round(u.uSegN.value);
   const segs = u.uSegs.value, segsB = u.uSegsB.value;
@@ -184,6 +190,76 @@ export function laserFrame(
     take((Math.abs(L - 1) * L) / gl, ca * nx - sa * ny, sa * nx + ca * ny, hue, w);
   };
 
+  // the floor as a sheet of spacetime (laser-shader.ts sheetH … sheetL): the
+  // ground point under each cell found by a few damped steps, the lines as
+  // level sets measured over their on-screen gradient
+  const gridOn = gridL.x >= 0.002 || sheet.w >= 0.002 || sheetC.w >= 0.002;
+  const sheetOn = sheet.x + sheet.z + sheet.w + sheetC.w + gridB.w > 0.002;
+  const s2 = sheet.y * sheet.y;
+  const sstep = (a: number, b: number, x: number) => {
+    const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  };
+  const fract = (x: number) => x - Math.floor(x);
+  const calmAt = (r: number) => (sheetC.z > 0 ? sstep(sheetC.z - 0.4, sheetC.z + 0.4, r) : 1);
+  const sheetH = (X: number, Z: number) => {
+    const ax = X - sheetB.x, az = Z - sheetB.y, bx = X - sheetB.z, bz = Z - sheetB.w;
+    let h = -sheet.x * (s2 / (s2 + ax * ax + az * az) + s2 / (s2 + bx * bx + bz * bz));
+    const qx = X - sheetD.z, qz = Z - sheetD.w, r = Math.sqrt(qx * qx + qz * qz);
+    if (sheet.z > 0) h += (sheet.z * calmAt(r) * sstep(0.2, 1.4, r) * Math.cos(sheetC.y * r - sheetC.x)) / (1 + 0.3 * r);
+    if (sheetC.w > 0) { const dr = (r - sheetC.z) / 0.4; h += 0.12 * sheetC.w * Math.exp(-dr * dr); }
+    return h;
+  };
+  let gX = 0, gZ = 0, gY = 0;
+  const sheetAt = (sx: number, sy: number, hy: number, depth: number, y: number, steps: number) => {
+    const b = Math.max(sy - hy, 0.5), rx = (sx - gridB.x) / b, rz = depth / b;
+    for (let i = 0; i < steps; i++) y += (Math.min(sheetH(rx * (1 - y), rz * (1 - y)), 0.6) - y) * 0.85;
+    gX = rx * (1 - y);
+    gZ = rz * (1 - y);
+    gY = y;
+  };
+  const lod = (gx: number, gy: number, l: number) =>
+    1 + (sstep(2.6, 5, Math.sqrt((gx / l / cw) ** 2 + (gy / l / ch) ** 2) / l) - 1) * gridB.w;
+  const sheetL = (px: number, py: number, hy: number, depth: number, fz: number) => {
+    // two steps at the cell, then one more there and a px across and down
+    sheetAt(px, py, hy, depth, 0, 2);
+    const y0 = gY;
+    sheetAt(px, py, hy, depth, y0, 1);
+    const X = gX, Z = gZ;
+    sheetAt(px + 1, py, hy, depth, y0, 1);
+    const xX = gX - X, xZ = gZ - Z;
+    sheetAt(px, py + 1, hy, depth, y0, 1);
+    const yX = gX - X, yZ = gZ - Z;
+    const fade = fz * (1 + (Math.exp(-Math.max(Z - 2, 0) * 0.32) - 1) * gridB.w);
+    const dux = xZ * gridB.z, duy = yZ * gridB.z, lu = Math.max(Math.sqrt(dux * dux + duy * duy), 1e-6);
+    take(Math.abs(fract(Z * gridB.z + gridL.z + 0.5) - 0.5) / lu, dux / lu, duy / lu, gridL.w, gridL.x * fade * lod(dux, duy, lu));
+    const sv = depth / gridB.y;
+    const dvx = xX * sv, dvy = yX * sv, lv = Math.max(Math.sqrt(dvx * dvx + dvy * dvy), 1e-6);
+    const rcx = Math.abs(dvx / lv / ch), rcy = Math.abs(dvy / lv / cw);
+    const steep = 1 + (sstep(0.15, 0.4, rcx / Math.max(rcx + rcy, 1e-6)) - 1) * gridB.w;
+    take(Math.abs(fract(X * sv + 0.5) - 0.5) / lv, dvx / lv, dvy / lv, gridL.w, gridL.x * fade * steep * lod(dvx, dvy, lv));
+    if (sheet.x > 0.002) {
+      const ax = X - sheetB.x, az = Z - sheetB.y, bx = X - sheetB.z, bz = Z - sheetB.w;
+      const ka = s2 / (s2 + ax * ax + az * az), kb = s2 / (s2 + bx * bx + bz * bz);
+      const wx = (-2 * (ax * ka * ka + bx * kb * kb)) / s2, wz = (-2 * (az * ka * ka + bz * kb * kb)) / s2;
+      const dfx = wx * xX + wz * xZ, dfy = wx * yX + wz * yZ, lf = Math.max(Math.sqrt(dfx * dfx + dfy * dfy), 1e-6);
+      take(Math.abs(ka + kb - 0.8) / lf, dfx / lf, dfy / lf, ka > kb ? orbitB.z : orbitB.w, sheet.x * 1.3 * fz * lod(dfx, dfy, lf));
+    }
+    const qx = X - sheetD.z, qz = Z - sheetD.w, r = Math.max(Math.sqrt(qx * qx + qz * qz), 1e-4);
+    const drx = (qx * xX + qz * xZ) / r, dry = (qx * yX + qz * yZ) / r;
+    if (sheet.w > 0.002) {
+      const ph = sheetC.y * r - sheetC.x;
+      const dpx = drx * sheetC.y, dpy = dry * sheetC.y, lp = Math.max(Math.sqrt(dpx * dpx + dpy * dpy), 1e-6);
+      const n = Math.floor(ph / TAU + 0.5);
+      const w = sheet.w * fade * calmAt(r) * sstep(0.3, 1.6, r) * lod(dpx, dpy, lp);
+      take(Math.abs(ph - n * TAU) / lp, dpx / lp, dpy / lp, ((n % 2) + 2) % 2 < 0.5 ? sheetD.x : sheetD.y, w);
+    }
+    if (sheetC.w > 0.002) {
+      const lr = Math.max(Math.sqrt(drx * drx + dry * dry), 1e-6);
+      take(Math.abs(r - sheetC.z) / lr, drx / lr, dry / lr, ringL.z, sheetC.w * fz);
+    }
+  };
+
   const flick = Math.floor(time * 9) * 0.137;
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
@@ -213,20 +289,24 @@ export function laserFrame(
         const pd = (segT - fanC.z) / 0.07;
         take(segBest, segNx, segNy, Math.min(fanLo + 0.499, Math.max(fanLo, fanB.z + k * fanC.x)), fan.x * far * (1 + fanC.w * Math.exp(-pd * pd)));
       }
-      if (!car && gridL.x >= 0.002) {
+      if (!car && gridOn) {
         const hy = gridL.y, below = py - hy;
         take(Math.abs(below), 0, 1, gridL.w, gridL.x * 0.9);
         if (below > 1) {
           const depth = Math.max(H - hy, 1);
           const tt = Math.min(1, Math.max(0, below / depth / 0.3));
-          const fade = tt * tt * (3 - 2 * tt) * gridL.x;
-          const uu = (depth / below) * gridB.z + gridL.z;
-          const fu = uu - Math.floor(uu);
-          take((Math.min(fu, 1 - fu) / gridB.z) * below * below / depth, 0, 1, gridL.w, fade);
-          const ri = Math.floor(((px - gridB.x) / below) * depth / gridB.y + 0.5);
-          const dl = Math.hypot(ri * gridB.y, depth), dxn = (ri * gridB.y) / dl, dyn = depth / dl;
+          const fz = tt * tt * (3 - 2 * tt);
+          const fade = fz * gridL.x;
           const rx = px - gridB.x, ry = py - hy;
-          take(Math.abs(rx * dyn - ry * dxn), dyn, -dxn, gridL.w, fade);
+          if (sheetOn) sheetL(px, py, hy, depth, fz);
+          else {
+            const uu = (depth / below) * gridB.z + gridL.z;
+            const fu = uu - Math.floor(uu);
+            take((Math.min(fu, 1 - fu) / gridB.z) * below * below / depth, 0, 1, gridL.w, fade);
+            const ri = Math.floor(((px - gridB.x) / below) * depth / gridB.y + 0.5);
+            const dl = Math.hypot(ri * gridB.y, depth), dxn = (ri * gridB.y) / dl, dyn = depth / dl;
+            take(Math.abs(rx * dyn - ry * dxn), dyn, -dxn, gridL.w, fade);
+          }
           if (rails.x >= 0.002) {
             for (let k = 0; k < 2; k++) {
               const side = k === 0 ? -1 : 1;
@@ -236,11 +316,28 @@ export function laserFrame(
           }
         }
       }
-      if (orbit.x >= 0.002) {
+      if (orbit.x >= 0.002 && placed) {
+        hoop(px, py, orbitD.x, orbitD.y, orbit.w, orbitC.x, orbitC.x * 0.37, orbitC.z, orbitB.z, orbit.x * pwA);
+        hoop(px, py, orbitD.z, orbitD.w, orbitC.w, orbitC.y, -orbitC.y * 0.29, orbitC.z, orbitB.w, orbit.x * pwB);
+      } else if (orbit.x >= 0.002) {
         hoop(px, py, orbitB.x + ox, orbitB.y + oy, orbit.w * (1 + 0.14 * oz), orbitC.x, orbitC.x * 0.37, orbitC.z, orbitB.z, orbit.x * (1 + 0.3 * oz));
         hoop(px, py, orbitB.x - ox, orbitB.y - oy, orbit.w * (1 - 0.14 * oz), orbitC.y, -orbitC.y * 0.29, orbitC.z, orbitB.w, orbit.x * (1 - 0.3 * oz));
       }
       if (ringL.x >= 0.002) circle(px, py, orbitB.x, orbitB.y, ringL.y, ringL.z, ringL.x);
+      // the sun: rim and banded disc, nothing below the horizon (laser-shader.ts sunL)
+      if (!car && sun.w >= 0.002 && py <= sunB.x) {
+        const qx = px - sun.x, qy = py - sun.y, L = Math.sqrt(qx * qx + qy * qy);
+        if (L <= sun.z + 60) {
+          take(Math.abs(L - sun.z), L > 1e-3 ? qx / L : 0, L > 1e-3 ? qy / L : 1, sunC.z, sun.w);
+          if (sunB.y >= 0.002 && L <= sun.z) {
+            const d = 2 * sun.z, v = Math.min(1, Math.max(0, (qy + sun.z) / d)), rows = d / (ch * Math.max(sunB.w, 1));
+            const uu = rows * (v - 0.43 * v * v) - sunB.z, du = (rows * (1 - 0.86 * v)) / d;
+            const k = Math.floor(uu + 0.5);
+            const hue = ((k % 2) + 2) % 2 < 0.5 ? sunC.x + (sunC.y - sunC.x) * v : sunC.z + (sunC.w - sunC.z) * v;
+            take(Math.abs(uu - k) / du, 0, 1, hue, sun.w * sunB.y * (0.75 - 0.3 * v));
+          }
+        }
+      }
       // the room, the car, the software figure: projected segments (lib/director)
       for (let i = 0; i < nSeg; i++) {
         if (px < segBox[i * 4] || px > segBox[i * 4 + 1] || py < segBox[i * 4 + 2] || py > segBox[i * 4 + 3]) continue;
