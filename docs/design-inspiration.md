@@ -146,15 +146,16 @@ as the signature moment, and fold **#4–#6** into Phase 6 hardening.
     hits on the kick.
   - **Timeline (memory):** a grey floor carries a white rail and a red rail
     that converge over the years.
-  - **Epilogue (union):** white and red rings orbit inside the circle the about
-    text wraps around. They fuse white-hot (a one-shot flash), ring down
-    through cooling reds, and resolve into one calm trace.
+  - **Epilogue (union):** white and pearl rings orbit on a sheet of spacetime
+    beside the about text: the timeline's floor seen from higher up, a well
+    under each ring, ripples rolling out past the screen. They fuse white-hot
+    (a one-shot flash), the ringdown races out over the sheet, and it lies
+    level: the timeline's road (`lib/director/about-scene.ts`).
   - Mood (brightness, white-hot core, glitch) is set per chapter in
     `lib/director/laser.ts`.
 - **Figures live in the layout.** `figure` chapters (code, music) split into a
   text column and a figure gutter, `[data-laser-anchor]`, where the figure is
   sticky inside its gutter.
-  - The about paragraphs wrap a `shape-outside: circle()` float.
   - The hero traces ride the name rule.
   - Reveals in figure chapters slide out of the figure's side and resolve from
     a blur.
@@ -197,9 +198,10 @@ as the signature moment, and fold **#4–#6** into Phase 6 hardening.
   glitch.
 - **`/music`:** shows, artists, releases and the collective. A pearl trace
   pulsing on the kick, shimmering fans in the gutter, and glitch on the kick.
-- **`/about`:** the about text (the union orbit, a timed fusion and ringdown,
-  then one calm trace), presence and contact, then the timeline coda. The calm
-  trace becomes the floor's horizon, with converging white and pearl rails.
+- **`/about`:** the about text (the union orbit on a sheet of spacetime, a
+  timed fusion and ringdown), presence and contact, then the timeline coda. The
+  sheet, level after the ringdown, becomes the road's floor, with converging
+  white and pearl rails.
 - **Transitions:** internal links burst the picked figure for 420ms, then
   navigate. The stage persists, and the director damps every figure
   parameter toward the new page's targets, so the background morphs between

@@ -28,7 +28,9 @@ export const CAR_HULL = 12;
  *   segs   — segments projected from 3D on the CPU: the room, the car, and
  *            the software page's network (lib/director/software-figure.ts)
  *   fan    — club fan beams sweeping from the floor (monty)
- *   grid   — a perspective laser floor that runs with the year track (timeline)
+ *   grid   — a perspective laser floor that runs with the year track (timeline);
+ *            on about first a sheet of spacetime, its wells, ripples and ringdown
+ *            (lib/director/about-scene.ts)
  *   orbit  — two beam rings in a decaying binary orbit, then the ringdown (merger)
  */
 
@@ -51,7 +53,18 @@ export interface LaserUniforms {
   uOrbit: { value: Vector4 };
   uOrbitB: { value: Vector4 };
   uOrbitC: { value: Vector4 };
+  /** the hoops placed in a scene (about): hoop A center px (xy), hoop B center px (zw) — used
+   *  when uOrbitC.w (hoop B's radius px) > 0, uOrbit.w then being hoop A's */
+  uOrbitD: { value: Vector4 };
   uRingL: { value: Vector4 };
+  /** the floor as a sheet of spacetime (about), all in floor units (the camera stands 1 above
+   *  it): well depth, well width, ripple height, crest weight · the two wells (X, Z, X, Z) ·
+   *  ripple phase rad, ripple wavenumber rad/unit, ringdown front radius, ringdown height ·
+   *  crest palettes (alternate rings), the pair's center (X, Z) */
+  uSheet: { value: Vector4 };
+  uSheetB: { value: Vector4 };
+  uSheetC: { value: Vector4 };
+  uSheetD: { value: Vector4 };
   /** projected segments (a.xy, b.xy px) + (palette, weight at a, weight at b, packet): the room,
    *  the car, the software figure. packet 0 = none, 1 + t = a pulse at t along it, < 0 = a node
    *  (a diamond: center xy, half-size zw) */
@@ -90,7 +103,12 @@ export function makeLaserUniforms(): LaserUniforms {
     uOrbit: { value: new Vector4() },
     uOrbitB: { value: new Vector4() },
     uOrbitC: { value: new Vector4(0, 0, 1, 0) },
+    uOrbitD: { value: new Vector4() },
     uRingL: { value: new Vector4() },
+    uSheet: { value: new Vector4() },
+    uSheetB: { value: new Vector4() },
+    uSheetC: { value: new Vector4() },
+    uSheetD: { value: new Vector4() },
     uSegs: { value: Array.from({ length: ROOM_SEGS }, () => new Vector4()) },
     uSegsB: { value: Array.from({ length: ROOM_SEGS }, () => new Vector4()) },
     uSegN: { value: 0 },
@@ -119,12 +137,17 @@ uniform vec4  uFan;                // weight, beam count, spread rad, sweep rad
 uniform vec4  uFanB;               // origin px (xy), hue, length px
 uniform vec4  uFanC;               // hue spread across the beams, far fade 0–1, pulse position (0 origin … 1 tip), pulse strength
 uniform vec4  uGridL;              // weight, horizon y px, scroll, hue
-uniform vec4  uGridB;              // vanishing x px, rail spacing px (at the bottom), rung density, —
+uniform vec4  uGridB;              // vanishing x px, rail spacing px (at the bottom), rung density, the sheet's calm (about: thinned, fogged far lines)
 uniform vec4  uRails;              // two lit rails to the vanishing point: weight, half-gap px at the bottom, hue A, hue B
 uniform vec4  uOrbit;              // weight, separation px, phase rad, ring radius px
 uniform vec4  uOrbitB;             // center px (xy), hue A, hue B
-uniform vec4  uOrbitC;             // hoop spin A rad, hoop spin B rad, roundness (1 = plain circles), —
+uniform vec4  uOrbitC;             // hoop spin A rad, hoop spin B rad, roundness (1 = plain circles), hoop B radius px (> 0: placed, see uOrbitD)
+uniform vec4  uOrbitD;             // placed hoops (about's sheet): hoop A center px (xy), hoop B center px (zw)
 uniform vec4  uRingL;              // weight, radius px, hue, —
+uniform vec4  uSheet;              // the floor as spacetime (floor units): well depth, well width, ripple height, crest weight
+uniform vec4  uSheetB;             // the two wells: A (X, Z), B (X, Z)
+uniform vec4  uSheetC;             // ripple phase rad, ripple wavenumber rad/unit, ringdown front radius, ringdown height
+uniform vec4  uSheetD;             // crest palettes (alternate rings), the pair's center (X, Z)
 uniform vec4  uSegs[${ROOM_SEGS}];    // the room: projected segments a.xy, b.xy (px)
 uniform vec4  uSegsB[${ROOM_SEGS}];   // palette, weight at a, weight at b (depth fog), packet (0 = none, 1 + t along it; < 0: a node, see roomL)
 uniform float uSegN;
@@ -196,25 +219,118 @@ void fanL(inout Hit h, vec2 p) {
   take(h, best, bn, clamp(uFanB.z + bk * uFanC.x, lo, lo + 0.499), uFan.x * far * (1.0 + uFanC.w * exp(-pd * pd)));
 }
 
+// ── the floor as a sheet of spacetime (about) ──────────────────────────────
+// Its height at ground point g = (X, Z), in floor units (the camera stands 1
+// above the floor, looking level): a well under each body, the inspiral's
+// ripples rolling out from the pair in rings, and — once they've fused — the
+// ringdown's ring racing out, the sheet calm behind it.
+float sheetCalm(float r) {
+  return uSheetC.z > 0.0 ? smoothstep(uSheetC.z - 0.4, uSheetC.z + 0.4, r) : 1.0;
+}
+float sheetH(vec2 g) {
+  float s2 = uSheet.y * uSheet.y;
+  vec2 a = g - uSheetB.xy, b = g - uSheetB.zw;
+  float h = -uSheet.x * (s2 / (s2 + dot(a, a)) + s2 / (s2 + dot(b, b)));
+  vec2 q = g - uSheetD.zw;
+  float r = length(q);
+  if (uSheet.z > 0.0)
+    h += uSheet.z * sheetCalm(r) * smoothstep(0.2, 1.4, r) * cos(uSheetC.y * r - uSheetC.x) / (1.0 + 0.3 * r);
+  if (uSheetC.w > 0.0) { float dr = (r - uSheetC.z) / 0.4; h += 0.12 * uSheetC.w * exp(-dr * dr); }
+  return h;
+}
+// the ground point seen through a point on screen: from a guess at the
+// sheet's height there, damped steps onto it (y = hy + depth·(1 − h)/Z)
+vec2 sheetAt(vec2 p, float hy, float depth, float y, int steps) {
+  vec2 ray = vec2(p.x - uGridB.x, depth) / max(p.y - hy, 0.5);
+  for (int i = 0; i < 2; i++) {
+    if (i >= steps) break;
+    y = mix(y, min(sheetH(ray * (1.0 - y)), 0.6), 0.85);
+  }
+  return ray * (1.0 - y);
+}
+// lines closer together on screen than a few glyphs fade out (uGridB.w: how
+// much), so the far sheet thins into haze instead of a dash on every row
+float sheetLod(vec2 grad, float l) {
+  return mix(1.0, smoothstep(2.6, 5.0, length(grad / l / uCell) / l), uGridB.w);
+}
+// the floor's lines on the sheet: rungs and rails as on the level floor, the
+// wells' rims, the ripples' crests (alternately in each signal) and the
+// ringdown's front. Each is a level set of some f(X, Z); its px distance is the
+// offset over f's gradient on screen (from the ground point one px across and
+// one px down).
+void sheetL(inout Hit h, vec2 p, float hy, float depth, float fz) {
+  // two steps from the level floor at the cell; then one more there and at
+  // the px across and the px down, all from that height, so the three agree
+  vec2 g0 = sheetAt(p, hy, depth, 0.0, 2);
+  float y0 = 1.0 - g0.y * max(p.y - hy, 0.5) / depth;
+  vec2 g = sheetAt(p, hy, depth, y0, 1);
+  vec2 gx = sheetAt(p + vec2(1.0, 0.0), hy, depth, y0, 1) - g;
+  vec2 gy = sheetAt(p + vec2(0.0, 1.0), hy, depth, y0, 1) - g;
+  // haze: the sheet thins out with distance (the road keeps its own)
+  float fade = fz * mix(1.0, exp(-max(g.y - 2.0, 0.0) * 0.32), uGridB.w);
+  float u = g.y * uGridB.z + uGridL.z;
+  vec2 du = vec2(gx.y, gy.y) * uGridB.z;
+  float lu = max(length(du), 1e-6);
+  take(h, abs(fract(u + 0.5) - 0.5) / lu, du / lu, uGridL.w, uGridL.x * fade * sheetLod(du, lu));
+  float sv = depth / uGridB.y;
+  vec2 dv = vec2(gx.x, gy.x) * sv;
+  float lv = max(length(dv), 1e-6);
+  // rails out at the sides run so flat they'd draw as a dash on every row:
+  // the calm sheet lets them go
+  vec2 rc = abs(dv / lv / uCell.yx);
+  float steep = mix(1.0, smoothstep(0.15, 0.4, rc.x / max(rc.x + rc.y, 1e-6)), uGridB.w);
+  take(h, abs(fract(g.x * sv + 0.5) - 0.5) / lv, dv / lv, uGridL.w, uGridL.x * fade * steep * sheetLod(dv, lv));
+  // the wells' rims: a contour of each body's pull, in its hoop's color —
+  // two rings under the pair that run together into one as they close in
+  if (uSheet.x > 0.002) {
+    float s2 = uSheet.y * uSheet.y;
+    vec2 a = g - uSheetB.xy, b = g - uSheetB.zw;
+    float ka = s2 / (s2 + dot(a, a)), kb = s2 / (s2 + dot(b, b));
+    vec2 wf = -2.0 * (a * ka * ka + b * kb * kb) / s2;
+    vec2 df = vec2(dot(wf, gx), dot(wf, gy));
+    float lf = max(length(df), 1e-6);
+    take(h, abs(ka + kb - 0.8) / lf, df / lf, ka > kb ? uOrbitB.z : uOrbitB.w, uSheet.x * 1.3 * fz * sheetLod(df, lf));
+  }
+  vec2 q = g - uSheetD.zw;
+  float r = max(length(q), 1e-4);
+  if (uSheet.w > 0.002) {
+    float ph = uSheetC.y * r - uSheetC.x;
+    vec2 dp = vec2(dot(q, gx), dot(q, gy)) * uSheetC.y / r;
+    float lp = max(length(dp), 1e-6);
+    float n = floor(ph / 6.2831853 + 0.5);
+    float w = uSheet.w * fade * sheetCalm(r) * smoothstep(0.3, 1.6, r) * sheetLod(dp, lp);
+    take(h, abs(ph - n * 6.2831853) / lp, dp / lp, mod(n, 2.0) < 0.5 ? uSheetD.x : uSheetD.y, w);
+  }
+  if (uSheetC.w > 0.002) {
+    vec2 dr = vec2(dot(q, gx), dot(q, gy)) / r;
+    float lr = max(length(dr), 1e-6);
+    take(h, abs(r - uSheetC.z) / lr, dr / lr, uRingL.z, uSheetC.w * fz);
+  }
+}
+
 void gridL(inout Hit h, vec2 p) {
-  if (uGridL.x < 0.002) return;
+  if (uGridL.x < 0.002 && uSheet.w < 0.002 && uSheetC.w < 0.002) return;
   float hy = uGridL.y;
   float below = p.y - hy;
   // the horizon itself — one bright scan line
   take(h, abs(below), vec2(0.0, 1.0), uGridL.w, uGridL.x * 0.9);
   if (below <= 1.0) return;
   float depth = max(uView.y - hy, 1.0);
-  float fade = smoothstep(0.0, 0.3, below / depth) * uGridL.x;      // rungs crowd at the horizon
-  // rungs: depth z = depth/below; a rung at every integer of z·density + scroll
-  float u = (depth / below) * uGridB.z + uGridL.z;
-  float fu = fract(u);
-  float dz = min(fu, 1.0 - fu) / uGridB.z;
-  take(h, dz * below * below / depth, vec2(0.0, 1.0), uGridL.w, fade);
-  // rails: lines through the vanishing point, evenly spaced along the bottom edge
-  float ri = floor((p.x - uGridB.x) / below * depth / uGridB.y + 0.5);
-  vec2 dir = normalize(vec2(ri * uGridB.y, depth));
+  float fz = smoothstep(0.0, 0.3, below / depth);
+  float fade = fz * uGridL.x;                                        // rungs crowd at the horizon
   vec2 rel = p - vec2(uGridB.x, hy);
-  take(h, abs(rel.x * dir.y - rel.y * dir.x), vec2(dir.y, -dir.x), uGridL.w, fade);
+  if (uSheet.x + uSheet.z + uSheet.w + uSheetC.w + uGridB.w > 0.002) sheetL(h, p, hy, depth, fz);
+  else {
+    // rungs: depth z = depth/below; a rung at every integer of z·density + scroll
+    float u = (depth / below) * uGridB.z + uGridL.z;
+    float fu = fract(u);
+    float dz = min(fu, 1.0 - fu) / uGridB.z;
+    take(h, dz * below * below / depth, vec2(0.0, 1.0), uGridL.w, fade);
+    // rails: lines through the vanishing point, evenly spaced along the bottom edge
+    float ri = floor((p.x - uGridB.x) / below * depth / uGridB.y + 0.5);
+    vec2 dir = normalize(vec2(ri * uGridB.y, depth));
+    take(h, abs(rel.x * dir.y - rel.y * dir.x), vec2(dir.y, -dir.x), uGridL.w, fade);
+  }
   // the two signals as lit rails, converging on the vanishing point
   if (uRails.x > 0.002) {
     for (int k = 0; k < 2; k++) {
@@ -249,7 +365,13 @@ void hoopL(inout Hit h, vec2 p, vec2 c, float r, float spin, float axis, float r
 }
 
 void orbitL(inout Hit h, vec2 p) {
-  if (uOrbit.x >= 0.002) {
+  if (uOrbit.x >= 0.002 && uOrbitC.w > 0.0) {
+    // placed in a scene (about's sheet): each hoop where the director
+    // projected it, sized by its distance — the nearer one brighter
+    float z = (uOrbit.w - uOrbitC.w) / max(uOrbit.w + uOrbitC.w, 1.0);
+    hoopL(h, p, uOrbitD.xy, uOrbit.w, uOrbitC.x, uOrbitC.x * 0.37, uOrbitC.z, uOrbitB.z, uOrbit.x * clamp(1.0 + 2.0 * z, 0.4, 1.6));
+    hoopL(h, p, uOrbitD.zw, uOrbitC.w, uOrbitC.y, -uOrbitC.y * 0.29, uOrbitC.z, uOrbitB.w, uOrbit.x * clamp(1.0 - 2.0 * z, 0.4, 1.6));
+  } else if (uOrbit.x >= 0.002) {
     // the binary, its orbit inclined toward you: the body in front is a
     // touch larger and brighter, and wins where they cross
     vec2 o = vec2(cos(uOrbit.z), sin(uOrbit.z) * 0.42) * uOrbit.y;

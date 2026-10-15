@@ -24,16 +24,22 @@
 //                        running up every beam on the kick. Seen from any other
 //                        page the fans fade out as they rise — far away.
 //   about     union      the two signals as spinning hoops in a binary orbit
-//                        (Kepler: eccentric, faster when close) inside the
-//                        circle the about text wraps. Reading tightens the
-//                        orbit; they keep twirling until "Let's work together."
-//                        comes on screen, then spiral in beside it and fuse
-//                        white-hot (a one-shot flash) and explode: their glyphs
-//                        scatter, hang, then fly back together as the timeline
-//                        rises — into the horizon, the road's two rails and the
-//                        car. Lamp posts stream past beside the road through
-//                        the years; the car holds just ahead until "start
-//                        over" comes up, then drives off over the horizon.
+//                        (Kepler: eccentric, faster when close) on a sheet of
+//                        spacetime (about-scene.ts): the road's own floor seen
+//                        from higher up, running past every edge, a well under
+//                        each hoop and their ripples rolling out in rings and
+//                        on past you. Reading carries you over it toward them
+//                        and tightens the orbit; when "Let's work together."
+//                        comes on screen they spiral in beside it, fuse
+//                        white-hot (a one-shot flash) and explode, the
+//                        ringdown racing out over the sheet and leaving it
+//                        level. Their glyphs scatter (some past the screen's
+//                        edges), hang, then fly back together as the camera
+//                        tilts up to the road's horizon — into it, the road's
+//                        two rails and the car. Lamp posts stream past beside
+//                        the road through the years; the car holds just ahead
+//                        until "start over" comes up, then drives off over the
+//                        horizon.
 //   detail    an echo    a project page keeps its faint network, a show page faint fans.
 //
 // Every figure parameter is damped toward its page's target, so moving between
@@ -47,6 +53,7 @@ import type { AnchorRect } from "@/lib/laser-anchors";
 import type { StageRouteKind } from "@/lib/journey-store";
 import { buildRoom } from "./room";
 import { buildCar, buildRoadside } from "./car";
+import { createAboutScene, pairDistance, placePair, sheetHorizon } from "./about-scene";
 import { createSoftwareFigure, FLOWS_LEFT, FLOWS_RIGHT, gapKey, pageKey } from "./software-figure";
 import { drag, knot, pointer, stepDrag } from "@/lib/stage-input";
 import { flag } from "@/lib/flags";
@@ -166,6 +173,7 @@ export function createLaserDirector() {
   const segsB = new Float32Array(ROOM_SEGS * 4);
   const hull = new Float32Array(CAR_HULL * 2);
   const figure = createSoftwareFigure();
+  const scene = createAboutScene();
 
   return function update(u: LaserUniforms, x: LaserInput): LaserOutput {
     const { time, viewW: W, viewH: H, p } = x;
@@ -189,12 +197,14 @@ export function createLaserDirector() {
     const flyHome = flyTo("home");
 
     Object.assign(tgt, ZERO);
-    let merge = 0, ring = 0, resolve = 0;
+    let merge = 0, ring = 0;
     let gliding = false; // the knot is moving between gaps: a slower, smoother glide
     let figKey = ""; // which graph the software figure takes (software-figure.ts)
     // about's road: assemble 0–1 as the timeline rises (the debris converging),
     // past = the timeline is behind you (the road stays), away = the drive-off
     let assemble = 0, pastTimeline = false, away = 0;
+    // about's sheet: how far reading has carried you over it (rungs), how far the camera has tilted up to the road
+    let travel = 0, tilt = 0;
     let orbitRate = 0.6, ecc = 0.15; // rad/s at rest, orbit eccentricity
     // section openers: the figure starts large in the opening screen, then is
     // carried into its gutter as the opener scrolls away
@@ -305,20 +315,21 @@ export function createLaserDirector() {
         Object.assign(tgt, { oW: 0.7 * nx.v, oX: nx.r.x + nx.r.w * 0.45, oY: nx.r.y + nx.r.h * 0.4, oSep: Math.max(nx.r.w * 0.5, ur * 2), oR: ur * 0.5, oA: TECH(0.9), oB: SOUND(0.75) });
       }
     } else if (x.page === "about") {
-      const ua = x.anchor("union");
-      // no anchor (phones: no side column): a smaller orbit parked at the right
-      // edge, where it grazes line ends instead of sitting on the text
-      let ucx = W < 768 ? W * 0.9 : W * 0.5, ucy = H * 0.5, ur = W < 768 ? M * 0.12 : M * 0.22, read = 0, past = 0;
-      if (ua) {
-        const cy = ua.y + ua.h / 2;
-        // reading the about text tightens the orbit; once the text has gone by
-        // they wait out to the right, smaller and calmer, still twirling
-        read = clamp01((H * 0.95 - cy) / (H * 0.7));
-        past = smooth(H * 0.25, -H * 0.35, cy);
-        ur = Math.min(ua.w, ua.h) / 2;
-        ucx = lerp(ua.x + ua.w / 2, Math.min(W * 0.84, W - ur), past);
-        ucy = lerp(Math.max(cy, H * 0.28), H * 0.3, past);
-      }
+      // the pair orbits on a sheet of spacetime ahead of you (about-scene.ts):
+      // sizes are in floor units, so how big they look is how far away they are
+      const compact = W < 768;
+      const hyS = sheetHorizon(H, 0), depthS = H - hyS;
+      const U = compact ? 0.7 : 0.8; // the pair's reach, floor units
+      const ua = x.anchor("union"); // the about text
+      // reading carries you over the sheet toward them, tightening the orbit
+      let read = 0;
+      if (ua) read = clamp01((H * 0.85 - ua.y) / Math.max(ua.h, H * 0.6));
+      travel = 3 * smooth(0, 1, read);
+      const Z = lerp(compact ? 5.2 : 4.4, compact ? 3.8 : 2.9, smooth(0, 1, read));
+      // in the gutter beside the text (phones: grazing the line ends at the right)
+      const far = placePair(H, hyS, Z, U * 0.36);
+      let ucx = compact ? W * 0.8 : Math.min(W * 0.8, W - 160);
+      let ucy = far.y;
       // "Let's work together." coming on screen pulls them in: they drift beside
       // it and spiral the last of the way together as it rises, fusing as it
       // reaches the middle of the screen
@@ -327,9 +338,16 @@ export function createLaserDirector() {
       if (tg) {
         pull = clamp01((H * 0.98 - tg.y) / (H * 0.42));
         k = smooth(0, 0.55, pull);
-        ucx = lerp(ucx, Math.min(tg.x + tg.w + ur * 1.1, W - ur * 0.9), k);
-        ucy = lerp(ucy, tg.y + tg.h / 2, k);
+        ucx = lerp(ucx, Math.min(tg.x + tg.w + far.r * 1.6, W - far.r * 1.2), k);
+        ucy = lerp(ucy, Math.max(tg.y + tg.h / 2, hyS + depthS * 0.2), k);
       }
+      if (inOpener > 0) {
+        // the opener: the pair orbits wide to the right of the title, close by
+        ucx = lerp(ucx, W * (compact ? 0.84 : 0.72), inOpener);
+        ucy = lerp(ucy, Math.max(opCy, hyS + depthS * 0.25), inOpener);
+      }
+      // how far away the hoops' place on screen puts them, and so their size
+      const sc = depthS / pairDistance(H, hyS, ucy, U * 0.36); // px per floor unit at the pair
       merge = smooth(0.45, 0.97, pull);
       // the ringdown is an event, not a place: once the signals fuse it spreads
       // on its own clock (scrolling back up before the fusion resets it)
@@ -340,12 +358,6 @@ export function createLaserDirector() {
       }
       lastMerge = merge;
       ring = merge >= 0.97 ? (still ? 1 : clamp01((time - fuseAt) / 2.4)) : 0;
-      if (inOpener > 0) {
-        // the opener: the two hoops orbit wide to the right of the title
-        ucx = lerp(ucx, W * 0.72, inOpener);
-        ucy = lerp(ucy, opCy, inOpener);
-        ur = lerp(ur, M * 0.3, inOpener);
-      }
       const fused = smooth(0.88, 1, merge);
       // the road: assembled by the time the timeline pins, and kept after it
       // (the pin's progress resets once it releases) through "start over"
@@ -355,22 +367,23 @@ export function createLaserDirector() {
       const nh = x.anchor("next-home");
       away = pastTimeline && nh ? smooth(H * 0.95, H * 0.3, nh.y) : 0;
       const floor = x.timelineProgress >= 0 || pastTimeline ? 1 : smooth(0.6, 1, assemble) * (ring > 0 ? 1 : 0);
-      resolve = smooth(0.55, 1, ring) * (1 - floor);
+      // the camera tilts up from the sheet to the road's horizon as the timeline rises
+      tilt = smooth(0.05, 0.7, assemble);
       // the orbit's size: wide, tightened by reading, then the plunge
-      const a = ur * 0.56 * lerp(1, 0.55, smooth(0, 1, read)) * Math.pow(1 - merge, 1.2);
+      const a0 = U * 0.56, a = a0 * lerp(1, 0.55, smooth(0, 1, read)) * Math.pow(1 - merge, 1.2);
       // gravity: closer is faster (Kepler, a^-1.5), and the orbit circularizes
       // as it decays
-      orbitRate = Math.min(0.7 * Math.pow((ur * 0.56) / Math.max(a, ur * 0.04), 1.5), 18);
+      orbitRate = Math.min(0.7 * Math.pow(a0 / Math.max(a, a0 * 0.04), 1.5), 18);
       ecc = 0.24 * (1 - merge);
-      const wait = past * (1 - k);
       Object.assign(tgt, {
         // one hoop stays beside the line once they've fused, breathing slowly
-        oW: (1 - 0.3 * wait - 0.2 * fused) * (1 - floor), oX: ucx, oY: ucy,
-        oSep: a, oR: ur * lerp(0.36, 0.5, merge) * (1 - 0.25 * wait) * (1 + 0.035 * fused * Math.sin(time * 1.4)),
+        oW: (1 - 0.2 * fused) * (1 - floor), oX: ucx, oY: ucy,
+        oSep: a * sc, oR: U * lerp(0.36, 0.42, merge) * sc * (1 + 0.035 * fused * Math.sin(time * 1.4)),
         oA: fused > 0.5 ? SOUND(0.97) : TECH(0.95), oB: SOUND(lerp(0.62, 0.9, merge)),
-        rW: smooth(0, 0.05, ring) * (1 - ring) * (1 - floor), rR: ring * Math.hypot(W, H) * 0.75, rPal: SOUND(lerp(0.98, 0.3, ring)),
+        // the ringdown runs out over the sheet (about-scene.ts), not as a ring on the glass
+        rW: 0, rPal: SOUND(0.97),
         // the one calm trace — the timeline floor's horizon when it arrives
-        sW: Math.max(resolve, 0.6 * floor), sBase: H * 0.56, sAmp: H * 0.02 * (1 - floor), sCyc: 1.2, sA: SOUND(0.97),
+        sW: 0.6 * floor, sBase: H * 0.56, sAmp: 0, sCyc: 1.2, sA: SOUND(0.97),
         // the floor is a road: a white and a pearl rail at its edges, a car on it (car.ts)
         gW: floor * 0.7, gRails: floor, gGap: roadHalfOf(W, H),
         bright: lerp(0.95, 0.82, floor), hot: lerp(0.2, 0.08, floor) + 0.5 * fused * (1 - ring),
@@ -450,11 +463,18 @@ export function createLaserDirector() {
 
     // past the timeline the road holds its "now" framing
     const tp = pastTimeline ? 1 : Math.max(x.timelineProgress, 0);
-    const roadScroll = tp * 14 + time * 0.12;
+    const roadScroll = tp * 14 + time * 0.12 + travel;
     const roadVx = W * (0.5 + 0.18 * (0.5 - tp));
     u.uGridL.value.set(c.gW, H * 0.56, roadScroll, TECH(0.32));
     u.uGridB.value.set(roadVx, roadHalfOf(W, H) * 0.25, 1.1, 0); // floor lines: a quarter road apart
     u.uRails.value.set(c.gRails, c.gGap, TECH(0.95), SOUND(0.8));
+    // about: the floor as a sheet of spacetime, the pair placed on it (about-scene.ts)
+    const hy = scene(u, {
+      H, dt, on: x.page === "about", road: tilt, vx: roadVx,
+      ox: c.oX, oy: c.oY, dist: u.uOrbit.value.y, ringR: c.oR, phase: orbitPhase, rate: orbitRate,
+      merge, ringAge: ring > 0 ? (still ? 10 : time - fuseAt) : -1, compact: W < 768,
+      palA: TECH(0.8), palB: SOUND(0.72),
+    });
 
     const feat = x.features ?? { room: false, wipe: false, titles: false };
     const ptr = x.pointer ?? { x: 0, y: 0 };
@@ -472,13 +492,13 @@ export function createLaserDirector() {
     let nSeg = buildRoom({ page: x.page, W, H, p, time, pointer: ptr, focus, tech: TECH, sound: SOUND, weight: roomW }, segs, segsB);
     // the car on the timeline's road, in the floor's perspective
     const car = buildCar({
-      W, H, hy: H * 0.56, vx: roadVx, roadHalf: c.gGap, tp, away, time,
+      W, H, hy, vx: roadVx, roadHalf: c.gGap, tp, away, time,
       weight: c.gW / 0.7, body: TECH(0.9), light: SOUND(0.95), glow: SOUND(0.7),
     }, segs, segsB, nSeg, hull);
     nSeg = car.n;
     // lamp posts beside the road, streaming past at the floor's pace
     nSeg = buildRoadside({
-      H, hy: H * 0.56, vx: roadVx, roadHalf: c.gGap, scroll: roadScroll, density: 1.1,
+      H, hy, vx: roadVx, roadHalf: c.gGap, scroll: roadScroll, density: 1.1,
       weight: c.gW / 0.7, post: TECH(0.7), lamp: SOUND(0.92),
     }, segs, segsB, nSeg);
     // the fusion's debris: scattered glyphs that fly back together into the road
@@ -540,10 +560,12 @@ export function createLaserDirector() {
 // When the two signals fuse on the about page, the figure explodes: DEBRIS
 // short strokes shoot out of the fusion point, each born in its signal's color
 // (white for tech, pearl for sound), slowing as they spread, then hanging and
-// drifting. As the timeline rises (`assemble` 0 → 1) each flies to its own
-// piece of the road scene, staggered, and lies down on it: the horizon, the
-// two rails, the edges of the car. The real scene fades in beneath them, and
-// they fade out as they land, so the road is literally made of the explosion.
+// drifting. They fly in depth too: those heading your way swell and shoot past
+// the screen's edges, to stream back in from beyond them. As the timeline
+// rises (`assemble` 0 → 1) each flies to its own piece of the road scene,
+// staggered, and lies down on it: the horizon, the two rails, the edges of the
+// car. The real scene fades in beneath them, and they fade out as they land,
+// so the road is literally made of the explosion.
 
 const DEBRIS = 28;
 const dSegs = new Float32Array(ROOM_SEGS * 4);
@@ -588,14 +610,16 @@ function debris(segs: Float32Array, segsB: Float32Array, n0: number, d: DebrisIn
   let n = n0;
   const v = Math.exp(-2.6 * tE); // 1 at the blast, → 0 as they slow
   for (let i = 0; i < T.length && n < ROOM_SEGS; i++) {
-    const h1 = hash(i * 12.9898 + 1), h2 = hash(i * 78.233 + 2), h3 = hash(i * 37.719 + 3);
-    // flight: out along its own heading, slowing, then a slow drift and tumble
+    const h1 = hash(i * 12.9898 + 1), h2 = hash(i * 78.233 + 2), h3 = hash(i * 37.719 + 3), h4 = hash(i * 93.989 + 4);
+    // flight: out along its own heading, slowing, then a slow drift and tumble —
+    // nearer (or farther) as it goes, so it swells (or shrinks) in perspective
     const th = h1 * Math.PI * 2;
-    const r = (0.18 + 0.5 * h2) * M * (1 - v);
+    const ps = 1 / Math.max(1 - (1 - v) * (h4 - 0.3) * 1.1, 0.22);
+    const r = (0.18 + 0.5 * h2) * M * (1 - v) * ps;
     const px = fuseX + Math.cos(th) * r + Math.sin(time * 0.5 + i) * M * 0.015;
     const py = fuseY + Math.sin(th) * r * 0.85 + Math.cos(time * 0.4 + i * 1.7) * M * 0.012;
     const phi = th + (1 - v) * (h3 - 0.5) * 2 * Math.sin(time * 0.35 + i);
-    const L = 8 + 56 * v;
+    const L = (8 + 56 * v) * Math.min(ps, 2.5);
     const dx = Math.cos(phi) * L * 0.5, dy = Math.sin(phi) * L * 0.5;
     // landing, staggered so the scene builds piece by piece
     const e0 = clamp01((assemble - 0.25 * h3) / 0.75);
