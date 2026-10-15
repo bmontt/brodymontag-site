@@ -130,6 +130,17 @@ export default function MusicPage() {
                       src={content.music.releases.soundcloudEmbedUrl}
                     />
                   </div>
+                  <div className="mt-4 overflow-hidden rounded-xl">
+                    <DeferredIframe
+                      title="Spotify — Monty (US)"
+                      width="100%"
+                      height="152"
+                      frameBorder="0"
+                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                      loading="lazy"
+                      src={content.music.releases.spotifyEmbedUrl}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

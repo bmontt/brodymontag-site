@@ -750,6 +750,7 @@
     },
     "releases": {
       "soundcloudEmbedUrl": "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/brodymontag&color=%239b8cf2&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false",
+      "spotifyEmbedUrl": "https://open.spotify.com/embed/artist/3uIzwP6Ab6TgP61naHtDMO?utm_source=generator&theme=0",
       "items": [
         {
           "id": "fire",
