@@ -3,6 +3,7 @@
 // about) and the site footer.
 
 import { content } from "@/lib/content";
+import { DisplayWord } from "@/components/display-word";
 
 export type SupportedArtist = { name: string; logo?: string; w?: number; h?: number };
 
@@ -29,7 +30,7 @@ export const SECTION_SIZE = { md: "clamp(1.75rem, 3.6vw, 2.75rem)", sm: "clamp(1
 export function SectionLabel({ children, size = "md" }: { children: React.ReactNode; size?: keyof typeof SECTION_SIZE }) {
   return (
     <h3 data-tp className={`tp-accent relative ${SECTION_HEADING} ${size === "md" ? "mb-6" : "mb-4"}`} style={{ fontSize: SECTION_SIZE[size] }}>
-      {children}
+      {typeof children === "string" ? <DisplayWord text={children} tracking={-0.04} halo /> : children}
     </h3>
   );
 }

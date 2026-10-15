@@ -18,6 +18,7 @@ import { content } from "@/lib/content";
 import { glow } from "@/lib/glow";
 import { useEffect, useRef, type CSSProperties } from "react";
 import { Morph, PageTransition } from "@/components/morph";
+import { DisplayWord } from "@/components/display-word";
 
 const j = content.journey as Record<string, { heading: string }>;
 const caption = (id: string) => j[id].heading.split(" — ").pop()!.replace(/\.$/, "");
@@ -93,15 +94,15 @@ export default function Landing({ now }: { now: NowLines | null }) {
             >
               <Morph name={`title-${o.vt}`}>
                 <span
-                  className={`inline-block font-sans font-medium leading-[0.9] tracking-[-0.045em] transition-[letter-spacing] duration-500 group-hover:tracking-[-0.03em] group-focus-visible:tracking-[-0.03em] ${o.tone}`}
+                  className={`halo-none inline-block font-sans font-medium leading-[0.9] tracking-[-0.045em] transition-[letter-spacing] duration-500 group-hover:tracking-[-0.03em] group-focus-visible:tracking-[-0.03em] ${o.tone}`}
                   style={{ fontSize: o.size }}
                 >
-                  {o.label}
+                  <DisplayWord text={o.label} tracking={-0.045} />
                 </span>
               </Morph>
               <span className="mt-3 block font-mono text-xs text-foreground/50 transition-colors duration-300 group-hover:text-foreground/70">
                 {o.caption}
-                <kbd className="ml-3 hidden rounded-sm border border-white/10 px-1 text-[10px] text-foreground/45 md:inline">{o.key}</kbd>
+                <kbd className="ml-3 hidden rounded-sm border border-white/10 px-1 text-[11px] text-foreground/45 md:inline">{o.key}</kbd>
               </span>
               {now && now[o.id as keyof NowLines] && <span className="mt-1.5 block font-mono text-xs text-foreground/65">
                 <span className={`mr-2 inline-block h-1.5 w-1.5 rounded-full align-middle ${o.id === "software" ? "bg-foreground/70" : o.id === "music" ? "bg-iridescent" : "bg-foreground/40"} now-pulse`} />

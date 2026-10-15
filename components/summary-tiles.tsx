@@ -51,23 +51,23 @@ export default function SummaryTiles({ groups }: { groups: TileGroup[] }) {
 
   return (
     <div ref={root} className="flex min-h-[calc(100svh-7rem)] flex-col justify-center py-8">
-      <div className="grid w-full gap-x-12 gap-y-10 md:grid-cols-3">
+      <div className="grid w-full gap-x-10 gap-y-10 md:grid-cols-3">
         {groups.map((g) => (
           <section key={g.title} aria-label={g.title}>
             <div data-tile-head className="mb-1 flex items-baseline justify-between border-b border-white/15 pb-2">
               <h3 className="font-sans text-lg font-medium tracking-[-0.02em] text-foreground">{g.title}</h3>
-              <span className="font-mono text-[11px] tabular-nums text-foreground/55">{String(g.tiles.length).padStart(2, "0")}</span>
+              <span className="font-mono text-2xs tabular-nums text-foreground/55">{String(g.tiles.length).padStart(2, "0")}</span>
             </div>
             <ol>
               {g.tiles.map((t, i) => (
                 <li key={`${g.title}:${t.label}`} data-tile>
                   <a
                     href={t.href}
-                    className="group grid grid-cols-[1.75rem_1fr_auto] items-baseline gap-x-2 border-b border-white/[0.07] py-2 transition-colors hover:border-white/20"
+                    className="group grid grid-cols-[1.5rem_1fr_auto] items-baseline gap-x-2 border-b border-white/[0.07] py-2 transition-colors hover:border-white/20"
                   >
-                    <span className="font-mono text-[11px] tabular-nums text-foreground/45">{String(i + 1).padStart(2, "0")}</span>
-                    <span className="truncate font-sans text-[15px] text-foreground/88 transition-colors group-hover:text-foreground">{t.label}</span>
-                    {t.meta && <span className="font-mono text-[11px] text-foreground/55">{t.meta}</span>}
+                    <span className="font-mono text-2xs tabular-nums text-foreground/45">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="min-w-0 text-balance font-sans text-[16px] md:truncate text-foreground/88 transition-colors group-hover:text-foreground">{t.label}</span>
+                    {t.meta && <span className="font-mono text-2xs text-foreground/55">{t.meta}</span>}
                   </a>
                 </li>
               ))}

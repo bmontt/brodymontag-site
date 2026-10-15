@@ -24,7 +24,7 @@ export default function ReleaseCard({ release }: { release: Release }) {
         ))}
       </div>
       {release.description && (
-        <p className="font-sans text-sm text-foreground/70 leading-relaxed pl-3 border-l border-white/10 mb-4">
+        <p className="copy-sm pl-3 border-l border-white/10 mb-4">
           {release.description}
         </p>
       )}

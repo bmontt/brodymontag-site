@@ -57,6 +57,40 @@
   --radius-lg: calc(var(--radius) + 2px);
 }
 
+/* the type scale, a step up from Tailwind's defaults: reading text (labels,
+   meta, card and page prose) ~12% larger, card titles a touch. Line heights
+   keep Tailwind's ratios. 3xl and up are display sizes, left alone, as are
+   the clamp()ed headings (inline fontSize). 2xs is the small mono meta
+   (counters, pills, timeline kinds) that used to be text-[11px]. */
+@theme {
+  --text-2xs: 0.78125rem; /* 12.5px (was 11) */
+  --text-2xs--line-height: 1.5;
+  --text-xs: 0.84375rem; /* 13.5px (12) */
+  --text-sm: 0.96875rem; /* 15.5px (14) */
+  --text-base: 1.09375rem; /* 17.5px (16) */
+  --text-lg: 1.21875rem; /* 19.5px (18) */
+  --text-xl: 1.34375rem; /* 21.5px (20) */
+  --text-2xl: 1.59375rem; /* 25.5px (24) */
+  /* running text (sentences, bios, descriptions, bullets) gets a reading
+     size of its own, growing with the screen; labels, meta, counters and
+     pills stay on the small mono steps above */
+  --text-body: clamp(1.0625rem, 1rem + 0.2vw, 1.125rem); /* 17 → 18px */
+  --text-body--line-height: 1.65;
+  --text-body-sm: clamp(1rem, 0.95rem + 0.15vw, 1.0625rem); /* 16 → 17px: cards, lists */
+  --text-body-sm--line-height: 1.6;
+}
+
+/* the reading layer under the mono labels: the prose face at a reading size
+   and near-full contrast. copy for page paragraphs, copy-sm inside cards and
+   lists. A leading-* class still tightens the line height where space is
+   short (sub-widgets). */
+@utility copy {
+  @apply font-sans text-body text-pretty text-foreground/88;
+}
+@utility copy-sm {
+  @apply font-sans text-body-sm text-pretty text-foreground/88;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -420,11 +454,22 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   footer a { padding-block: 0.6rem; }
 }
 
-/* a soft dark halo behind reading text: where a laser crosses copy it fades
-   out around the letters (drawn once at paint; no per-frame cost) */
-main :where(p, li, h3, h4, dd, dt, td) {
-  text-shadow: 0 0 10px oklch(0.13 0 0 / 0.85), 0 0 3px oklch(0.13 0 0 / 0.9);
+/* a soft dark halo behind text: where a laser crosses copy, labels or meta it
+   fades out around the letters (drawn once at paint; no per-frame cost). The
+   radii follow the type, from 10px / 3px at reading sizes up to 16px / 5px
+   on headings. Display words (h1, h2, the landing and next-section words:
+   .halo-none) stand on their own, and gradient-clipped text (.text-blend)
+   can't carry one: the shadow would paint over its gradient. Inside an h3 or
+   h4 the spans (kerned display pieces, icons' labels) inherit the heading's,
+   so a heading's own text-shadow animation (tp-settle) still reaches them. */
+:root {
+  --text-halo: 0 0 clamp(10px, 0.6em, 16px) oklch(0.13 0 0 / 0.85), 0 0 clamp(3px, 0.18em, 5px) oklch(0.13 0 0 / 0.9);
 }
+main :where(p, li, h3, h4, dd, dt, td, span, a, kbd):not(:where(h1, h2, h3, h4) *),
+footer :where(p, a, span) {
+  text-shadow: var(--text-halo);
+}
+.text-blend, .text-blend *, .halo-none, .halo-none * { text-shadow: none; }
 
 /* ── transition accents: one short flourish as each section heading arrives
    (journey-controller adds .tp-on), different per page, never during content */

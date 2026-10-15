@@ -36,11 +36,11 @@ export default function ProjectCard({ project }: { project: Project }) {
             </>
           }
         />
-        <p className="font-sans text-sm leading-relaxed text-foreground/78">{project.description}</p>
+        <p className="copy-sm">{project.description}</p>
         {project.stats ? (
           <>
             <StatWidgets stats={project.stats.slice(0, 3)} />
-            {project.statsAsOf && <p className="mt-2 font-mono text-[11px] text-foreground/50">as of {project.statsAsOf.toLowerCase()}</p>}
+            {project.statsAsOf && <p className="mt-2 font-mono text-2xs text-foreground/50">as of {project.statsAsOf.toLowerCase()}</p>}
           </>
         ) : (
           <SubWidgets items={project.highlights.slice(0, 3)} cols={3} />

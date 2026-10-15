@@ -7,6 +7,7 @@
 // evolves its era skin across the same scroll (journey.timelineProgress).
 
 import EntryCard from "@/components/journey/entry-card";
+import { kern } from "@/components/display-word";
 import { groupByYear } from "@/lib/timeline";
 import { getChapter } from "@/lib/chapters";
 
@@ -38,7 +39,7 @@ export default function TimelineSection() {
         >
           <span className="sr-only">{chapter.heading.split(" — ")[0]} — </span>
           <span data-display className="block">
-            {chapter.heading.split(" — ").pop()}
+            {kern(chapter.heading.split(" — ").pop()!, -0.04)}
           </span>
         </h2>
       </div>
