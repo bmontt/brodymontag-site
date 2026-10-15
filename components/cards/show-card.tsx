@@ -8,7 +8,7 @@ export default function ShowCard({ event }: { event: Event }) {
 
   return (
     <Link href={`/shows/${event.slug}`} className="group block">
-      <div className="grid grid-cols-[6.5rem_1fr] gap-x-8 items-start -mx-3 px-3 py-2.5 hover:bg-white/[0.025] transition-colors duration-150">
+      <div className="grid gap-y-0.5 sm:grid-cols-[7.5rem_1fr] sm:gap-x-8 items-start -mx-3 px-3 py-2.5 hover:bg-white/[0.025] transition-colors duration-150">
         <span className="font-mono text-xs text-muted-foreground/70 pt-0.5 shrink-0">
           {event.date.toLowerCase()}
         </span>
