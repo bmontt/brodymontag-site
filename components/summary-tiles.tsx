@@ -14,13 +14,8 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export type Tile = { label: string; href: string; icon?: string };
+export type Tile = { label: string; href: string; icon?: string; meta?: string };
 export type TileGroup = { title: string; tiles: Tile[] };
-
-const drift = (i: number) => {
-  const v = Math.sin(i * 12.9898) * 43758.5453;
-  return v - Math.floor(v) - 0.5;
-};
 
 export default function SummaryTiles({ groups }: { groups: TileGroup[] }) {
   const root = useRef<HTMLDivElement>(null);
@@ -37,18 +32,10 @@ export default function SummaryTiles({ groups }: { groups: TileGroup[] }) {
       const tiles = gsap.utils.toArray<HTMLElement>(r.querySelectorAll("[data-tile]"));
       const heads = gsap.utils.toArray<HTMLElement>(r.querySelectorAll("[data-tile-head]"));
       tl = gsap.timeline({
-        scrollTrigger: { trigger: r, start: "top top+=56", end: () => `+=${innerHeight * 0.85}`, pin: true, scrub: 0.5, invalidateOnRefresh: true },
+        scrollTrigger: { trigger: r, start: "top top+=56", end: () => `+=${innerHeight * 0.6}`, pin: true, scrub: 0.5, invalidateOnRefresh: true },
       });
-      tl.to(heads, { opacity: 0, y: -12, duration: 0.25, stagger: 0.05, ease: "power1.in" }, 0)
-        .to(tiles, {
-          y: () => innerHeight * 0.7,
-          x: (i: number) => drift(i) * 24,
-          opacity: 0,
-          scale: 0.92,
-          duration: 0.55,
-          ease: "power2.in",
-          stagger: { each: 0.018, from: "start" },
-        }, 0.05);
+      tl.to(tiles, { x: -18, opacity: 0, duration: 0.4, ease: "power2.in", stagger: { each: 0.014, from: "start" } }, 0)
+        .to(heads, { opacity: 0, duration: 0.2, stagger: 0.04, ease: "power1.in" }, 0.25);
       ScrollTrigger.sort();
       ScrollTrigger.refresh();
       });
@@ -64,29 +51,28 @@ export default function SummaryTiles({ groups }: { groups: TileGroup[] }) {
 
   return (
     <div ref={root} className="flex min-h-[calc(100svh-7rem)] flex-col justify-center py-8">
-      <div className="grid w-full gap-x-12 gap-y-8 md:grid-cols-[1.25fr_1.1fr_0.9fr]">
+      <div className="grid w-full gap-x-12 gap-y-10 md:grid-cols-3">
         {groups.map((g) => (
-          <div key={g.title}>
-            <p data-tile-head className="mb-4 font-sans text-lg font-medium tracking-[-0.02em] text-foreground md:text-xl">{g.title}</p>
-            <ul className="flex flex-wrap gap-2">
-              {g.tiles.map((t) => (
+          <section key={g.title} aria-label={g.title}>
+            <div data-tile-head className="mb-1 flex items-baseline justify-between border-b border-white/15 pb-2">
+              <h3 className="font-sans text-lg font-medium tracking-[-0.02em] text-foreground">{g.title}</h3>
+              <span className="font-mono text-[11px] tabular-nums text-foreground/40">{String(g.tiles.length).padStart(2, "0")}</span>
+            </div>
+            <ol>
+              {g.tiles.map((t, i) => (
                 <li key={`${g.title}:${t.label}`} data-tile>
                   <a
                     href={t.href}
-                    className="pill rounded-xl border border-white/12 px-3.5 py-2.5 font-sans text-sm font-medium leading-none text-foreground/80 md:text-[15px]"
+                    className="group grid grid-cols-[1.75rem_1fr_auto] items-baseline gap-x-2 border-b border-white/[0.07] py-2 transition-colors hover:border-white/20"
                   >
-                    <span className="flex items-center gap-2">
-                    {t.icon && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={t.icon} alt="" aria-hidden="true" className="brand-icon h-4 w-4 object-contain" style={{ width: t.icon.includes("fiserv") ? "auto" : undefined, height: t.icon.includes("fiserv") ? 10 : undefined }} />
-                    )}
-                    {t.label}
-                    </span>
+                    <span className="font-mono text-[11px] tabular-nums text-foreground/30">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="truncate font-sans text-[15px] text-foreground/80 transition-colors group-hover:text-foreground">{t.label}</span>
+                    {t.meta && <span className="font-mono text-[11px] text-foreground/40">{t.meta}</span>}
                   </a>
                 </li>
               ))}
-            </ul>
-          </div>
+            </ol>
+          </section>
         ))}
       </div>
     </div>

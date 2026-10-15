@@ -19,6 +19,12 @@ import { experience, stack } from "@/lib/stack-data";
 // The tech half: projects, experience, stack. White-grey-black; the laser
 // layer holds a white knot in the gutter (lib/director/laser.ts, "software").
 
+/** "June 2025 — present" → "2025–now"; "2021 — 2025" → "2021–25" */
+const years = (period: string) => {
+  const [a, b] = period.split(" — ").map((x) => x.match(/\d{4}/)?.[0] ?? x);
+  return b === "present" || !b ? `${a}–now` : a === b ? a : `${a}–${b.slice(2)}`;
+};
+
 /** sideways nudges (% of the column) for the project cards, repeating */
 const SHIFT = [0, 6, 2, 8, 1, 5, 3, 7];
 
@@ -42,9 +48,9 @@ export default function SoftwarePage() {
               <div className="mx-auto max-w-6xl px-6 md:px-12">
                 <SummaryTiles
                   groups={[
-                    { title: "projects", tiles: projects.map((p) => ({ label: p.name, href: `#project-${p.slug}`, icon: p.icon })) },
-                    { title: "experience", tiles: experience.map((e) => ({ label: e.org, href: `#role-${e.id}`, icon: e.icon })) },
-                    { title: "stack", tiles: stack.map((c) => ({ label: c.label, href: "#stack" })) },
+                    { title: "projects", tiles: projects.map((p) => ({ label: p.name, href: `#project-${p.slug}`, meta: p.status === "wip" ? "in progress" : "live" })) },
+                    { title: "experience", tiles: experience.map((e) => ({ label: e.org, href: `#role-${e.id}`, meta: years(e.period) })) },
+                    { title: "stack", tiles: stack.map((c) => ({ label: c.label, href: "#stack", meta: `${c.items.length}` })) },
                   ]}
                 />
               </div>
