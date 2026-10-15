@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- BM in the site's shimmer (orchid → sky blue → white). On a light browser
+       theme it sits on the site's dark tile so the white end still reads; on a
+       dark theme the tile drops away and the letters float, as on the site. -->
+  <style>
+    .word { transform-origin: 32px 32px; }
+    @media (prefers-color-scheme: dark) { .tile { display: none; } .word { transform: scale(1.14); } }
+  </style>
+  <defs>
+    <linearGradient id="s" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#e1b9f3"/>
+      <stop offset="0.55" stop-color="#7fdce6"/>
+      <stop offset="1" stop-color="#eeeeee"/>
+    </linearGradient>
+  </defs>
+  <rect class="tile" width="64" height="64" rx="14" fill="#070707"/>
+  <path class="word" fill="url(#s)" d="M7 45.44V18.56H19.03Q23.35 18.56 25.53 20.52Q27.68 22.43 27.68 25.55Q27.68 29.5 23.47 30.93V31.04Q25.72 31.72 27.09 33.48Q28.47 35.25 28.47 37.7Q28.47 41.27 26.1 43.3Q23.65 45.44 19.33 45.44ZM12.45 33.41V40.93H18.73Q20.68 40.93 21.81 39.93Q22.94 38.94 22.94 37.28Q22.94 35.44 21.72 34.42Q20.5 33.41 18.58 33.41ZM12.45 29.39H18.35Q20.16 29.39 21.25 28.54Q22.34 27.7 22.34 26.15Q22.34 24.65 21.3 23.82Q20.27 23 18.47 23H12.45Z M30.53 45.44V18.56H38.2L42 32.06Q42.41 33.56 42.85 35.38Q43.28 37.21 43.5 38.26L43.69 39.31H43.77Q44.48 35.44 45.42 32.06L49.22 18.56H57V45.44H51.92V30.03L52.15 24.46H52.08Q51.47 27.62 50.91 29.58L46.29 45.44H41.06L36.55 29.58L35.38 24.46H35.31Q35.53 27.85 35.53 30.03V45.44Z"/>
+</svg>

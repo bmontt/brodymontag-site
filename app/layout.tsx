@@ -36,8 +36,16 @@ export const metadata: Metadata = {
       "Full-stack developer & DJ/producer. Fiserv. Monty (US). East Coast based.",
     images: ["/brody.optimized.webp"],
   },
+  // BM in the shimmer. The SVG adapts to the browser theme (dark tile on light
+  // chrome, floating letters on dark); the .ico (always on the tile) is the
+  // fallback for browsers without SVG favicons — sized, not "any", so the SVG
+  // wins where it's supported.
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
   },
   // machine-readable face of the site (see lib/machine.ts)
   alternates: { types: { "text/plain": "/llms.txt" } },
