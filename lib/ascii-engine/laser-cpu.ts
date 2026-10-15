@@ -114,6 +114,16 @@ export function laserFrame(
   const oz = Math.sin(orbit.z) * Math.min(1, Math.max(0, orbit.y / Math.max(orbit.w, 1)));
   const nSeg = Math.round(u.uSegN.value);
   const segs = u.uSegs.value, segsB = u.uSegsB.value;
+  // each segment's reach (its box grown by the 70 px a stroke can light), so
+  // most cells skip it without measuring
+  const segBox = new Float32Array(Math.max(nSeg, 1) * 4);
+  for (let i = 0; i < nSeg; i++) {
+    const sg = segs[i], node = segsB[i].w < -0.5;
+    segBox[i * 4] = (node ? sg.x - sg.z : Math.min(sg.x, sg.z)) - 70;
+    segBox[i * 4 + 1] = (node ? sg.x + sg.z : Math.max(sg.x, sg.z)) + 70;
+    segBox[i * 4 + 2] = (node ? sg.y - sg.w : Math.min(sg.y, sg.w)) - 70;
+    segBox[i * 4 + 3] = (node ? sg.y + sg.w : Math.max(sg.y, sg.w)) + 70;
+  }
   const carHull = u.uCarHull.value, carN = Math.round(u.uCarN.value);
   // inside the car's silhouette, grown by about a glyph, the road behind it is
   // hidden (laser-shader.ts inCar)
@@ -233,11 +243,11 @@ export function laserFrame(
       if (ringL.x >= 0.002) circle(px, py, orbitB.x, orbitB.y, ringL.y, ringL.z, ringL.x);
       // the room, the car, the software figure: projected segments (lib/director)
       for (let i = 0; i < nSeg; i++) {
+        if (px < segBox[i * 4] || px > segBox[i * 4 + 1] || py < segBox[i * 4 + 2] || py > segBox[i * 4 + 3]) continue;
         const sg = segs[i], sb = segsB[i];
         if (sb.w < -0.5) {
           // a node: a diamond's outline (laser-shader.ts roomL)
           const qx = px - sg.x, qy = py - sg.y, ax = Math.abs(qx), ay = Math.abs(qy);
-          if (ax > sg.z + 70 || ay > sg.w + 70) continue;
           const ex = -sg.z, ey = sg.w;
           const t = Math.min(1, Math.max(0, ((ax - sg.z) * ex + ay * ey) / Math.max(ex * ex + ey * ey, 1e-4)));
           const dx = ax - (sg.z + ex * t), dy = ay - ey * t, d = Math.hypot(dx, dy);

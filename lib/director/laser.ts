@@ -271,7 +271,7 @@ export function createLaserDirector() {
         tgt.kW = 1;
         tgt.kX = lerp(tgt.kX, W * 0.72, inOpener);
         tgt.kY = lerp(tgt.kY, opCy, inOpener);
-        tgt.kR = lerp(tgt.kR, Math.min(M * 0.36, W * 0.22), inOpener);
+        tgt.kR = lerp(tgt.kR, Math.min(M * 0.36, W * (W < 768 ? 0.3 : 0.22)), inOpener);
       }
       const nx = nextVis("next-music");
       if (nx && nx.v > 0) Object.assign(tgt, { fW: 0.7 * nx.v, fX: nx.r.x + nx.r.w * 0.3, fY: nx.r.y + nx.r.h + H * 0.12, fSpread: 0.8, fLen: H * 0.6, fCount: 5, fPal: SOUND(0.62) });
@@ -489,7 +489,7 @@ export function createLaserDirector() {
       x: c.kX, y: c.kY, r: c.kR, w: c.kW * 0.95,
       yaw: c.kYaw + 0.38 * Math.sin(lissSpin * 0.4) + (x.drag?.spin ?? 0),
       tilt: 0.2 + 0.3 * (c.kTilt - 0.35) + 0.08 * Math.sin(time * 0.2) + (x.drag?.tilt ?? 0),
-      pal: c.kPal, phase: lissSpin, dt, key: figKey,
+      pal: c.kPal, phase: lissSpin, dt, key: figKey, compact: W < 768,
     }, segs, segsB, nSeg);
     for (let i = 0; i < car.hullN; i++) u.uCarHull.value[i].fromArray(hull, i * 2);
     u.uCarN.value = car.hullN;

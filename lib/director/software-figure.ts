@@ -32,6 +32,8 @@ export interface FigureInput {
   dt: number; // s (0 = reduced motion: fully formed, no glides)
   /** which graph: a layout key (gapKey / pageKey), "" for the page's own */
   key: string;
+  /** a narrow screen: always the folded-down graph */
+  compact: boolean;
 }
 
 /** facings (yaw): inputs on the left, flowing right — and the mirror, flowing left */
@@ -289,7 +291,7 @@ export function createSoftwareFigure() {
     if (f.w < 0.002 || f.r < 2) return n0;
 
     // small places fold the graph down (with a little hysteresis)
-    small = small ? f.r < 128 : f.r < 112;
+    small = f.compact || (small ? f.r < 128 : f.r < 112);
     const key = `${small ? "s" : ""}${f.key}`;
     if (key !== keyNow) {
       // re-wire: start from wherever the nodes are now
@@ -332,13 +334,11 @@ export function createSoftwareFigure() {
     const clock = f.phase * 3.5;
     const packetOn = (g: Graph, k: number, step: number) => {
       const T = g.steps + 1.5;
-      const jit = hash(k * 3.7 + step) * 0.25;
-      for (const off of [0, T / 2]) {
-        const cyc = (((clock + off) % T) + T) % T;
-        const pt = cyc - step - jit;
-        if (pt >= 0 && pt <= 1) return pt;
-      }
-      return -1;
+      const at = clock - step - hash(k * 3.7 + step) * 0.25;
+      const pt = ((at % T) + T) % T;
+      if (pt <= 1) return pt;
+      const pt2 = (((at + T / 2) % T) + T) % T;
+      return pt2 <= 1 ? pt2 : -1;
     };
     heat.fill(0);
     for (let k = 0; k < to.edges.length; k++) {
