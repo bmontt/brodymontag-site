@@ -67,7 +67,7 @@ export default function MusicPage() {
                           width={a.w}
                           height={a.h}
                           loading="lazy"
-                          className="w-auto object-contain opacity-55 transition-opacity duration-200 hover:opacity-95"
+                          className="w-auto object-contain opacity-90"
                           style={{ height: `calc(${logoHeight(a.w / a.h)}px * var(--logo-scale))` }}
                           sizes="240px"
                         />

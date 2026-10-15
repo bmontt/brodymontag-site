@@ -79,7 +79,7 @@ export function StatWidgets({ stats, cols = 3 }: { stats: { label: string; value
 }
 
 /** a small brand or project mark beside a title: decorative (the title names it),
- *  greyscale until its card or itself is hovered (globals.css .brand-icon) */
+ *  always in full color (globals.css .brand-icon) */
 export function BrandIcon({ src, size = 20, round = false }: { src?: string; size?: number; round?: boolean }) {
   if (!src) return null;
   return (

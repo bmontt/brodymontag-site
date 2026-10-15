@@ -92,7 +92,7 @@ export default function AboutPage() {
                   width={144}
                   height={176}
                   loading="lazy"
-                  className="pill-iridescent h-44 w-36 border border-white/10 object-cover object-top grayscale brightness-[0.72] contrast-[1.12]"
+                  className="pill-iridescent h-44 w-36 border border-white/10 object-cover object-top"
                   sizes="144px"
                 />
                 <p className="font-mono text-xs text-foreground/40">

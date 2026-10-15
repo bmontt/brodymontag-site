@@ -7,7 +7,6 @@ import BackLink from "@/components/back-link";
 import { SECTION_HEADING, SECTION_SIZE } from "@/components/journey/section-bits";
 import { events } from "@/lib/brody-events";
 
-const PHOTO_FILTER = "grayscale(1) brightness(0.72) contrast(1.12)";
 
 function AsciiRule({ className = "" }: { className?: string }) {
   return (
@@ -138,7 +137,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
                   <div
                     key={i}
                     className="photo-hover relative w-full overflow-hidden border border-white/8"
-                    style={{ "--photo-filter": PHOTO_FILTER, maxHeight: "360px", aspectRatio: "16/9" } as React.CSSProperties}
+                    style={{ maxHeight: "360px", aspectRatio: "16/9" }}
                   >
                     <Image
                       src={img.src}

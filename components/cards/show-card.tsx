@@ -26,7 +26,7 @@ export default function ShowCard({ event }: { event: Event }) {
           </div>
           {firstImage && (
             // CSS group-hover replaces the old framer whileHover filter reveal
-            <div className="hidden sm:block shrink-0 h-12 w-16 overflow-hidden border border-white/8 grayscale brightness-[0.72] contrast-[1.12] transition-[filter,border-color] duration-300 group-hover:grayscale-0 group-hover:brightness-100 group-hover:contrast-100 group-hover:border-white/20">
+            <div className="hidden sm:block shrink-0 h-12 w-16 overflow-hidden border border-white/8">
               <Image
                 src={firstImage.src}
                 alt=""
