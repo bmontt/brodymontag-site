@@ -22,9 +22,11 @@ interface Film {
   caption: string;
 }
 
-// both axes feathered, intersected: the film fades out on all four sides
+// both axes feathered, intersected: the film fades out on all four sides. Phones
+// keep only the top and bottom (--feather-x 0): fading a seventh of a narrow
+// screen off each side left the film reading as inset, not edge to edge
 const FEATHER =
-  "linear-gradient(to right, transparent, #000 14%, #000 86%, transparent), " +
+  "linear-gradient(to right, transparent, #000 var(--feather-x), #000 calc(100% - var(--feather-x)), transparent), " +
   "linear-gradient(to bottom, transparent, #000 16%, #000 84%, transparent)";
 
 /** how much the veil covers the stage at its peak (film centered on screen) */
@@ -157,7 +159,7 @@ export default function PromoFilm({ film }: { film: Film }) {
         )}
         <video
           ref={video}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover [--feather-x:0%] md:[--feather-x:14%]"
           style={{ maskImage: FEATHER, WebkitMaskImage: FEATHER, maskComposite: "intersect", WebkitMaskComposite: "source-in" }}
           poster={film.poster}
           src={load ? film.src : undefined}
