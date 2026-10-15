@@ -6,6 +6,7 @@
 // not 50vw. Used by the film and the supported-artists strip on /music.
 
 import { useEffect, useRef, type ReactNode, type RefObject } from "react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 /** keep `bleed` edge to edge: its column is `slot` (an unshifted wrapper) */
 export function useFullBleed(slot: RefObject<HTMLElement | null>, bleed: RefObject<HTMLElement | null>) {
@@ -18,9 +19,15 @@ export function useFullBleed(slot: RefObject<HTMLElement | null>, bleed: RefObje
       b.style.width = `${document.documentElement.clientWidth}px`;
     };
     fit();
+    // anything measured inside before this widened it (a pin locks in its
+    // width) re-measures now
+    const raf = requestAnimationFrame(() => ScrollTrigger.refresh());
     const ro = new ResizeObserver(fit);
     ro.observe(document.documentElement);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
   }, [slot, bleed]);
 }
 
