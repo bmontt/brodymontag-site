@@ -247,34 +247,54 @@ function graphFor(key: string, small: boolean): Graph {
 /** the software page's alternating widgets as they stand on screen */
 export interface Widgets {
   n: number;
-  /** on-screen rects, x0 y0 x1 y1 (px, slide included) */
+  /** on-screen rects, x0 y0 x1 y1 (px, slide included), and each one's opacity */
   rects: Float32Array;
+  alpha: Float32Array;
   /** the id of the widget nearest the middle of the screen ("project-prism"…), "" for none */
   focus: string;
   /** 0 with a widget centered on screen → 1 halfway between two */
   between: number;
-  /** where the last widget ends (px; −∞ for none): the figure leaves with it */
+  /** where the first widget starts and the last ends (px; ±∞ for none) */
+  first: number;
   last: number;
 }
 
 let widgetEls: HTMLElement[] = [];
 /** read the [data-slide] widgets (cached until they leave the document) */
 export function readWidgets(H: number, out: Widgets): Widgets {
-  out.n = 0; out.focus = ""; out.between = 1; out.last = -Infinity;
+  out.n = 0; out.focus = ""; out.between = 1; out.first = Infinity; out.last = -Infinity;
   if (typeof document === "undefined") return out;
   if (!widgetEls.length || !widgetEls[0].isConnected) widgetEls = Array.from(document.querySelectorAll<HTMLElement>("[data-slide]"));
   let best = Infinity;
   for (const el of widgetEls) {
     const r = el.getBoundingClientRect();
+    out.first = Math.min(out.first, r.top);
     out.last = Math.max(out.last, r.bottom);
     if (r.bottom < 0 || r.top > H || r.height < 2) continue;
-    if (out.n * 4 < out.rects.length) out.rects.set([r.left, r.top, r.right, r.bottom], out.n++ * 4);
+    if (out.n * 4 < out.rects.length) {
+      out.alpha[out.n] = el.style.opacity ? Number(el.style.opacity) : 1;
+      out.rects.set([r.left, r.top, r.right, r.bottom], out.n++ * 4);
+    }
     const d = Math.abs(r.top + r.height / 2 - H / 2);
     if (d < best) { best = d; out.focus = el.id; out.between = clamp01(d / (r.height / 2 + 12)); }
   }
   return out;
 }
-export const makeWidgets = (): Widgets => ({ n: 0, rects: new Float32Array(32 * 4), focus: "", between: 1, last: -Infinity });
+export const makeWidgets = (): Widgets => ({ n: 0, rects: new Float32Array(32 * 4), alpha: new Float32Array(32), focus: "", between: 1, first: Infinity, last: -Infinity });
+
+/** behind a widget a stroke sinks to 0.3 (a soft 28 px edge), so the text reads
+ *  over it — as far as the widget itself is showing (one faded out at the side
+ *  hides nothing) */
+export function quietAt(q: Widgets | undefined, x: number, y: number): number {
+  if (!q) return 1;
+  let inside = 0;
+  for (let i = 0; i < q.n; i++) {
+    const r = q.rects;
+    const d = Math.min(x - r[i * 4], r[i * 4 + 2] - x, y - r[i * 4 + 1], r[i * 4 + 3] - y);
+    if (d > -28) inside = Math.max(inside, clamp01((d + 28) / 56) * q.alpha[i]);
+  }
+  return 1 - 0.7 * inside;
+}
 
 /** a project page asks for its own project's graph */
 export function pageKey(): string {
@@ -350,18 +370,7 @@ export function createSoftwareFigure() {
       px = f.x + x1 * f.r * s; py = f.y - y2 * f.r * s; pz = z2;
     };
     const fog = (z: number) => clamp01((z + 1) * 0.5);
-    // behind a widget the strokes sink (a soft 28 px edge), so the text reads over them
-    const qv = f.quiet;
-    const quiet = (x: number, y: number) => {
-      if (!qv) return 1;
-      let inside = 0;
-      for (let i = 0; i < qv.n; i++) {
-        const r = qv.rects;
-        const d = Math.min(x - r[i * 4], r[i * 4 + 2] - x, y - r[i * 4 + 1], r[i * 4 + 3] - y);
-        if (d > -28) inside = Math.max(inside, clamp01((d + 28) / 56));
-      }
-      return 1 - 0.7 * inside;
-    };
+    const quiet = (x: number, y: number) => quietAt(f.quiet, x, y);
 
     // ── packets: waves through the graph, a step at a time ────────────────
     // each edge's packet rides it from source to target in its step's slot of

@@ -49,6 +49,7 @@ import type { StageRouteKind } from "@/lib/journey-store";
 import { buildRoom } from "./room";
 import { buildCar, buildRoadside } from "./car";
 import { createSoftwareFigure, FLOWS_RIGHT, makeWidgets, pageKey, readWidgets } from "./software-figure";
+import { createSoftwareSpace } from "./software-space";
 import { drag, knot, pointer, stepDrag } from "@/lib/stage-input";
 import { flag } from "@/lib/flags";
 import { CAR_HULL, ROOM_SEGS } from "@/lib/ascii-engine/gl/laser-shader";
@@ -122,8 +123,8 @@ export interface LaserOutput {
 interface Frame {
   // scope: up to two traces on one baseline; split ≥ 0 puts A left of it, B right
   sW: number; sWB: number; sBase: number; sAmp: number; sCyc: number; sHarm: number; sA: number; sB: number; sSplit: number;
-  // the software figure (the knot, once)
-  kW: number; kX: number; kY: number; kR: number; kPal: number; kTilt: number;
+  // the software figure (the knot, once) · eW: the network space it opens into (software-space.ts)
+  kW: number; kX: number; kY: number; kR: number; kPal: number; kTilt: number; eW: number;
   // fans
   fW: number; fX: number; fY: number; fSpread: number; fLen: number; fPal: number; fCount: number; fFade: number;
   // orbit + ring
@@ -137,7 +138,7 @@ interface Frame {
 
 const ZERO: Frame = {
   sW: 0, sWB: 0, sBase: 0, sAmp: 0, sCyc: 3, sHarm: 0, sA: 0, sB: 0.5, sSplit: -1,
-  kW: 0, kX: 0, kY: 0, kR: 1, kPal: 0.45, kTilt: 0.35,
+  kW: 0, kX: 0, kY: 0, kR: 1, kPal: 0.45, kTilt: 0.35, eW: 0,
   fW: 0, fX: 0, fY: 0, fSpread: 0.8, fLen: 1, fPal: 0.8, fCount: 6, fFade: 1,
   oW: 0, oX: 0, oY: 0, oSep: 0, oR: 1, oA: 0.47, oB: 0.8,
   rW: 0, rR: 0, rPal: 0.9,
@@ -146,7 +147,7 @@ const ZERO: Frame = {
 };
 const KEYS = Object.keys(ZERO) as (keyof Frame)[];
 // weights and moods ease; geometry follows anchors closely (but glides on arrival)
-const SLOW = new Set<keyof Frame>(["sW", "sWB", "kW", "fW", "oW", "rW", "gW", "gRails", "bright", "hot"]);
+const SLOW = new Set<keyof Frame>(["sW", "sWB", "kW", "eW", "fW", "oW", "rW", "gW", "gRails", "bright", "hot"]);
 const WEIGHT_OF: Partial<Record<keyof Frame, keyof Frame>> = {};
 for (const k of KEYS) if (!SLOW.has(k)) WEIGHT_OF[k] = k[0] === "k" ? "kW" : k[0] === "f" ? "fW" : k[0] === "o" ? "oW" : undefined;
 
@@ -167,6 +168,7 @@ export function createLaserDirector() {
   const segsB = new Float32Array(ROOM_SEGS * 4);
   const hull = new Float32Array(CAR_HULL * 2);
   const figure = createSoftwareFigure();
+  const space = createSoftwareSpace();
   const widgets = makeWidgets();
 
   return function update(u: LaserUniforms, x: LaserInput): LaserOutput {
@@ -194,6 +196,7 @@ export function createLaserDirector() {
     let merge = 0, ring = 0, resolve = 0;
     let figKey = ""; // which graph the software figure takes (software-figure.ts)
     let quiet = false; // it sits behind the widgets: sink it under them
+    let spaceKey = "", spaceOpen = 1; // the network space: whose pattern, how open
     // about's road: assemble 0–1 as the timeline rises (the debris converging),
     // past = the timeline is behind you (the road stays), away = the drive-off
     let assemble = 0, pastTimeline = false, away = 0;
@@ -236,29 +239,28 @@ export function createLaserDirector() {
       const detail = x.page === "project";
       const rule = detail ? null : x.anchor("code-rule");
       if (rule) Object.assign(tgt, { sW: 1, sBase: rule.y + rule.h / 2, sAmp: H * 0.014, sCyc: 6, sHarm: 0.7, sA: TECH(0.75) });
-      // the network holds one place behind the widgets (wide screens),
-      // centered on the content and sticky on screen: re-wiring into the
-      // project in the middle of the screen, contracting between two and
-      // expanding as the next settles, leaving with the last widget
-      const wd = detail || W < 768 ? null : readWidgets(H, widgets);
       if (detail) {
         figKey = pageKey(); // a project page: that project's own graph, faint
         Object.assign(tgt, { kW: 0.4, kX: W * 0.8, kY: H * 0.45, kR: M * 0.22 });
-      } else if (wd) {
-        quiet = true;
-        figKey = wd.focus;
-        const r = Math.min(M * 0.4, W * 0.28) * (0.78 + 0.22 * (1 - smooth(0.2, 1, wd.between))) * (1 + 0.03 * Math.sin(time * 0.6));
-        Object.assign(tgt, {
-          kW: 0.9 * smooth(H * 0.25, H * 0.65, wd.last), kX: W / 2,
-          kY: Math.min(H * 0.5, wd.last - r * 0.3), kR: r,
-        });
       } else {
-        // phones: no lanes beside the widgets — it grazes the right edge
-        Object.assign(tgt, { kW: 0.6, kX: W * 0.8, kY: H * 0.45, kR: M * 0.3 });
+        // past the opener the reader is inside the network (software-space.ts):
+        // it re-wires into the project in the middle of the screen, draws in
+        // between two and opens out as the next settles, sinks behind the
+        // cards (wide screens) and thins out after the last of them
+        const wd = readWidgets(H, widgets);
+        quiet = W >= 768;
+        spaceKey = wd.focus;
+        spaceOpen = 1 - smooth(0.2, 1, wd.between);
+        // (and holds back to half over the summary, before the first widget)
+        tgt.eW = (W < 768 ? 0.8 : 1) * smooth(H * 0.15, H * 0.6, wd.last) * lerp(0.45, 1, smooth(H * 0.95, H * 0.45, wd.first));
+        // the figure only lives in the opener now; scrolling out of it, it
+        // swells past the screen and fades — the camera flying into it
+        Object.assign(tgt, { kW: 0, kX: W * 0.5, kY: H * 0.5, kR: M * 1.4 });
       }
       if (inOpener > 0) {
         // the opener: a big network to the right of the title
-        tgt.kW = 1;
+        tgt.kW = detail ? 1 : smooth(0.12, 0.7, inOpener);
+        tgt.eW *= 1 - smooth(0.35, 0.9, inOpener);
         tgt.kX = lerp(tgt.kX, W * 0.72, inOpener);
         tgt.kY = lerp(tgt.kY, opCy, inOpener);
         tgt.kR = lerp(tgt.kR, Math.min(M * 0.36, W * (W < 768 ? 0.3 : 0.22)), inOpener);
@@ -418,7 +420,9 @@ export function createLaserDirector() {
 
     const spinUp = x.hover?.startsWith("project:") || x.hover === "nav:software" ? 1 : 0;
     lissSpin += dt * (0.3 + 0.9 * spinUp + 4 * flyKnot + Math.min(Math.abs(x.velocity) / 2500, 1.5));
-    out.knot.x = c.kX; out.knot.y = c.kY; out.knot.r = c.kR; out.knot.w = c.kW;
+    // grabbing: the figure, or — inside the network — the view itself (a drag rolls it)
+    if (c.eW > c.kW) { out.knot.x = W / 2; out.knot.y = H / 2; out.knot.r = Math.hypot(W, H); out.knot.w = c.eW; }
+    else { out.knot.x = c.kX; out.knot.y = c.kY; out.knot.r = c.kR; out.knot.w = c.kW; }
 
     u.uFan.value.set(c.fW, Math.round(c.fCount), c.fSpread, 0.36 * Math.sin(time * 0.55 + p * 7));
     u.uFanB.value.set(c.fX, c.fY, c.fPal, c.fLen);
@@ -474,13 +478,24 @@ export function createLaserDirector() {
     // the fusion's debris: scattered glyphs that fly back together into the road
     if (x.page === "about" && ring > 0) nSeg = debris(segs, segsB, nSeg, { W, H, time, still, fuseAt, fuseX, fuseY, assemble, M });
     // the software figure: the network, where the knot was — turning on its
-    // own (faster when stirred), tilting as you read, spun by a grab
-    nSeg = figure({
+    // own (faster when stirred), tilting as you read, spun by a grab — and the
+    // network space past the opener, flown through with scroll, rolling slowly
+    // (a grab rolls it). Whichever is showing more claims the slots first.
+    const drawFigure = () => figure({
       x: c.kX, y: c.kY, r: c.kR, w: c.kW * 0.95,
       yaw: FLOWS_RIGHT + lissSpin * 0.8 + (x.drag?.spin ?? 0),
       tilt: 0.15 + 0.5 * (c.kTilt - 0.35) + 0.1 * Math.sin(time * 0.2) + (x.drag?.tilt ?? 0),
       pal: c.kPal, phase: lissSpin, dt, key: figKey, compact: W < 768, quiet: quiet ? widgets : undefined,
     }, segs, segsB, nSeg);
+    const drawSpace = () => space({
+      W, H, w: c.eW * 0.9, pal: c.kPal, phase: lissSpin, dolly: p * 90 + lissSpin * 1.2, dt, time,
+      key: spaceKey, open: spaceOpen,
+      roll: lissSpin * 0.12 + (x.drag?.spin ?? 0), yaw: ptr.x * 0.05 + 0.04 * Math.sin(time * 0.13),
+      pitch: -ptr.y * 0.035 + 0.5 * (x.drag?.tilt ?? 0) + 0.08 * (p - 0.5),
+      compact: W < 768, quiet: quiet ? widgets : undefined,
+    }, segs, segsB, nSeg);
+    if (c.eW > c.kW) { nSeg = drawSpace(); nSeg = drawFigure(); }
+    else { nSeg = drawFigure(); nSeg = drawSpace(); }
     for (let i = 0; i < car.hullN; i++) u.uCarHull.value[i].fromArray(hull, i * 2);
     u.uCarN.value = car.hullN;
     for (let i = 0; i < nSeg; i++) {
