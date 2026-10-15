@@ -13,6 +13,7 @@
 
 import Link from "next/link";
 import { Morph } from "@/components/morph";
+import { DisplayWord, kern } from "@/components/display-word";
 
 /** a section page's opening screen (the chapter starts with it) */
 export interface Opener {
@@ -104,7 +105,7 @@ export default function Chapter({
                 className={`inline-block font-sans font-medium leading-[0.88] tracking-[-0.05em] ${opener.tone}`}
                 style={{ fontSize: "clamp(3.5rem, 13vw, 12rem)" }}
               >
-                {opener.title}
+                <DisplayWord text={opener.title} tracking={-0.05} />
               </h1>
             </Morph>
             <h2
@@ -115,7 +116,7 @@ export default function Chapter({
             >
               {prefix && <span className="sr-only">{prefix} — </span>}
               <span data-display className="block">
-                {displayLine(heading)}
+                {kern(displayLine(heading), -0.03)}
               </span>
             </h2>
             {figure && <div aria-hidden="true" data-laser-anchor={`${id}-rule`} className="mt-10 h-8 w-full" />}
@@ -142,7 +143,7 @@ export default function Chapter({
             >
               {prefix && <span className="sr-only">{prefix} — </span>}
               <span data-display className="block">
-                {displayLine(heading)}
+                {kern(displayLine(heading), -0.045)}
               </span>
             </h2>
             {figure && <div aria-hidden="true" data-laser-anchor={`${id}-rule`} className="mx-auto -mt-8 mb-14 h-8 max-w-6xl md:-mt-14 md:mb-20" />}
