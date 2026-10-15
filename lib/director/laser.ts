@@ -279,8 +279,10 @@ export function createLaserDirector() {
       const hoverShow = x.hover?.startsWith("show:") ? 1 : 0;
       Object.assign(tgt, {
         fW: (detail ? 0.4 : 1) * (0.62 + (0.38 + 0.3 * hoverShow) * beat),
+        // rooted in the floor all the way down: the gutter sets only the x (right
+        // of the next section's word), so its end scrolling up doesn't lift the fan
         fX: ma ? ma.x + ma.w / 2 : W * (detail ? 0.8 : 0.5),
-        fY: ma ? Math.min(Math.max(ma.y + ma.h, H * 0.55), H * 1.04) : H * 1.04,
+        fY: H * 1.04,
         fSpread: ma ? lerp(0.6, 0.9, p) : 0.75, fLen: H * 1.3, fCount: 6,
         fPal: SOUND(lerp(0.55, 0.75, p) + 0.15 * beat),
         fFade: 0, // its own page: the beams burn full length
