@@ -26,6 +26,15 @@
 // middle of the screen for a moment before the space re-wires to it, and the
 // breathing is eased too — so a fast scroll never churns it.
 //
+// Now and then it catches a little of the music's light: on the beat (124
+// bpm, the music page's tempo) a wire here and there carries a pearl spark
+// along it, a node catches a pearl glint as it turns, and the nodes a re-wire
+// brings in bloom pearl as they arrive — the SOUND shimmer, rare, low and
+// brief, brighter on the near layers and lost in the fog on the far ones, and
+// never under the card you're reading. The space stays white; the glints are
+// a second look's worth. (Every stroke, glints included, still steps back with
+// the stage's brightness past the opener.)
+//
 // Built like the room and the road (room.ts, car.ts): world space, a camera,
 // projection and near-plane clipping on the CPU each frame, depth fog carried
 // in each stroke's end weights, into the shared segment slots (ROOM_SEGS) —
@@ -58,8 +67,13 @@ export interface SpaceInput {
   pitch: number;
   /** a narrow screen: fewer, sparser layers */
   compact: boolean;
-  /** where the widgets are (the strokes sink behind them) */
+  /** where the widgets are: glints keep out from under the one being read, and
+   *  (sink) the strokes sink behind them — wide screens; on phones the cards
+   *  span the screen and the stage's own dim does that */
   quiet?: Widgets;
+  sink: boolean;
+  /** the SOUND palette (laser.ts): the glints' pearl */
+  sound: (t: number) => number;
 }
 
 type P2 = [number, number];
@@ -192,6 +206,9 @@ const FOLLOW_S = 0.5; // the camera's lag behind scroll (time constant, s)
 const FOLLOW_MAX = 6; // …its top speed (world units / s)
 const LAG_MAX = 7; // …and the most it can owe (scroll beyond that is forgiven, not raced through)
 const SETTLE_S = 0.4; // a project holds the middle this long before the space re-wires to it
+const BPM = 124; // the glints keep the music page's time
+const GLINT_WIRE = 0.022; // chance a wire sparks, on every other beat
+const GLINT_NODE = 0.035; // chance a node catches the light, on the beats between
 const DEG = Math.PI / 180;
 
 /** stateful: the pattern shown, the one it's becoming */
@@ -262,6 +279,10 @@ export function createSoftwareSpace() {
     const depthOf = (d: number) => -(SPACING * (d + 1 - frac) + 0.2);
     const presence = (d: number, z: number) => smooth(-0.5, -1.8, z) * (d === slabs - 1 ? frac : 1);
 
+    // the beat, for the glints (none in reduced motion: no time passes there)
+    const beat = (s.time * BPM) / 60, bi = Math.floor(beat), bf = beat - bi;
+    const glints = !still && s.w > 0.05;
+    const rare = s.compact ? 0.7 : 1;
     let n = n0;
     const put = (ax: number, ay: number, bx: number, by: number, pal: number, wa: number, wb: number, pk: number) => {
       if (n >= ROOM_SEGS) return;
@@ -304,7 +325,9 @@ export function createSoftwareSpace() {
 
     // a wire between two placed nodes, clipped to the near plane, short of both diamonds
     const NEAR = -0.4;
-    const wire = (sa: number, sb: number, weight: number, packet: number) => {
+    /** pearl ≥ 0: a glint's copy of the wire, in the SOUND palette (pearl = how
+     *  luminous, before fog), skipped under the card being read */
+    const wire = (sa: number, sb: number, weight: number, packet: number, pearl = -1) => {
       if (n >= ROOM_SEGS || weight < 0.02) return;
       let za = nz[sa], zb = nz[sb];
       if (za > NEAR && zb > NEAR) return;
@@ -325,9 +348,11 @@ export function createSoftwareSpace() {
       pax += ux * ga; pay += uy * ga; pbx -= ux * gb; pby -= uy * gb;
       const fa = fog(za), fb = fog(zb);
       const qm = quietAt(s.quiet, (pax + pbx) / 2, (pay + pby) / 2);
+      if (pearl >= 0 && qm < 0.85) return;
+      const qs = (q: number) => (s.sink ? q : 1);
       const w = s.w * 0.52 * weight * Math.min(np[sa], np[sb]);
-      put(pax, pay, pbx, pby, s.pal * 0.8 * (0.45 + 0.55 * (fa + fb) * 0.5),
-        w * fa * Math.min(quietAt(s.quiet, pax, pay), qm), w * fb * Math.min(quietAt(s.quiet, pbx, pby), qm), packet >= 0 ? 1 + packet : 0);
+      put(pax, pay, pbx, pby, pearl >= 0 ? s.sound(pearl * (0.7 + 0.3 * (fa + fb) * 0.5)) : s.pal * 0.8 * (0.45 + 0.55 * (fa + fb) * 0.5),
+        w * fa * qs(Math.min(quietAt(s.quiet, pax, pay), qm)), w * fb * qs(Math.min(quietAt(s.quiet, pbx, pby), qm)), packet >= 0 ? 1 + packet : 0);
     };
     // packets: down the wires into the distance, each on its own beat
     const packetOn = (k: number, i: number, j: number) => {
@@ -343,15 +368,32 @@ export function createSoftwareSpace() {
         if (nw[slot] < 0.02 || nz[slot] > NEAR) continue;
         const px = nx[slot], py = ny[slot], hh = nhh[slot];
         if (px < -hh || px > W + hh || py < -hh || py > H + hh) continue;
-        const w = s.w * 0.95 * nw[slot] * quietAt(s.quiet, px, py);
-        put(px, py, hh * 0.38, hh, Math.min(0.499, s.pal * (0.5 + 0.5 * fog(nz[slot]))), w, w, -1);
+        const q = quietAt(s.quiet, px, py), fz = fog(nz[slot]);
+        const w = s.w * 0.95 * nw[slot] * (s.sink ? q : 1);
+        put(px, py, hh * 0.38, hh, Math.min(0.499, s.pal * (0.5 + 0.5 * fz)), w, w, -1);
+        if (!glints || q < 0.85) continue;
+        // a glint: a pearl halo just outside the node — catching the light on
+        // a beat, or blooming as a re-wire brings the node in
+        const A = layerOf(from, k), B = layerOf(to, k);
+        const arriving = i >= Math.min(cap, A.nodes.length) && i < Math.min(cap, B.nodes.length) ? Math.sin(Math.PI * e) : 0;
+        const caught = bi & 1 && hash(k * 13.7 + i * 5.1 + bi * 2.9) < GLINT_NODE * rare ? Math.exp(-bf * 3.5) * (1 - Math.exp(-bf * 25)) : 0;
+        const g = Math.max(arriving * 0.8, caught);
+        const gw = Math.min(0.6, w * 0.9 * g);
+        if (g > 0.04) put(px, py, hh * 0.58, hh * 1.5, s.sound(0.82 + 0.16 * fz), gw, gw, -1);
       }
+      // a wire, and now and then (every other beat) a pearl spark running along
+      // a copy of it for that beat — a dim body, the spark carrying the light
+      const link = (sa: number, sb: number, weight: number, live: boolean, i: number, j: number) => {
+        wire(sa, sb, weight, live ? packetOn(k, i, j) : -1);
+        if (!live || !glints || bi & 1 || hash(i * 0.731 + j * 2.39 + k * 3.17 + bi * 1.618) >= GLINT_WIRE * rare) return;
+        wire(sa, sb, weight * 0.5 * Math.sin(Math.PI * bf), bf, 0.92);
+      };
       const edges = (sp: Space, weight: number, live: boolean) => {
         const L = layerOf(sp, k), nm = Math.min(cap, L.nodes.length);
-        for (const [i, j] of L.within) if (i < nm && j < nm) wire(d * MAXN + i, d * MAXN + j, weight, live ? packetOn(k, i, j + 9) : -1);
+        for (const [i, j] of L.within) if (i < nm && j < nm) link(d * MAXN + i, d * MAXN + j, weight, live, i, j + 9);
         if (d + 1 >= slabs) return;
         const nn = Math.min(cap, layerOf(sp, k + 1).nodes.length);
-        for (const [i, j] of L.next) if (i < nm && j < nn) wire(d * MAXN + i, (d + 1) * MAXN + j, weight, live ? packetOn(k, i, j) : -1);
+        for (const [i, j] of L.next) if (i < nm && j < nn) link(d * MAXN + i, (d + 1) * MAXN + j, weight, live, i, j);
       };
       edges(to, from === to ? 1 : e, true);
       if (from !== to) edges(from, 1 - e, false);

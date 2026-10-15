@@ -494,7 +494,7 @@ export function createLaserDirector() {
       key: spaceKey, open: spaceOpen,
       roll: x.drag?.spin ?? 0, yaw: ptr.x * 0.05 + 0.04 * Math.sin(time * 0.1),
       pitch: -ptr.y * 0.035 + 0.5 * (x.drag?.tilt ?? 0),
-      compact: W < 768, quiet: quiet ? widgets : undefined,
+      compact: W < 768, quiet: x.page === "software" ? widgets : undefined, sink: quiet, sound: SOUND,
     }, segs, segsB, nSeg);
     if (c.eW > c.kW) { nSeg = drawSpace(); nSeg = drawFigure(); }
     else { nSeg = drawFigure(); nSeg = drawSpace(); }
