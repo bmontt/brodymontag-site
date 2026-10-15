@@ -16,6 +16,16 @@
 // between two projects and open out as the next settles. Behind the cards the
 // strokes sink low (quietAt), so the text reads over a calm, deep field.
 //
+// It keeps its own slow time. Scroll moves the camera only through a heavily
+// damped follower with a capped speed: what you scroll is owed to the camera
+// and paid out gently, and anything past a few layers' worth is forgiven
+// rather than raced through — so a flick or a jump of a few screens glides a
+// few layers in a second or so instead of rushing the whole way;
+// the roll and the packets run on a calm clock of their own that scrolling
+// doesn't touch (only a hover stirs it, eased); a project has to hold the
+// middle of the screen for a moment before the space re-wires to it, and the
+// breathing is eased too — so a fast scroll never churns it.
+//
 // Built like the room and the road (room.ts, car.ts): world space, a camera,
 // projection and near-plane clipping on the CPU each frame, depth fog carried
 // in each stroke's end weights, into the shared segment slots (ROOM_SEGS) —
@@ -32,17 +42,17 @@ export interface SpaceInput {
   w: number;
   /** TECH palette coordinate of the brightest stroke */
   pal: number;
-  /** a clock that runs faster when stirred (hover, scroll, a picked transition) */
-  phase: number;
-  /** world units flown forward (scroll) */
-  dolly: number;
+  /** scroll progress through the page, 0–1 (the camera follows it, damped) */
+  scroll: number;
+  /** 0–1: stirred (a hovered project) — the clock runs a little faster, eased */
+  stir: number;
   dt: number; // s (0 = reduced motion: no glides)
   time: number;
   /** whose network: a widget id ("project-prism"…), "" for the page's own */
   key: string;
   /** 0 drawn in (between two projects) → 1 open (one settled in the middle) */
   open: number;
-  /** the camera: roll about the view, and a little yaw / pitch (radians) */
+  /** the camera: roll added to its own slow roll (a grab), and a little yaw / pitch (radians) */
   roll: number;
   yaw: number;
   pitch: number;
@@ -176,6 +186,12 @@ function spaceFor(key: string): Space {
 // ── the space ─────────────────────────────────────────────────────────────────
 
 const SPACING = 2.6; // world units between layers
+const DOLLY_PAGE = 50; // world units flown over the whole page (~2 layers a screen)
+const DRIFT = 0.12; // world units / s it drifts on its own
+const FOLLOW_S = 0.5; // the camera's lag behind scroll (time constant, s)
+const FOLLOW_MAX = 6; // …its top speed (world units / s)
+const LAG_MAX = 7; // …and the most it can owe (scroll beyond that is forgiven, not raced through)
+const SETTLE_S = 0.4; // a project holds the middle this long before the space re-wires to it
 const DEG = Math.PI / 180;
 
 /** stateful: the pattern shown, the one it's becoming */
@@ -183,6 +199,8 @@ export function createSoftwareSpace() {
   let from: Space = MODEL, to: Space = MODEL;
   let morph = 1;
   let keyNow = "\u0000";
+  let keyNext = "", keySince = 0; // a key waiting to settle
+  let dolly = 0, owed = 0, lastScroll = 0, clock = 0, stir = 0, open = 1, live = false;
 
   // projected nodes of the layers in view (px, depth, size, weight), by layer and slot
   const MAXN = 6;
@@ -192,15 +210,32 @@ export function createSoftwareSpace() {
   const np = new Float32Array(10 * MAXN); // the node's layer's presence (wires fade with it)
 
   return function buildSpace(s: SpaceInput, segs: Float32Array, segsB: Float32Array, n0: number): number {
-    const still = s.dt <= 0;
-    if (s.key !== keyNow) {
-      // re-wire from whatever is showing now
-      from = morph < 0.5 ? from : to;
-      to = spaceFor(s.key);
-      morph = keyNow === "\u0000" || s.w < 0.03 ? 1 : 0;
-      keyNow = s.key;
+    const still = s.dt <= 0, dt = Math.min(s.dt, 0.1);
+    // ── its own pace ───────────────────────────────────────────────────
+    const fresh = !live || still || s.w < 0.03; // first sight, reduced motion, or unseen: no glide
+    const scrolled = s.scroll * DOLLY_PAGE;
+    if (fresh) { dolly = scrolled; owed = 0; }
+    else {
+      owed = Math.min(Math.max(owed + scrolled - lastScroll, -LAG_MAX), LAG_MAX);
+      const step = Math.min(Math.max(owed * (1 - Math.exp(-dt / FOLLOW_S)), -FOLLOW_MAX * dt), FOLLOW_MAX * dt);
+      dolly += step + dt * DRIFT;
+      owed -= step;
     }
-    morph = still ? 1 : Math.min(1, morph + s.dt * 0.9);
+    lastScroll = scrolled;
+    stir += (s.stir - stir) * (1 - Math.exp(-dt / 0.8));
+    clock += dt * (0.22 + 0.25 * stir);
+    open = fresh ? s.open : open + (s.open - open) * (1 - Math.exp(-dt / 0.7));
+    live = s.w >= 0.03;
+    // re-wire only to a project that has settled in the middle
+    if (s.key !== keyNext) { keyNext = s.key; keySince = s.time; }
+    if (keyNext !== keyNow && (fresh || keyNow === "\u0000" || s.time - keySince >= SETTLE_S)) {
+      // from whatever is showing now
+      from = morph < 0.5 ? from : to;
+      to = spaceFor(keyNext);
+      morph = keyNow === "\u0000" || fresh ? 1 : 0;
+      keyNow = keyNext;
+    }
+    morph = still ? 1 : Math.min(1, morph + dt * 0.5);
     if (s.w < 0.002) return n0;
     const e = morph * morph * (3 - 2 * morph);
 
@@ -209,10 +244,11 @@ export function createSoftwareSpace() {
     const slabs = s.compact ? 5 : 8;
     const cap = s.compact ? 3 : MAXN; // nodes per layer
     // a layer spans a little more than the screen at the nearest layer's depth
-    const SX = 2.3 * Math.min(Math.max(W / H, 0.55), 1.8) * (0.72 + 0.4 * s.open + 0.03 * Math.sin(s.time * 0.6));
-    const SY = 2.1 * (0.72 + 0.4 * s.open + 0.03 * Math.sin(s.time * 0.6 + 1));
-    const cr = Math.cos(s.roll), sr = Math.sin(s.roll);
-    const cy = Math.cos(s.yaw), sy = Math.sin(s.yaw), cp = Math.cos(s.pitch), sp = Math.sin(s.pitch);
+    const SX = 2.3 * Math.min(Math.max(W / H, 0.55), 1.8) * (0.72 + 0.4 * open + 0.03 * Math.sin(s.time * 0.4));
+    const SY = 2.1 * (0.72 + 0.4 * open + 0.03 * Math.sin(s.time * 0.4 + 1));
+    const roll = clock * 0.08 + s.roll, pitch = s.pitch + 0.04 * Math.sin(clock * 0.3);
+    const cr = Math.cos(roll), sr = Math.sin(roll);
+    const cy = Math.cos(s.yaw), sy = Math.sin(s.yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
     // world → camera: roll the space about the view, then turn and pitch; looking down −z
     let cx = 0, cyy = 0, cz = 0;
     const cam = (x: number, y: number, z: number) => {
@@ -222,11 +258,10 @@ export function createSoftwareSpace() {
     };
     const fog = (z: number) => Math.exp(-Math.max(-z - 3, 0) * 0.075);
     // the nearest layer swells and fades as it slips past; the farthest comes up out of the fog
-    const base = Math.floor(s.dolly / SPACING), frac = s.dolly / SPACING - base;
+    const base = Math.floor(dolly / SPACING), frac = dolly / SPACING - base;
     const depthOf = (d: number) => -(SPACING * (d + 1 - frac) + 0.2);
     const presence = (d: number, z: number) => smooth(-0.5, -1.8, z) * (d === slabs - 1 ? frac : 1);
 
-    const clock = s.phase * 2.2;
     let n = n0;
     const put = (ax: number, ay: number, bx: number, by: number, pal: number, wa: number, wb: number, pk: number) => {
       if (n >= ROOM_SEGS) return;
@@ -296,7 +331,7 @@ export function createSoftwareSpace() {
     };
     // packets: down the wires into the distance, each on its own beat
     const packetOn = (k: number, i: number, j: number) => {
-      const pt = (clock * 0.5 + hash(k * 13.1 + i * 7.7 + j * 3.3) * 1.7) % 1.7;
+      const pt = (clock * 0.9 + hash(k * 13.1 + i * 7.7 + j * 3.3) * 1.7) % 1.7;
       return pt <= 1 ? pt : -1;
     };
 

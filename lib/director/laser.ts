@@ -158,6 +158,7 @@ export function createLaserDirector() {
   let orbitPhase = 0;
   let hoopSpin = 0;
   let lissSpin = 0;
+  let spinVel = 0; // scroll speed's share of the figure's spin, eased and capped (no whip on a flick)
   let lastMerge = 0;
   let fuseAt = -1e9;
   let fuseX = 0, fuseY = 0; // where the signals fused (the debris flies from here)
@@ -419,7 +420,8 @@ export function createLaserDirector() {
     u.uScopeD.value.set(tgt.sSplit >= 0 ? c.sSplit : -1, W * 0.14, 0, 0);
 
     const spinUp = x.hover?.startsWith("project:") || x.hover === "nav:software" ? 1 : 0;
-    lissSpin += dt * (0.3 + 0.9 * spinUp + 4 * flyKnot + Math.min(Math.abs(x.velocity) / 2500, 1.5));
+    spinVel += (Math.min(Math.abs(x.velocity) / 2500, 0.6) - spinVel) * (1 - Math.exp(-1.5 * dt));
+    lissSpin += dt * (0.3 + 0.9 * spinUp + 4 * flyKnot + spinVel);
     // grabbing: the figure, or — inside the network — the view itself (a drag rolls it)
     if (c.eW > c.kW) { out.knot.x = W / 2; out.knot.y = H / 2; out.knot.r = Math.hypot(W, H); out.knot.w = c.eW; }
     else { out.knot.x = c.kX; out.knot.y = c.kY; out.knot.r = c.kR; out.knot.w = c.kW; }
@@ -488,10 +490,10 @@ export function createLaserDirector() {
       pal: c.kPal, phase: lissSpin, dt, key: figKey, compact: W < 768, quiet: quiet ? widgets : undefined,
     }, segs, segsB, nSeg);
     const drawSpace = () => space({
-      W, H, w: c.eW * 0.9, pal: c.kPal, phase: lissSpin, dolly: p * 90 + lissSpin * 1.2, dt, time,
+      W, H, w: c.eW * 0.9, pal: c.kPal, scroll: p, stir: spinUp, dt, time,
       key: spaceKey, open: spaceOpen,
-      roll: lissSpin * 0.12 + (x.drag?.spin ?? 0), yaw: ptr.x * 0.05 + 0.04 * Math.sin(time * 0.13),
-      pitch: -ptr.y * 0.035 + 0.5 * (x.drag?.tilt ?? 0) + 0.08 * (p - 0.5),
+      roll: x.drag?.spin ?? 0, yaw: ptr.x * 0.05 + 0.04 * Math.sin(time * 0.1),
+      pitch: -ptr.y * 0.035 + 0.5 * (x.drag?.tilt ?? 0),
       compact: W < 768, quiet: quiet ? widgets : undefined,
     }, segs, segsB, nSeg);
     if (c.eW > c.kW) { nSeg = drawSpace(); nSeg = drawFigure(); }
