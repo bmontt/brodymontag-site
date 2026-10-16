@@ -179,8 +179,8 @@
           },
           {
             "label": "latest",
-            "value": "when a fire starts to burn",
-            "href": "https://soundcloud.com/brodymontag"
+            "value": "PWR",
+            "href": "https://soundcloud.com/brodymontag/pwr"
           }
         ]
       },
@@ -765,8 +765,8 @@
         {
           "id": "soundcloud",
           "label": "soundcloud",
-          "href": "https://soundcloud.com/brodymontag",
-          "src": "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/brodymontag&color=%239b8cf2&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true"
+          "href": "https://soundcloud.com/brodymontag/pwr",
+          "src": "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/brodymontag/pwr&color=%239b8cf2&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true"
         }
       ],
       "items": [
@@ -787,7 +787,7 @@
             },
             {
               "platform": "soundcloud",
-              "href": "https://soundcloud.com/brodymontag"
+              "href": "https://soundcloud.com/brodymontag/pwr"
             }
           ]
         },
