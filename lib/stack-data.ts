@@ -21,6 +21,8 @@ export interface ExperienceEntry {
   icon?: string;
 }
 
-// Copy lives in content.json (code.stack / code.experience).
+// Copy lives in content.json (code.stack / code.stackLinks / code.experience).
 export const stack: StackCategory[] = content.code.stack as unknown as StackCategory[];
+/** each stack pill's site (official home or docs; a reference for concepts), keyed by its label */
+export const stackLinks: Record<string, string> = content.code.stackLinks;
 export const experience: ExperienceEntry[] = content.code.experience as unknown as ExperienceEntry[];
