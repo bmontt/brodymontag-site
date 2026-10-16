@@ -4,17 +4,15 @@ import Chapter from "@/components/journey/chapter";
 import SiteNav from "@/components/nav";
 import Image from "next/image";
 import EntryCard from "@/components/journey/entry-card";
-import ReleaseCard from "@/components/cards/release-card";
 import CollectiveCard from "@/components/cards/collective-card";
+import ReleasePlayer from "@/components/release-player";
 import { SectionLabel, SiteFooter, logoHeight, type SupportedArtist } from "@/components/journey/section-bits";
 import { getChapter } from "@/lib/chapters";
 import NextSection from "@/components/journey/next-section";
 import { nowLines } from "@/lib/now";
 import { flag } from "@/lib/flags";
 import { getAllEntries, isFuture } from "@/lib/timeline";
-import { releases } from "@/lib/releases-data";
 import { content } from "@/lib/content";
-import DeferredIframe from "@/components/deferred-iframe";
 import PromoFilm from "@/components/promo-film";
 import FullBleed from "@/components/full-bleed";
 
@@ -109,40 +107,10 @@ export default function MusicPage() {
               </div>
             </div>
 
-            <div>
+            {/* the latest release, as a player: one platform at a time */}
+            <div data-reveal>
               <SectionLabel>releases</SectionLabel>
-              <div className="flex flex-col gap-10">
-                {releases.map((r) => (
-                  <div key={r.id} data-reveal>
-                    <ReleaseCard release={r} />
-                  </div>
-                ))}
-                <div data-reveal>
-                  <SectionLabel size="sm">latest tracks</SectionLabel>
-                  <div className="pill-iridescent border border-white/8 overflow-hidden">
-                    <DeferredIframe
-                      title="SoundCloud"
-                      width="100%"
-                      height="120"
-                      scrolling="no"
-                      frameBorder="no"
-                      allow="autoplay"
-                      src={content.music.releases.soundcloudEmbedUrl}
-                    />
-                  </div>
-                  <div className="mt-4 overflow-hidden rounded-xl">
-                    <DeferredIframe
-                      title="Spotify — Monty (US)"
-                      width="100%"
-                      height="152"
-                      frameBorder="0"
-                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                      loading="lazy"
-                      src={content.music.releases.spotifyEmbedUrl}
-                    />
-                  </div>
-                </div>
-              </div>
+              <ReleasePlayer sources={content.music.releases.player} />
             </div>
 
             <div data-reveal>

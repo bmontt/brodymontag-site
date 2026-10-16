@@ -198,13 +198,13 @@
           },
           {
             "label": "single",
-            "value": "when a fire starts to burn (oct 2025)",
-            "href": "https://spotify.link/vVmdengZJXb"
+            "value": "PWR (oct 2026)",
+            "href": "https://open.spotify.com/album/4vYn2Z0EOv9aaQAjFGoYhF"
           },
           {
-            "label": "release",
-            "value": "ffm.to/whenafirestartstoburn",
-            "href": "https://ffm.to/whenafirestartstoburn"
+            "label": "previous",
+            "value": "when a fire starts to burn (oct 2025)",
+            "href": "https://spotify.link/vVmdengZJXb"
           }
         ]
       },
@@ -749,9 +749,48 @@
       "caption": "Monty opening and closing for Ian Asher at Echostage, September 19, 2026 (film by John Narvell)"
     },
     "releases": {
-      "soundcloudEmbedUrl": "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/brodymontag&color=%239b8cf2&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false",
-      "spotifyEmbedUrl": "https://open.spotify.com/embed/artist/3uIzwP6Ab6TgP61naHtDMO?utm_source=generator&theme=0",
+      "player": [
+        {
+          "id": "spotify",
+          "label": "spotify",
+          "href": "https://open.spotify.com/album/4vYn2Z0EOv9aaQAjFGoYhF",
+          "src": "https://open.spotify.com/embed/album/4vYn2Z0EOv9aaQAjFGoYhF?utm_source=generator&theme=0"
+        },
+        {
+          "id": "apple",
+          "label": "apple music",
+          "href": "https://music.apple.com/us/album/pwr/6820025126",
+          "src": "https://embed.music.apple.com/us/album/pwr/6820025126"
+        },
+        {
+          "id": "soundcloud",
+          "label": "soundcloud",
+          "href": "https://soundcloud.com/brodymontag",
+          "src": "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/brodymontag&color=%239b8cf2&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true"
+        }
+      ],
       "items": [
+        {
+          "id": "pwr",
+          "title": "PWR",
+          "date": "oct 2026",
+          "type": "single",
+          "tags": [],
+          "links": [
+            {
+              "platform": "spotify",
+              "href": "https://open.spotify.com/album/4vYn2Z0EOv9aaQAjFGoYhF"
+            },
+            {
+              "platform": "apple music",
+              "href": "https://music.apple.com/us/album/pwr/6820025126"
+            },
+            {
+              "platform": "soundcloud",
+              "href": "https://soundcloud.com/brodymontag"
+            }
+          ]
+        },
         {
           "id": "fire",
           "title": "when a fire starts to burn",
