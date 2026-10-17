@@ -1,5 +1,7 @@
 // static: every project is prerendered at build (generateStaticParams)
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { alternates } from "@/lib/canonical";
 import { enterStyle } from "@/lib/enter";
 import SiteNav from "@/components/nav";
 import BackLink from "@/components/back-link";
@@ -19,6 +21,11 @@ function AsciiRule({ className = "" }: { className?: string }) {
 
 export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.slug }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  return { alternates: alternates(`/projects/${slug}`) };
 }
 
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {

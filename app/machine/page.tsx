@@ -6,11 +6,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { machineText } from "@/lib/machine";
+import { alternates } from "@/lib/canonical";
 
 export const metadata: Metadata = {
   title: { absolute: "Brody Montag :: machine" },
   description: "Plain-text, machine-readable mirror of brodymontag.com.",
-  alternates: { canonical: "/machine", types: { "text/plain": "/llms.txt" } },
+  alternates: alternates("/machine"),
 };
 
 // absolute URLs and site paths become links for human readers of the mirror

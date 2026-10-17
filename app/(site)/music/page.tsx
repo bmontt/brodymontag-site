@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { alternates } from "@/lib/canonical";
 import JourneyRoot from "@/components/journey/journey-root";
 import Chapter from "@/components/journey/chapter";
 import SiteNav from "@/components/nav";
@@ -24,6 +25,7 @@ import FullBleed from "@/components/full-bleed";
 export const metadata: Metadata = {
   title: "music",
   description: "Monty (US) — shows, releases and the PB&J Sounds collective.",
+  alternates: alternates("/music"),
 };
 
 export default function MusicPage() {

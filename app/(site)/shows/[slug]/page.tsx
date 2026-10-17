@@ -1,5 +1,7 @@
 // static: every show is prerendered at build (generateStaticParams)
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { alternates } from "@/lib/canonical";
 import Image from "next/image";
 import { enterStyle } from "@/lib/enter";
 import SiteNav from "@/components/nav";
@@ -20,6 +22,11 @@ function AsciiRule({ className = "" }: { className?: string }) {
 
 export function generateStaticParams() {
   return events.map((e) => ({ slug: e.slug }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  return { alternates: alternates(`/shows/${slug}`) };
 }
 
 export default async function ShowPage({ params }: { params: Promise<{ slug: string }> }) {

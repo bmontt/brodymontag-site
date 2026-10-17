@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { alternates } from "@/lib/canonical";
 import JourneyRoot from "@/components/journey/journey-root";
 import Chapter from "@/components/journey/chapter";
 import SiteNav from "@/components/nav";
@@ -22,6 +23,7 @@ import { content } from "@/lib/content";
 export const metadata: Metadata = {
   title: "about",
   description: "About Brody Montag — background, contact, and the timeline from 2021 to now.",
+  alternates: alternates("/about"),
 };
 
 export default function AboutPage() {

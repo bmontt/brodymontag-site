@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { alternates } from "@/lib/canonical";
 import JourneyRoot from "@/components/journey/journey-root";
 import Chapter from "@/components/journey/chapter";
 import SiteNav from "@/components/nav";
@@ -42,6 +43,7 @@ function Alt({ n, id, stage, children }: { n: number; id?: string; stage?: strin
 export const metadata: Metadata = {
   title: "software",
   description: "Projects, experience and stack — machine learning, agentic systems, audio.",
+  alternates: alternates("/software"),
 };
 
 export default function SoftwarePage() {
