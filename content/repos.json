@@ -1,0 +1,9 @@
+{
+  "_README": "Repos that code excerpts come from. `path` is the local checkout scripts/sync-excerpts.mjs reads with git show (never the working tree). `ref` is what --check compares a pinned excerpt against (default HEAD). `github` is set only for a public remote; a private or local-only repo shows its name and commit, with no link.",
+  "brodymontag-site": {
+    "path": "/Users/brodymontag/Documents/Coding/brodymontag-site",
+    "github": "bmontt/brodymontag-site",
+    "ref": "origin/main",
+    "visibility": "public"
+  }
+}
