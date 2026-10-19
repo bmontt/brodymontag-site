@@ -62,7 +62,7 @@ export default function SoftwarePage() {
               <div className="mx-auto max-w-6xl px-6 md:px-12">
                 <SummaryTiles
                   groups={[
-                    { title: "projects", tiles: projects.map((p) => ({ label: p.name, href: `#project-${p.slug}`, meta: p.status === "wip" ? "in progress" : "live" })) },
+                    { title: "projects", tiles: projects.map((p) => ({ label: p.name, href: `#project-${p.slug}`, meta: p.status })) },
                     { title: "experience", tiles: experience.map((e) => ({ label: e.org, href: `#role-${e.id}`, meta: years(e.period) })) },
                     { title: "stack", tiles: stack.map((c) => ({ label: c.label, href: "#stack", meta: `${c.items.length}` })) },
                   ]}

@@ -4,7 +4,7 @@
 // links to the detail page through a stretched-link overlay (no nested anchors:
 // that was a hydration bug); the GitHub link sits above the overlay.
 import Link from "next/link";
-import type { Project } from "@/lib/projects";
+import { isMoving, statusLine, type Project } from "@/lib/projects";
 import { BrandIcon, StatWidgets, SubWidgets, TagRow, Widget, WidgetHead } from "@/components/widgets";
 
 export default function ProjectCard({ project }: { project: Project }) {
@@ -22,7 +22,7 @@ export default function ProjectCard({ project }: { project: Project }) {
           }
           right={
             <>
-              <span className={project.status === "wip" ? "text-accent/85" : "text-foreground/55"}>{project.status === "wip" ? "in progress" : "live"}</span>
+              <span className={isMoving(project.status) ? "text-accent/85" : "text-foreground/55"}>{statusLine(project)}</span>
               {project.githubUrl && (
                 <a
                   href={project.githubUrl}

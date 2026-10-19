@@ -5,7 +5,7 @@
 // terminals, and anyone who prefers text.
 
 import { content } from "./content";
-import { projects } from "./projects";
+import { projects, statusLine } from "./projects";
 import { experience, stack } from "./stack-data";
 import { releases } from "./releases-data";
 import { events } from "./brody-events";
@@ -56,7 +56,7 @@ export function machineText(): string {
 
   push("## code / projects");
   for (const p of projects) {
-    push(`- ${p.name}  [${p.tags.join(" · ")}]${p.status === "wip" ? "  (in progress)" : ""}`);
+    push(`- ${p.name}  [${p.tags.join(" · ")}]  ${statusLine(p)}${p.statusNote ? ` · ${p.statusNote}` : ""} · checked ${p.updated}`);
     push(`  ${p.description}`);
     push(`  → ${ORIGIN}/projects/${p.slug}${p.githubUrl ? `   ↗ ${p.githubUrl}` : ""}`);
     if (p.stats) push(`  results${p.statsAsOf ? ` (as of ${p.statsAsOf})` : ""}: ${p.stats.map((x) => `${x.label} ${x.value}${x.note ? ` (${x.note})` : ""}`).join(" · ")}`);
@@ -99,7 +99,7 @@ export function llmsText(): string {
   L.push(`# ${c.meta.name}`, "", `> ${c.hero.elevatorPitch}`, "");
   L.push(`${c.meta.name} is a ${c.hero.subtitle}.`, "");
   L.push("## Projects");
-  for (const p of projects) L.push(`- [${p.name}](${ORIGIN}/projects/${p.slug}): ${p.description}`);
+  for (const p of projects) L.push(`- [${p.name}](${ORIGIN}/projects/${p.slug}) (${statusLine(p)}): ${p.description}`);
   L.push("", "## Shows");
   for (const e of events) L.push(`- [${e.title}](${ORIGIN}/shows/${e.slug}): ${e.date} — ${e.description}`);
   L.push("", "## Music");
