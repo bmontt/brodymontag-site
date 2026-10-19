@@ -7,7 +7,7 @@ import SiteNav from "@/components/nav";
 import BackLink from "@/components/back-link";
 import { SECTION_HEADING, SECTION_SIZE } from "@/components/journey/section-bits";
 import { StatWidgets, SubWidgets } from "@/components/widgets";
-import { projects } from "@/lib/projects";
+import { isMoving, projects, statusLine } from "@/lib/projects";
 
 function AsciiRule({ className = "" }: { className?: string }) {
   return (
@@ -66,12 +66,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             </h1>
             <span
               className={`font-mono text-xs px-2 py-0.5 border ${
-                project.status === "wip"
+                isMoving(project.status)
                   ? "text-accent/75 border-accent/25"
                   : "text-foreground/60 border-white/12"
               }`}
             >
-              {project.status === "wip" ? "in progress" : "live"}
+              {project.status}
             </span>
           </div>
 
@@ -88,6 +88,23 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 {project.tags.map((t) => t.toLowerCase()).join(" · ")}
               </span>
             </div>
+            <div className="grid grid-cols-[6.5rem_1fr] gap-x-8">
+              <span className="font-mono text-xs text-foreground/52">status</span>
+              <span className="font-mono text-xs text-foreground/80">
+                {statusLine(project)}
+                {project.statusNote && <> · {project.statusNote}</>}
+              </span>
+            </div>
+            <div className="grid grid-cols-[6.5rem_1fr] gap-x-8">
+              <span className="font-mono text-xs text-foreground/52">checked</span>
+              <time dateTime={project.updated} className="font-mono text-xs text-foreground/80">{project.updated}</time>
+            </div>
+            {!project.githubUrl && (
+              <div className="grid grid-cols-[6.5rem_1fr] gap-x-8">
+                <span className="font-mono text-xs text-foreground/52">source</span>
+                <span className="font-mono text-xs text-foreground/80">private repo</span>
+              </div>
+            )}
             {project.githubUrl && (
               <div className="grid grid-cols-[6.5rem_1fr] gap-x-8">
                 <span className="font-mono text-xs text-foreground/52">source</span>

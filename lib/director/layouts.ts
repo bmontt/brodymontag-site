@@ -48,7 +48,7 @@ export const PILLARS = projects.map((p, i) => {
     slug: p.slug,
     side,
     ...flank(BUILD, 60 + i * 170, side),
-    h: (p.status === "live" ? 360 : 250) + ((i * 53) % 70),
+    h: (p.status === "active" ? 360 : 250) + ((i * 53) % 70),
     // face back toward the camera path, turned slightly in toward it
     rot: faceRotation(-BUILD.h[0] - side * BUILD.right[0] * 0.12, -BUILD.h[1] - side * BUILD.right[1] * 0.12),
   };
