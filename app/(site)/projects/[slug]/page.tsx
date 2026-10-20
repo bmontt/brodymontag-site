@@ -7,6 +7,8 @@ import SiteNav from "@/components/nav";
 import BackLink from "@/components/back-link";
 import { SECTION_HEADING, SECTION_SIZE } from "@/components/journey/section-bits";
 import { StatWidgets, SubWidgets } from "@/components/widgets";
+import DetailSections from "@/components/blocks/detail-sections";
+import { getDetail } from "@/content/detail";
 import { isMoving, projects, statusLine } from "@/lib/projects";
 
 function AsciiRule({ className = "" }: { className?: string }) {
@@ -35,6 +37,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   if (!project) notFound();
 
   const paragraphs = project.longDescription.split("\n\n");
+  // the long-form part (code, diagrams, decisions, results), where one exists
+  const detail = getDetail("project", project.slug);
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -97,7 +101,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             </div>
             <div className="grid grid-cols-[6.5rem_1fr] gap-x-8">
               <span className="font-mono text-xs text-foreground/52">checked</span>
-              <time dateTime={project.updated} className="font-mono text-xs text-foreground/80">{project.updated}</time>
+              <time dateTime={detail?.updated ?? project.updated} className="font-mono text-xs text-foreground/80">{detail?.updated ?? project.updated}</time>
             </div>
             {!project.githubUrl && (
               <div className="grid grid-cols-[6.5rem_1fr] gap-x-8">
@@ -156,6 +160,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <h2 className={`mb-5 ${SECTION_HEADING}`} style={{ fontSize: SECTION_SIZE.sm }}>highlights</h2>
             <SubWidgets items={project.highlights} />
           </div>
+
+          {detail && (
+            <>
+              <AsciiRule className="mt-14 mb-10" />
+              <DetailSections doc={detail} />
+            </>
+          )}
         </div>
       </main>
 
