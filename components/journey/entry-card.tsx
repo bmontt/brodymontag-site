@@ -20,7 +20,7 @@ function CompactEntry({ entry }: { entry: TimelineEntry }) {
   const [kind, line, href] =
     entry.kind === "show" ? ["show", src.description, entry.href]
     : entry.kind === "release" ? [src.type ?? "release", src.tags?.join(" · "), src.links?.[0]?.href]
-    : entry.kind === "project" ? [src.status === "wip" ? "project · in progress" : "project", src.tags?.join(" · "), entry.href]
+    : entry.kind === "project" ? [src.status ? `project · ${src.status}` : "project", src.tags?.join(" · "), entry.href]
     : ["role", `${src.org} · ${src.period}`, src.href];
   const body = (
     <>

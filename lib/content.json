@@ -917,82 +917,88 @@
         "id": "prism",
         "slug": "prism",
         "name": "Prism",
-        "status": "wip",
+        "status": "paused",
         "date": "June 2026",
         "githubUrl": null,
         "tags": [
           "C++",
-          "edge ML",
           "HTDemucs",
+          "JACK2",
           "Raspberry Pi"
         ],
-        "description": "A standalone box that splits a DJ's track into drums, bass, vocals and other while it plays, and routes each stem through the mixer's FX loop. No laptop, no cloud.",
-        "longDescription": "Prism is hardware for the booth. Load a track on a CDJ and it plays as normal; Prism sees the load over Pro DJ Link and starts separating it in the background.\n\nHTDemucs runs quantized to INT4 on a Hailo-10H AI accelerator on a Raspberry Pi 5, working through the track in 10-second chunks at about twelve times real time. A few seconds after the load the stem controls go live, and JACK2 plays the pre-extracted stems in lockstep with the CDJ's playback position. Each stem gets its own encoder on the box, or a DJM-V10 FX knob over MIDI.\n\nThe audio path is balanced XLR in and out at 24-bit/192 kHz, with a 1.9 ms round trip, because extraction never sits in the live signal path.",
+        "description": "A design for a box that splits a DJ's track into drums, bass, vocals and other, so the DJ can set each stem's level. No hardware exists yet.",
+        "longDescription": "Prism is a design for hardware in the DJ booth. When a CDJ loads a track, Prism splits the track into four stems in the background. The design gives each stem its own encoder, or a DJM-V10 knob over MIDI.\n\nThe firmware is about 2,200 lines of C++20 with 54 unit tests. The tests use synthetic Pro DJ Link packets. No test ran against a real CDJ or a real mixer.\n\nHTDemucs runs as an INT8 model on the CPU. I dropped the plan to run it on a Hailo-10H accelerator. The export to the Hailo format failed, and attention is 63.3% of the model's compute. On a Mac with an M4 Pro, the model splits audio at 5.79 times real time.\n\nThe audio never waits for the model. The model fills a buffer ahead of the playhead, and the audio callback reads only stems that are complete.",
         "highlights": [
-          "HTDemucs (INT4) on a Hailo-10H: stems at ~12× real time",
-          "Live 3–4 s after a track loads, detected over Pro DJ Link",
-          "JACK2 plays stems locked to the CDJ's playhead",
-          "1.9 ms round-trip audio, balanced XLR, 24-bit/192 kHz",
-          "Per-stem encoders, or DJM-V10 FX knobs over MIDI",
-          "About $565 in parts: Raspberry Pi 5 with a PREEMPT_RT kernel"
+          "Status: software written, hardware not built",
+          "Measured: 5.79× real time on an M4 Pro Mac (INT8, 10 s chunks)",
+          "Measured: attention is 63.3% of HTDemucs compute (334.9 GFLOPs)",
+          "Target: stem controls live about 40 s after a track loads",
+          "Target: 1.9 ms audio round trip (calculated, not measured)",
+          "12 architecture decision records"
         ],
-        "icon": "/icons/prism.webp"
+        "icon": "/icons/prism.webp",
+        "statusSince": "2026-07-15",
+        "statusNote": "software written, hardware not built",
+        "updated": "2026-10-19"
       },
       {
         "id": "venture",
         "slug": "venture",
         "name": "venture",
-        "status": "live",
+        "status": "active",
         "date": "July 2026",
         "githubUrl": null,
         "tags": [
           "Python",
-          "LLM agents",
           "Claude API",
-          "DeFi"
+          "DeFi",
+          "prediction markets"
         ],
-        "description": "An autonomous capital-allocation agent that runs real money unattended across DeFi yield, prediction markets and paper crypto. Built around one question: how much should an agent be allowed to decide on its own?",
-        "longDescription": "venture is an experiment in giving an agent real stakes and engineering the trust around them. It runs on a schedule with no one watching, so most of the design is about what it may and may not do by itself.\n\nMoney enters one way, through a single exchange account, and an allocator decides where it goes: converting to stablecoins, keeping the on-chain wallet's gas topped up, funding the prediction-market account to its target. Anything that would send money off the exchange is proposed, not executed, and waits for a human to approve it.\n\nStrategy and safety are kept apart. Each avenue runs its own logic and reports its own health; a weekly review by Claude reads the system's history and may adjust only the crypto strategy's tunables, never the guardrails. Paper trading runs alongside the real accounts, so a change can prove itself before it touches money.\n\nIt's operated from a terminal interface — a live view of every account, history, open positions, and a setup wizard that brings each connection online in order — and every agent that touches it has its financial actions gated.",
+        "description": "A Python system that runs on a schedule. It manages real money in Aave (DeFi) and Kalshi (a prediction market), with paper crypto trades beside them.",
+        "longDescription": "I started venture in July 2026 and rebuilt it in October 2026. It runs a full cycle four times a day and a short check every 15 minutes, with no person at the screen. Most of the design decides what the system may do alone and what needs a human.\n\nRule-based code decides where the money goes. Coinbase is the main way in. The allocator converts funds to stablecoins, keeps gas in the on-chain wallet, and funds the Kalshi account toward a target. Transfers to the wallet or to Kalshi wait for my approval in the terminal app or in Telegram. Gas top-ups of $10 or less run alone.\n\nStrategy and safety are separate. Each avenue runs its own logic and reports its own health, and an incident stops new risk. Once a week, Claude reads the history and may change only the settings of the paper crypto strategy. A change to any of the 11 locked limits stops the real-money avenues.\n\nI operate it from a terminal app. The app shows every account and open position, and a setup wizard connects each service in order.",
         "highlights": [
-          "One way in for money; an allocator decides where it goes",
-          "Moves off the exchange are proposals awaiting approval",
-          "The LLM review may tune strategy, never the guardrails",
-          "Paper trading alongside real accounts, to prove changes first",
-          "Per-avenue health checks and a degraded mode",
-          "Terminal UI and a setup wizard for every connection"
-        ]
+          "Rule-based code decides where the money goes",
+          "Transfers wait for approval, except gas top-ups of $10 or less",
+          "The weekly Claude review may change paper-strategy settings only",
+          "A change to a locked limit stops the real-money avenues",
+          "Paper trades run beside the real accounts",
+          "Terminal app and a setup wizard for each service"
+        ],
+        "updated": "2026-10-19"
       },
       {
         "id": "superset",
         "slug": "superset",
         "name": "superset",
-        "description": "Rekordbox-compatible DJ setlist optimizer. A librosa/Essentia pipeline extracts 40+ spectral, timbral, and rhythmic features per track, then KMeans/DBSCAN clustering generates flow-optimized sets with a CustomTkinter GUI.",
+        "description": "A local tool that analyzes a DJ library and puts tracks in an order by key, tempo and energy. It reads Rekordbox XML and exports the set as JSON.",
         "tags": [
           "Python",
-          "audio ML",
-          "DSP",
-          "CLI + GUI"
+          "librosa",
+          "Essentia",
+          "MLX"
         ],
         "githubUrl": "https://github.com/bmontt/superset",
-        "status": "live",
+        "status": "paused",
         "date": "March 2026",
-        "longDescription": "Superset automates the part of set preparation that doesn't require taste: curating a coherent set from a library of thousands of tracks. It applies the same audio feature extraction that powers music recommendation systems to DJ curation.\n\nThe pipeline runs locally on Apple Silicon. Rekordbox XML is parsed to extract a track catalog, then librosa and Essentia compute 40+ features per track — BPM, key, spectral centroid, timbral texture, energy envelope, and more. KMeans and DBSCAN cluster the library into vibe and energy groups, and a greedy graph traversal generates a setlist that respects harmonic mixing rules and energy arc.\n\nThe output is a rekordbox-compatible XML playlist — it drops directly into the existing DJ workflow, no intermediate steps. A CustomTkinter GUI allows interactive library exploration and manual override at any point in the process.",
+        "longDescription": "superset puts a DJ set in order. I still choose the tracks. It reads a Rekordbox library, analyzes each track, and proposes an order that follows key and energy.\n\nThe analysis has three stages. librosa measures tempo, key, a 16-point intensity curve and spectral features. Essentia models add genre, mood, danceability and an embedding. A 4-bit Qwen2.5-3B model on MLX writes notes for each transition from those numbers. It does not hear the audio.\n\nA greedy walk over a cost matrix makes the order. The cost weighs tempo, energy, key on the Camelot wheel, mood, spectral match and position in the set.\n\nEverything runs on the Mac after a first download of the models. A test run on 41 tracks took 4 to 8 minutes on an M4 Pro. The public repo holds the March 2026 version (v1), which grouped tracks with KMeans and DBSCAN.",
         "highlights": [
-          "40+ spectral, timbral, and rhythmic features per track via librosa + Essentia",
-          "Runs entirely on-device — no API calls, no cloud dependency",
-          "KMeans + DBSCAN dual-clustering for energy and vibe segmentation",
-          "Exports rekordbox-compatible XML playlists",
-          "CustomTkinter GUI with real-time library exploration",
-          "Genre-specific parameter modes (house, dubstep)",
-          "Optimized for Apple Silicon via MLX"
+          "Three stages: librosa, Essentia and a local LLM on MLX",
+          "A greedy order over a cost matrix, with the Camelot wheel for key",
+          "Measured: 41 tracks in 4 to 8 min on an M4 Pro",
+          "Works offline after the first model download",
+          "React and Electron app over FastAPI, and a CLI",
+          "The public repo is v1 (March 2026). v2 is not public yet."
         ],
-        "icon": "/icons/pioneerdj.svg"
+        "icon": "/icons/pioneerdj.svg",
+        "statusSince": "2026-06-30",
+        "statusNote": "v2 not public yet",
+        "updated": "2026-10-19"
       },
       {
         "id": "realmbot",
         "slug": "realmbot",
         "name": "realmbot",
-        "status": "wip",
+        "status": "paused",
         "date": "September 2026",
         "githubUrl": null,
         "tags": [
@@ -1001,24 +1007,27 @@
           "decision models",
           "evals"
         ],
-        "description": "A test bed for Jev-style decision-making systems: a headless game client where the model only picks a tactical mode, and every call falls back to a heuristic policy on a timeout, low confidence or an outage.",
-        "longDescription": "realmbot is where I test how a Jev-style decision model behaves when it's in charge of as little as possible. The model (TypeSafe AI's Jev) only chooses a tactical mode; deterministic code owns safety, movement and every required protocol reply.\n\nEvery call degrades to a heuristic policy on a timeout, low confidence or an outage, and an action gate plus a rate and cost governor sit between the model and the game. Thresholds are tuned from reliability sweeps rather than by feel, so the interesting output is the evaluation: when the model helps, when the fallback wins, and what it costs.\n\nThe game is the test harness: a private server I run, with no anti-detection work of any kind.",
+        "description": "A bot harness for a private game server, built for TypeSafe AI's Jev decision model. Jev access did not come, so every test used stand-in models.",
+        "longDescription": "realmbot tests how little control a decision model can have and still help. The model picks only a tactical mode. Deterministic code owns safety, movement and every required protocol reply.\n\nEach model call falls back to a heuristic policy on a timeout, low confidence or an outage. An action gate guards risky game actions, and a governor limits the rate and cost of model calls.\n\nI built it for Jev's API, but access did not come. The tests used stand-ins: the heuristic, a local Qwen3-4B, a test double and a small tabular model. A 60-minute soak ran 17,997 ticks with no disconnect.\n\nThe game server is a local open-source server that I run. The project has no anti-detection code of any kind.",
         "highlights": [
-          "Tests a Jev-style model as a narrow mode picker",
-          "Heuristic fallback on timeout, low confidence or outage",
-          "Action gate and a rate/cost governor",
-          "Danger thresholds tuned from reliability sweeps",
-          "Evals: when the model helps, when the fallback wins",
-          "Private test server; no anti-detection"
+          "The model picks only a tactical mode",
+          "Heuristic fallback on a timeout, low confidence or an outage",
+          "An action gate, and a rate and cost governor",
+          "Measured: danger threshold tuned from 0.55 to 0.30 (stand-in model)",
+          "Measured: 60-minute soak, 17,997 ticks, 0 disconnects",
+          "Local open-source server. No anti-detection code."
         ],
-        "icon": "/icons/realm.webp"
+        "icon": "/icons/realm.webp",
+        "statusSince": "2026-10-01",
+        "statusNote": "model access not granted",
+        "updated": "2026-10-19"
       },
       {
         "id": "site",
         "slug": "brodymontag-com",
         "name": "brodymontag.com",
-        "status": "live",
-        "date": "September 2026",
+        "status": "active",
+        "date": "October 2026",
         "githubUrl": "https://github.com/bmontt/brodymontag-site",
         "tags": [
           "TypeScript",
@@ -1026,23 +1035,24 @@
           "GLSL",
           "GSAP"
         ],
-        "description": "This site: a laser stage rendered as ASCII through a custom GLSL glyph pass over a three.js scene, with a CPU twin in a worker for devices without 3D, and a scroll-driven journey through both halves.",
-        "longDescription": "The background is one persistent stage that survives navigation. On capable devices it's a three.js scene drawn through a custom GLSL pass that turns every 8×22 px cell into a glyph; elsewhere a CPU painter in a Web Worker draws the same figures pixel for pixel.\n\nScroll drives it: GSAP ScrollTrigger is the single writer, so React never re-renders on scroll. Each page has its own composition, and moving between pages morphs the figures instead of cutting them.\n\nIt holds 120 fps on a scripted scroll even with the CPU slowed six times, after a pass that moved the iridescent shimmer onto one shared clock.",
+        "description": "This site. A three.js scene draws a laser stage, and a GLSL pass turns each 8×22 px cell into a text glyph. A CPU version in a Web Worker draws the same figures.",
+        "longDescription": "One stage stays on screen across all pages. Every visitor first sees a 2D version that the CPU paints in a Web Worker. A capable device then loads the three.js version and fades to it.\n\nGSAP ScrollTrigger is the only code that writes scroll state, so React does not render on each scroll frame. Each page has its own composition, and a page change moves the figures to the new one.\n\nOn a production build with a 6× CPU throttle, a scripted scroll holds 120 fps (p95 frame 9.3 ms, M4 Pro, 120 Hz display). The first version went live in June 2026, and the 3D stage in October 2026.",
         "highlights": [
-          "Custom GLSL ASCII pass over a three.js scene",
-          "CPU twin in a Web Worker, matched pixel for pixel",
-          "GSAP as the single scroll writer: no React re-renders",
-          "Figures morph across page changes",
-          "120 fps scrolling at 6× CPU slowdown",
-          "Prerendered pages that re-render hourly"
+          "A GLSL pass: one glyph for each 8×22 px cell",
+          "A CPU version in a Web Worker paints first",
+          "GSAP is the only writer of scroll state",
+          "Figures move to the composition of each new page",
+          "Measured: 120 fps at a 6× CPU throttle (2026-10-14)",
+          "Static pages, rendered again each hour"
         ],
-        "icon": "/icons/threedotjs.svg"
+        "icon": "/icons/threedotjs.svg",
+        "updated": "2026-10-19"
       },
       {
         "id": "kicker",
         "slug": "here-comes-the-kicker",
         "name": "here comes the kicker",
-        "status": "wip",
+        "status": "paused",
         "date": "August 2026",
         "githubUrl": null,
         "tags": [
@@ -1051,23 +1061,26 @@
           "C# / Unity",
           "game design"
         ],
-        "description": "3D kickball, first in the browser with three.js and no build step, now ported to Unity: pitches that roll and bounce, held-power throws, positional defense with difficulty levels.",
-        "longDescription": "here comes the kicker started as a browser game: three.js, plain script files, no bundler. The work went into feel — pitches that roll and bounce, throws whose power you hold rather than fix, throws that skip in off the dirt, contact you can read, and 80s-style callouts instead of box scores.\n\nIt's now being ported to C# in Unity 6, with a deterministic simulation separated from the view, camera transitions that look ahead of the ball, a crowd and audio that react to play, and a lobby in an elevated press box above the field.",
+        "description": "3D kickball, first in the browser with three.js and no build step, then ported to Unity 6 in C#. Pitches roll and bounce, and throw power depends on how long you hold.",
+        "longDescription": "here comes the kicker started as a browser game: three.js, plain script files, no bundler. The work went into feel. Pitches roll, skip and bounce, throws get the power that you hold, and 80s-style callouts replace box scores.\n\nIn August 2026 I ported it to C# in Unity 6 in three days. The simulation runs at a fixed step with a seeded random generator, separate from the view. The port also has a camera that looks ahead of the ball. A crowd reacts to play, and the lobby is a press box above the field.\n\nThe project is paused. Avatar progression exists only as design documents. The work after commit fce6a4b has no compile check yet.",
         "highlights": [
-          "Browser original: three.js, no build step",
-          "Held-power throws; pitches roll and bounce",
-          "Positional defense with difficulty levels",
-          "Unity 6 port with a deterministic sim",
-          "Camera look-ahead, reactive crowd and audio",
-          "Avatar progression designed for multiple sessions"
+          "Browser version: three.js, no build step",
+          "Held-power throws, and pitches that roll, skip and bounce",
+          "Positional defense with four difficulty levels",
+          "Unity 6 port: a fixed-step sim with a seeded RNG",
+          "A camera that looks ahead, and a crowd that reacts",
+          "Avatar progression: designed, not built"
         ],
-        "icon": "/icons/unity.svg"
+        "icon": "/icons/unity.svg",
+        "statusSince": "2026-08-19",
+        "statusNote": "Unity port done, next steps not started",
+        "updated": "2026-10-19"
       },
       {
         "id": "agent_forge",
         "slug": "agent-forge",
         "name": "agent-forge",
-        "status": "live",
+        "status": "active",
         "date": "June 2026",
         "githubUrl": null,
         "tags": [
@@ -1076,23 +1089,24 @@
           "multi-agent",
           "evals"
         ],
-        "description": "One canonical library of agent prompts, built into variants for Claude Code and VS Code from shared blocks, with an eval and observability layer: the fleet behind most of these projects.",
-        "longDescription": "My agents used to live as drifted copies across repositories. agent-forge keeps one canonical source for each, written platform-neutral and composed from shared blocks: the orchestrator-to-worker brief format, just-in-time stack discovery, dashboard logging.\n\nA stdlib-only build splices the blocks, emits Claude Code and VS Code variants, and fails on any unresolved placeholder. An eval layer checks agents against blueprints, and runs stream into the Subagent Dashboard, a Next.js control plane for watching parallel agents live.\n\nGuardrails are part of the source: the agent that operates venture, for example, has every financial action gated.",
+        "description": "One source file for each of my AI agent prompts, built into Claude Code and VS Code versions. An eval script checks the built agents, and an optional dashboard shows them as they run.",
+        "longDescription": "My agents were copies in many repositories, and the copies drifted apart. agent-forge keeps one platform-neutral source for each agent. It builds the Claude Code and VS Code versions from that source.\n\nThe build is Python with one dependency, PyYAML. It fails on any placeholder that it cannot resolve. Shared instructions, such as the brief format and stack discovery, load as skills only when an agent needs them.\n\nAn eval script runs 12 checks on the built agents, for example model routing, file drift and delegations to agents that do not exist. When the Subagent Dashboard runs, agents can post events to it. The dashboard is a Next.js page with server-sent events.\n\nGuardrails are part of the source. The agent that operates venture must ask before any financial action. I used these agents to build realmbot, Prism and venture.",
         "highlights": [
-          "One source per agent, built for two platforms",
-          "Shared blocks: briefs, discovery, logging",
-          "Build fails on unresolved placeholders",
-          "Blueprint evals and an observability rollup",
-          "Live in the Subagent Dashboard (Next.js, SSE)",
-          "Lazy skill pointers: 32% fewer tokens"
+          "One source for each agent, built for two platforms",
+          "The build fails on any unresolved placeholder",
+          "Shared blocks load on demand as skills",
+          "An eval script with 12 checks on the built agents",
+          "Measured: lazy skill pointers cut 31,538 tokens to 20,564 (−35%, 2026-06-30)",
+          "Today the same 16 agents use 25,683 tokens (2026-10-19)"
         ],
-        "icon": "/icons/claude.svg"
+        "icon": "/icons/claude.svg",
+        "updated": "2026-10-19"
       },
       {
         "id": "peak_finding",
         "slug": "peak-finding-toolbox",
         "name": "Peak_Finding_Toolbox",
-        "description": "Research-grade peak detector for auditory signals. Handles ABR clinical wave I–V annotation, HRTF/SOFA-format spatial audio files, and general audio onset detection with configurable thresholding.",
+        "description": "A Python toolbox that finds peaks in auditory signals: ABR waves I to V, impulse responses from SOFA files, and transients in audio. A research prototype from my PIRL work.",
         "tags": [
           "Python",
           "EEG",
@@ -1100,18 +1114,21 @@
           "signal processing"
         ],
         "githubUrl": "https://github.com/bmontt/Peak_Finding_Toolbox",
-        "status": "live",
+        "status": "archived",
         "date": "April 2025",
-        "longDescription": "The Peak Finding Toolbox was developed during auditory signal processing research at the University of Maryland. Auditory Brainstem Response (ABR) measurements — short electrical signals recorded from the scalp in response to sound — require precise peak annotation across five clinical waves (I-V) to be clinically useful. Existing tools were either proprietary, inflexible, or required significant manual annotation.\n\nThe toolbox provides configurable adaptive thresholding algorithms for automated ABR wave detection, with support for the SOFA (Spatially Oriented Format for Acoustics) standard used in HRTF spatial audio research. The design philosophy: accurate enough for clinical research use, accessible enough for researchers who are not Python experts — clear interfaces, documented parameters, and sensible defaults.\n\nThe toolbox is also used for general audio onset detection, where the same thresholding and peak-picking algorithms apply beyond the neurological signal domain.",
+        "longDescription": "I wrote the toolbox during auditory signal research at UMD's Perceptual Interfaces and Reality Laboratory. An auditory brainstem response (ABR) is a small signal from the scalp after a sound. Each of its five waves needs an exact peak mark.\n\nFor ABR, the toolbox smooths the signal by its signal-to-noise ratio and looks for peaks in up to three passes. It scores I–III–V triplets against normal time windows, then finds waves II and IV between them. For SOFA and audio files it uses a fixed threshold.\n\nI compared its Wave V picks with manual picks for 8 subjects (54 pairs). The median error was 1.15 ms, and 41% of the picks were within 0.5 ms. It is a prototype, not a clinical tool. Waves I to IV have no benchmark.\n\nIt reads EEG through MNE-BIDS, SOFA files through h5py, and audio through soundfile. I stopped work on it in May 2025.",
         "highlights": [
-          "ABR wave I–V annotation with adaptive thresholding algorithms",
-          "HRTF/SOFA-format spatial audio file parsing and processing",
-          "Configurable onset detection with multiple threshold strategies",
-          "MNE and BIDS-compatible data format support",
-          "Designed for clinical and academic research environments",
-          "Accessible API — no signal processing expertise required"
+          "ABR waves I to V, smoothed by the signal-to-noise ratio",
+          "Measured: Wave V median error 1.15 ms against manual picks (8 subjects)",
+          "Measured: 41% of Wave V picks within 0.5 ms",
+          "Impulse responses from SOFA files, and transients in audio",
+          "Loaders for MNE-BIDS, h5py and soundfile",
+          "A research prototype. Not clinically validated."
         ],
-        "icon": "/icons/umd.webp"
+        "icon": "/icons/umd.webp",
+        "statusSince": "2025-05-07",
+        "statusNote": "research prototype",
+        "updated": "2026-10-19"
       }
     ],
     "stack": [
@@ -1125,11 +1142,12 @@
           "c++",
           "rust",
           "ocaml",
-          "ruby"
+          "ruby",
+          "c#"
         ]
       },
       {
-        "label": "frontend",
+        "label": "frontend & graphics",
         "items": [
           "react",
           "next.js (app router)",
@@ -1139,7 +1157,12 @@
           "tailwind",
           "vite",
           "vitest",
-          "playwright"
+          "playwright",
+          "three.js / r3f",
+          "glsl",
+          "gsap",
+          "electron",
+          "unity"
         ]
       },
       {
@@ -1152,7 +1175,11 @@
           "postgresql",
           "flyway",
           "mongodb",
-          "dynamodb"
+          "dynamodb",
+          "fastapi",
+          "typer",
+          "sqlite",
+          "supabase"
         ]
       },
       {
@@ -1178,7 +1205,8 @@
           "nmt (m2m-100)",
           "pytorch",
           "tensorflow",
-          "yolov8 / opencv"
+          "r-cnn / opencv",
+          "mlx"
         ]
       },
       {
@@ -1234,13 +1262,24 @@
       "nmt (m2m-100)": "https://huggingface.co/facebook/m2m100_418M",
       "pytorch": "https://pytorch.org",
       "tensorflow": "https://www.tensorflow.org",
-      "yolov8 / opencv": "https://docs.ultralytics.com/models/yolov8/",
       "librosa": "https://librosa.org",
       "essentia": "https://essentia.upf.edu",
       "mne": "https://mne.tools",
       "sofa / hrtf": "https://www.sofaconventions.org",
       "fl studio": "https://www.image-line.com/fl-studio/",
-      "rekordbox": "https://rekordbox.com"
+      "rekordbox": "https://rekordbox.com",
+      "c#": "https://learn.microsoft.com/dotnet/csharp/",
+      "three.js / r3f": "https://r3f.docs.pmnd.rs",
+      "glsl": "https://en.wikipedia.org/wiki/OpenGL_Shading_Language",
+      "gsap": "https://gsap.com",
+      "electron": "https://www.electronjs.org",
+      "unity": "https://unity.com",
+      "fastapi": "https://fastapi.tiangolo.com",
+      "typer": "https://typer.tiangolo.com",
+      "sqlite": "https://www.sqlite.org",
+      "supabase": "https://supabase.com",
+      "r-cnn / opencv": "https://opencv.org",
+      "mlx": "https://ml-explore.github.io/mlx/"
     },
     "experience": [
       {
@@ -1258,12 +1297,13 @@
           "postgres",
           "multi-agent ai"
         ],
-        "description": "Full-stack developer building an enterprise payments developer portal and the AI tooling behind it.",
+        "description": "Full-stack developer in Fiserv's Global Business Solutions group. I work on an enterprise payments developer portal and the AI tools for it.",
         "highlights": [
-          "Proposed and built a collaborative documentation CMS (Tiptap, Yjs CRDTs, Fastify, Postgres) with real-time co-editing, versioning and approvals. It became the team's CMS.",
-          "Built a governed multi-agent delivery platform: independent AI review before a human sees the code, every agent run logged, a human approving every merge. Adopted team-wide.",
-          "Built safety-gated security remediation that triaged 344 scanner findings in 13 seconds with 100% recall against manual review. Every fix ships with a regression test.",
-          "Moved a multi-team platform's authorization out of the browser into fail-closed policy-as-code (OPA) on the backend."
+          "I am one of two developers who lead a team of five engineers.",
+          "I proposed and built a documentation CMS (Tiptap, Yjs CRDTs, Fastify, Postgres) with versions and approvals. Two or more people can edit a page at the same time. It became the team's CMS.",
+          "I built a delivery platform for AI agents. An independent AI review runs before a human reads the code, and a human approves each merge. The team adopted it.",
+          "I built security tools with safety gates. On one run they sorted 344 scanner findings in 13 seconds and missed none of the findings from a manual review.",
+          "I moved the authorization checks out of the browser into OPA policies on the backend. A check that fails denies access."
         ],
         "icon": "/icons/fiserv.svg"
       },
@@ -1280,11 +1320,12 @@
           "signal processing",
           "research"
         ],
-        "description": "Deep learning and auditory signal processing for hearing research.",
+        "description": "Deep learning and auditory signal processing for research on how people hear.",
         "highlights": [
-          "Optimized a differentiable auditory processing model for open-source release.",
-          "Built deep-learning pipelines for phoneme recognition and source separation.",
-          "Built a multi-modal CRNN to diagnose hearing loss in low-resource environments ([senior research paper](https://docs.google.com/document/d/1YATXYDqKSsFRUAdsngWYRoW_lLQKZk4tKbO5e55yaMw/edit?usp=sharing))."
+          "I improved a differentiable auditory model for its open-source release.",
+          "I built deep-learning pipelines for phoneme recognition and source separation.",
+          "I built a multi-modal CRNN to detect hearing loss in low-resource settings ([senior research paper](https://docs.google.com/document/d/1YATXYDqKSsFRUAdsngWYRoW_lLQKZk4tKbO5e55yaMw/edit?usp=sharing)).",
+          "I built Peak_Finding_Toolbox, a peak finder for ABR waves and SOFA files."
         ],
         "icon": "/icons/umd.webp"
       },
@@ -1301,11 +1342,11 @@
           "azure",
           "data"
         ],
-        "description": "Computer vision, data pipelines and AI adoption for an environmental technology team.",
+        "description": "Computer vision, data pipelines and AI adoption for Ramboll's environmental monitoring work.",
         "highlights": [
-          "Led a team-wide AI adoption initiative, with published guidance on use cases, prompting and best practices.",
-          "Retrained an R-CNN algae-bloom detection model to 94% accuracy, correctly telling blooms from debris.",
-          "Built a Power BI financial dashboard (Azure Functions, Power Automate, HubSpot) with automated ingestion of drone photologs, financial records and CRM data."
+          "I led the team's AI adoption work and wrote its guide to use cases, prompts and good practice.",
+          "I retrained an R-CNN algae-bloom detection model to 94% accuracy. The model correctly identifies debris.",
+          "I built a Power BI financial dashboard (Azure Functions, Power Automate, HubSpot). It loads drone photo logs, financial records and CRM data automatically."
         ],
         "icon": "/icons/bloomoptix.webp"
       },
@@ -1321,7 +1362,7 @@
           "data science",
           "research"
         ],
-        "description": "Specialization in machine learning. Senior research in auditory signal processing at PIRL: ABR peak detection and HRTF/SOFA spatial audio (Peak_Finding_Toolbox).",
+        "description": "Specialization in machine learning. Senior research in auditory signal processing at PIRL.",
         "href": "https://www.cs.umd.edu",
         "icon": "/icons/umd.webp"
       }
