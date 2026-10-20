@@ -39,10 +39,13 @@ export const metadata: Metadata = {
   // BM in the shimmer. The SVG adapts to the browser theme (dark tile on light
   // chrome, floating letters on dark); the .ico (always on the tile) is the
   // fallback for browsers without SVG favicons — sized, not "any", so the SVG
-  // wins where it's supported.
+  // wins where it's supported. The 192px PNG is for search results (Google
+  // wants a square multiple of 48px); the SVG stays last, so browsers that take
+  // the last suitable icon still get the theme-aware one.
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon.svg", type: "image/svg+xml" },
     ],
     apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
