@@ -7,7 +7,9 @@
 // opacity while their center crosses the middle ~45% of the screen, then slide
 // back out the same way as they leave, fading as they go. Scrubbed by scroll
 // both ways, so the widget you're reading is centered and still, and its
-// neighbors recede: one widget at a time. Phones (one column) get a short
+// neighbors recede: one widget at a time — or, on wide screens, one row at a
+// time, where two cards share it ([data-pair]): each comes in from its own
+// side and holds in its own column. Phones (one column) get a short
 // drift. Reduced motion or no JS: nothing is set, every widget plain and fully
 // visible. Horizontal overflow is clipped on html/body (globals.css), so a
 // widget out at the side never adds a scrollbar.
@@ -44,10 +46,13 @@ export default function WidgetSlide() {
               const toO = gsap.quickTo(el, "opacity", { duration: 0.5, ease: "power3.out" });
               let h = el.offsetHeight;
               let toMid = 0; // px from its resting center to (nearly) the screen's
+              // a card in a two-up row ([data-pair]) holds in its own column —
+              // pulled to the middle it would cover its neighbour
+              const paired = el.dataset.pair !== undefined;
               const measure = () => {
                 h = el.offsetHeight;
                 const r = el.getBoundingClientRect();
-                toMid = (innerWidth / 2 - (r.left + r.width / 2 - Number(gsap.getProperty(el, "x")))) * 0.92;
+                toMid = paired ? 0 : (innerWidth / 2 - (r.left + r.width / 2 - Number(gsap.getProperty(el, "x")))) * 0.92;
               };
               measure();
               // its center from the screen's, as a share of half the screen:

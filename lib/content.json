@@ -71,7 +71,7 @@
       },
       {
         "label": "",
-        "value": "sigma phi delta · ridge high '21"
+        "value": "ridge high '21"
       },
       {
         "label": "based",
@@ -854,7 +854,7 @@
           "icon": "/icons/glow.webp"
         }
       ],
-      "scene": "dnb in the dmv · no djs left behind · delusionville afters · mirari presents",
+      "scene": "dnb in the dmv · no djs left behind · mirari presents",
       "icon": "/icons/pbj.webp"
     }
   },
@@ -1271,18 +1271,6 @@
         "description": "Specialization in machine learning. Senior research in auditory signal processing at PIRL: ABR peak detection and HRTF/SOFA spatial audio (Peak_Finding_Toolbox).",
         "href": "https://www.cs.umd.edu",
         "icon": "/icons/umd.webp"
-      },
-      {
-        "id": "sigma",
-        "role": "member",
-        "org": "sigma phi delta",
-        "orgDetail": "professional engineering fraternity",
-        "period": "2021 — 2025",
-        "tags": [
-          "engineering",
-          "leadership"
-        ],
-        "description": "Active member of the professional engineering fraternity at UMD. Focused on technical community building and cross-discipline collaboration."
       }
     ]
   },

@@ -44,6 +44,27 @@ export function SubWidgets({ items, cols = 2 }: { items: string[]; cols?: 2 | 3 
   );
 }
 
+/** a card's top facts, compact: small chips that wrap on wider screens, one
+ *  row you swipe sideways on phones (snapping card by card). The detail page
+ *  keeps the full sub-widgets. Phones turn pointer events back on for the row,
+ *  so it scrolls inside a card whose content otherwise lets clicks through. */
+export function FactRow({ items }: { items: string[] }) {
+  if (!items.length) return null;
+  return (
+    <ul className="pointer-events-auto relative -mx-1 mt-3 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] sm:pointer-events-none sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 [&::-webkit-scrollbar]:hidden">
+      {items.map((t, i) => (
+        <li
+          key={i}
+          className="subwidget w-[80%] shrink-0 snap-start px-3 py-2 font-sans text-sm leading-snug text-foreground/85 sm:w-auto sm:shrink sm:px-2.5 sm:py-1.5"
+          style={{ animationDelay: `${-((i * 1.9) % 7)}s` }}
+        >
+          {renderInline(t)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** tags as quiet pills along a widget's foot */
 export function TagRow({ tags }: { tags: string[] }) {
   return (

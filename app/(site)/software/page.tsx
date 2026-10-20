@@ -28,13 +28,14 @@ const years = (period: string) => {
   return b === "present" || !b ? `${a}–now` : a === b ? a : `${a}–${b.slice(2)}`;
 };
 
-/** a widget on alternating sides (wide screens); it slides in and out from
- *  its own side as you scroll (WidgetSlide), and the laser network reads it to
- *  take its project's shape and sink behind it (lib/director/software-figure.ts) */
-function Alt({ n, id, stage, children }: { n: number; id?: string; stage?: string; children: React.ReactNode }) {
-  const right = n % 2 === 1;
+/** a card in a two-up row (wide screens; one column on phones): it slides in
+ *  and out from its own column's side as you scroll and holds there
+ *  (WidgetSlide), and the laser network reads it to take its project's shape
+ *  and sink behind it (lib/director/software-figure.ts). Both cards in a row
+ *  stretch to one height. */
+function Pair({ n, id, stage, children }: { n: number; id?: string; stage?: string; children: React.ReactNode }) {
   return (
-    <div id={id} data-slide={right ? "right" : "left"} data-stage-id={stage} className={`relative scroll-mt-28 md:w-[60%] ${right ? "md:self-end" : "md:self-start"}`}>
+    <div id={id} data-slide={n % 2 === 1 ? "right" : "left"} data-pair="" data-stage-id={stage} className="relative min-w-0 scroll-mt-28 [&>*]:h-full">
       {children}
     </div>
   );
@@ -72,36 +73,32 @@ export default function SoftwarePage() {
 
             <div>
               <SectionLabel>projects</SectionLabel>
-              {/* an orderly column, each card nudged sideways on a fixed
-                  pattern so they don't sit in one rigid line */}
-              <div className="flex flex-col gap-6">
+              {/* two to a row on wide screens, one column on phones */}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {projects.map((p, i) => (
-                  <Alt key={p.id} n={i} id={`project-${p.slug}`} stage={`project:${p.id}`}>
+                  <Pair key={p.id} n={i} id={`project-${p.slug}`} stage={`project:${p.id}`}>
                     <ProjectCard project={p} />
-                  </Alt>
+                  </Pair>
                 ))}
               </div>
             </div>
 
             <div>
               <SectionLabel>experience</SectionLabel>
-              <div className="flex flex-col gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {experience.map((e, i) => (
-                  <Alt key={e.id} n={projects.length + i} id={`role-${e.id}`}>
+                  <Pair key={e.id} n={i} id={`role-${e.id}`}>
                     <ExperienceCard entry={e} />
-                  </Alt>
+                  </Pair>
                 ))}
               </div>
             </div>
 
             <div id="stack" className="scroll-mt-28">
               <SectionLabel>stack</SectionLabel>
-              <div className="flex flex-col gap-6">
-                {stack.map((c, i) => (
-                  <Alt key={c.label} n={projects.length + experience.length + i}>
-                    <StackGrid categories={[c]} />
-                  </Alt>
-                ))}
+              {/* the whole stack slides in as one block, three across */}
+              <div data-slide="left" className="relative">
+                <StackGrid />
               </div>
             </div>
           </div>

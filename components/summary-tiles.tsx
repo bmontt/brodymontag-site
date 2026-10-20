@@ -12,6 +12,9 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
+/** how long the tiles hold, pinned, while they pour into the cards (screens) */
+const PIN = 0.3;
+
 gsap.registerPlugin(ScrollTrigger);
 
 export type Tile = { label: string; href: string; icon?: string; meta?: string };
@@ -32,7 +35,7 @@ export default function SummaryTiles({ groups }: { groups: TileGroup[] }) {
       const tiles = gsap.utils.toArray<HTMLElement>(r.querySelectorAll("[data-tile]"));
       const heads = gsap.utils.toArray<HTMLElement>(r.querySelectorAll("[data-tile-head]"));
       tl = gsap.timeline({
-        scrollTrigger: { trigger: r, start: "top top+=56", end: () => `+=${innerHeight * 0.6}`, pin: true, scrub: 0.5, invalidateOnRefresh: true },
+        scrollTrigger: { trigger: r, start: "top top+=56", end: () => `+=${innerHeight * PIN}`, pin: true, scrub: 0.5, invalidateOnRefresh: true },
       });
       tl.to(tiles, { x: -18, opacity: 0, duration: 0.4, ease: "power2.in", stagger: { each: 0.014, from: "start" } }, 0)
         .to(heads, { opacity: 0, duration: 0.2, stagger: 0.04, ease: "power1.in" }, 0.25);

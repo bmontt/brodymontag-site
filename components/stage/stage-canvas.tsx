@@ -246,6 +246,8 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
   const track = useRef<{ bounds: number[] | null; t: ResolvedTrack | null }>({ bounds: null, t: null });
   const firstFrame = useRef(false);
   const stats = useRef({ frames: 0, since: performance.now() });
+  // the software network's focused widget, for the debug stats
+  const spaceFocus = useRef("");
   const tmp = useMemo(
     () => ({
       f: new Vector3(), up: new Vector3(), pos: new Vector3(), tgt: new Vector3(), at: new Vector3(),
@@ -428,6 +430,7 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
       L.uLaserMix.value = 1; // per-page intensity lives in the director
       const lo = laserDirector(L, laserInputFrom(st, now, delta, size.width, size.height, readAnchor, TRANSITION_MS));
       noteKnot(lo);
+      spaceFocus.current = lo.space;
       // the 3D title's mask follows the page (rebuilt when the page changes)
       const text = lo.title ? TITLE_TEXT[routeKind] : undefined;
       if (text && titleTex.current.text !== text) {
@@ -472,6 +475,8 @@ function Stage({ cell, mode = "journey", parity = false, onStats, onFirstFrame, 
         // the laser layer: projected segments this frame (room + car), year track
         segs: ascii.laser.uSegN.value,
         tl: +st.timelineProgress.toFixed(3),
+        // the widget the software network takes its pattern from
+        space: spaceFocus.current,
       };
     }
     if ((onStats || debugOn) && now - sa.since > 500) {

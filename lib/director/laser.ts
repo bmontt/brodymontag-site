@@ -125,6 +125,8 @@ export interface LaserOutput {
   burst: number; // 0–1 white flash at the merger
   brightness: number;
   hot: number; // white-hot core amount
+  /** the widget the software network takes its pattern from ("" elsewhere) */
+  space: string;
 }
 
 /** every figure parameter the pages compose — damped as a whole */
@@ -172,7 +174,7 @@ export function createLaserDirector() {
   let fuseX = 0, fuseY = 0; // where the signals fused (the debris flies from here)
   let page: StageRouteKind | null = null;
   let pageAt = 0;
-  const out: LaserOutput = { knot: { x: 0, y: 0, r: 0, w: 0 }, title: false, burst: 0, brightness: 1, hot: 0.2 };
+  const out: LaserOutput = { knot: { x: 0, y: 0, r: 0, w: 0 }, title: false, burst: 0, brightness: 1, hot: 0.2, space: "" };
   const segs = new Float32Array(ROOM_SEGS * 4);
   const segsB = new Float32Array(ROOM_SEGS * 4);
   const hull = new Float32Array(CAR_HULL * 2);
@@ -259,7 +261,7 @@ export function createLaserDirector() {
         // it re-wires into the project in the middle of the screen, draws in
         // between two and opens out as the next settles, sinks behind the
         // cards (wide screens) and thins out after the last of them
-        const wd = readWidgets(H, widgets);
+        const wd = readWidgets(H, widgets, x.hover ?? null, time);
         quiet = W >= 768;
         spaceKey = wd.focus;
         spaceOpen = 1 - smooth(0.2, 1, wd.between);
@@ -563,6 +565,7 @@ export function createLaserDirector() {
     // ── mood ────────────────────────────────────────────────────────────
     out.brightness = c.bright;
     out.hot = c.hot;
+    out.space = spaceKey;
     // the fusion's flash, stepped back with the rest of the stage (it lights the whole grid)
     out.burst = x.page === "about" ? 0.5 * c.bright * Math.exp(-Math.max(0, time - fuseAt) * 3.5) : 0;
     u.uLaserTime.value = time;

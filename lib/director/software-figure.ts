@@ -260,12 +260,20 @@ export interface Widgets {
 }
 
 let widgetEls: HTMLElement[] = [];
-/** read the [data-slide] widgets (cached until they leave the document) */
-export function readWidgets(H: number, out: Widgets): Widgets {
+/** the widgets sharing the focused row (two-up on wide screens), reused per frame */
+const row: HTMLElement[] = [];
+/** how long the network holds one card of a pair before re-wiring into the other (s) */
+const PAIR_HOLD = 5;
+/** read the [data-slide] widgets (cached until they leave the document). The
+ *  focus is the widget nearest the middle of the screen; when a row holds two
+ *  (they stretch to one height, so they tie), the hovered one wins, and
+ *  otherwise the network takes each in turn every PAIR_HOLD seconds. */
+export function readWidgets(H: number, out: Widgets, prefer: string | null = null, time = 0): Widgets {
   out.n = 0; out.focus = ""; out.between = 1; out.first = Infinity; out.last = -Infinity;
   if (typeof document === "undefined") return out;
   if (!widgetEls.length || !widgetEls[0].isConnected) widgetEls = Array.from(document.querySelectorAll<HTMLElement>("[data-slide]"));
   let best = Infinity;
+  let rowN = 0;
   for (const el of widgetEls) {
     const r = el.getBoundingClientRect();
     out.first = Math.min(out.first, r.top);
@@ -276,7 +284,19 @@ export function readWidgets(H: number, out: Widgets): Widgets {
       out.rects.set([r.left, r.top, r.right, r.bottom], out.n++ * 4);
     }
     const d = Math.abs(r.top + r.height / 2 - H / 2);
-    if (d < best) { best = d; out.focus = el.id; out.between = clamp01(d / (r.height / 2 + 12)); }
+    if (d < best - 1) {
+      best = d;
+      out.between = clamp01(d / (r.height / 2 + 12));
+      row[0] = el;
+      rowN = 1;
+    } else if (d <= best + 1 && rowN < 4) {
+      row[rowN++] = el;
+    }
+  }
+  if (rowN) {
+    let pick = row[(rowN > 1 ? Math.floor(time / PAIR_HOLD) : 0) % rowN];
+    for (let i = 0; i < rowN && prefer; i++) if (row[i].dataset.stageId === prefer) pick = row[i];
+    out.focus = pick.id;
   }
   return out;
 }

@@ -1,11 +1,12 @@
 // ── ProjectCard ───────────────────────────────────────────────────────────────
 // A project as a widget: name and status, the one-line description, its top
-// three highlights as floating sub-widgets, tags along the foot. The whole card
-// links to the detail page through a stretched-link overlay (no nested anchors:
-// that was a hydration bug); the GitHub link sits above the overlay.
+// three highlights as compact fact chips (a swipe row on phones), tags along
+// the foot. The whole card links to the detail page through a stretched-link
+// overlay (no nested anchors: that was a hydration bug); the GitHub link sits
+// above the overlay.
 import Link from "next/link";
 import type { Project } from "@/lib/projects";
-import { BrandIcon, StatWidgets, SubWidgets, TagRow, Widget, WidgetHead } from "@/components/widgets";
+import { BrandIcon, FactRow, StatWidgets, TagRow, Widget, WidgetHead } from "@/components/widgets";
 
 export default function ProjectCard({ project }: { project: Project }) {
   return (
@@ -43,7 +44,7 @@ export default function ProjectCard({ project }: { project: Project }) {
             {project.statsAsOf && <p className="mt-2 font-mono text-2xs text-foreground/50">as of {project.statsAsOf.toLowerCase()}</p>}
           </>
         ) : (
-          <SubWidgets items={project.highlights.slice(0, 3)} cols={3} />
+          <FactRow items={project.highlights.slice(0, 3)} />
         )}
         <TagRow tags={project.tags} />
       </div>
