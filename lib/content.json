@@ -98,12 +98,12 @@
       }
     ],
     "paragraphs": [
-      "I grew up in New Jersey splitting time between making things and performing them — two halves that never felt separate. Before I wrote a line of code I was a competitive ice hockey player and a classically trained musician: piano, oboe, viola, drums. What held my attention was always the building, whether the result was a song, a system, or a set.",
-      "I started producing at ten on GarageBand and moved to FL Studio two years later. Early on I made rap and hip-hop beats for local artists; then dance music reorganized how I heard everything. Now I produce and DJ as Monty (US) — warm basslines, crisp percussion, a UK- and minimal-leaning take on house and tech house — and I've opened and closed for artists I grew up listening to across DC, Baltimore, and New York. In 2026 that became a residency at Transmission, a first headline night in Brooklyn, and both ends of the night at Echostage.",
-      "I studied Computer Science at the University of Maryland, where I gravitated toward audio engineering, signal processing, and machine learning — including senior research on auditory signal processing at UMD's Perceptual Interfaces & Reality Lab. Today I'm a full-stack developer in Fiserv's Global Business Solutions group, building an enterprise payments developer portal and the AI tooling behind it. A lot of what I build starts with the music. Most projects I take on solve a problem I have as an artist — a setlist optimizer, audio-analysis pipelines, the tooling that runs my own workflow.",
+      "I grew up in New Jersey splitting time between making things and performing them — two halves that never felt separate. In school I played competitive ice hockey (Ridge varsity and the NJ Rockets 16U AA) and trained formally as a musician: piano, oboe, viola, drums. What held my attention was always the building, whether the result was a song, a system, or a set.",
+      "I started producing at ten on GarageBand and moved to FL Studio two years later. Early on I made rap and hip-hop beats for local artists; then dance music reorganized how I heard everything. Now I produce and DJ as Monty (US) — warm basslines, crisp percussion, a UK- and minimal-leaning take on house and tech house — and I've opened, closed and supported touring artists in DC and New York. In 2026 that became a residency at Transmission, a first headline night in Brooklyn, and both ends of the night at Echostage.",
+      "I studied Computer Science at the University of Maryland, where I gravitated toward audio engineering, signal processing, and machine learning — including senior research on auditory signal processing at UMD's Perceptual Interfaces & Reality Lab. Today I'm a full-stack developer in Fiserv's Global Business Solutions group, building an enterprise payments developer portal and the AI tooling behind it. A lot of what I build starts with the music. Many projects I take on solve a problem I have as an artist — a setlist optimizer, audio-analysis pipelines, the tooling that runs my own workflow.",
       "With two close friends I co-founded [PB&J Sounds](https://pbandjsounds.com), an East Coast collective and label built around underground house, and I hold a residency with [Beatprint](https://www.instagram.com/beatprint__) at Transmission DC. My investment is in the grassroots side of this scene — small rooms, real crowds, music you have to dig for — and in owning the whole stack that supports it, from the label's website to the software that prepares my sets.",
       "Lately my focus has been making agentic AI trustworthy: at work, a governed multi-agent delivery platform where independent AI review runs before a human sees the code and a human approves every merge; at home, models on my own hardware and small fleets of agents, with the architecture written down before the code. I work for craft, rigor, and ownership — understanding something well enough to build it myself, and building it well enough to trust it on stage or in production.",
-      "Right now, music is the priority. Production is the work that compounds — it drives the long-term growth and the bookings that follow — so most of my creative energy lives in the studio and the next room I'm trying to play. The direction I care most about pulls both halves together: machine learning and signal processing applied to sound — deep learning, on-device and edge models, the territory companies like Dolby, Bose, and Sony work in — aimed at live performance and the tools producers use to make records. I want to build the instruments and systems that change how DJs play and how records get made. The engineering and the music were never two separate careers to me. They're one practice: the code serves the sets, and the sets inform the code."
+      "Production is the work that compounds — it drives the long-term growth and the bookings that follow — so most of my creative energy lives in the studio and the next room I'm trying to play. The direction I care most about pulls both halves together: machine learning and signal processing applied to sound — deep learning, on-device and edge models, the territory companies like Dolby, Bose, and Sony work in — aimed at live performance and the tools producers use to make records. I want to build the instruments and systems that change how DJs play and how records get made. The engineering and the music were never two separate careers to me. They're one practice: the code serves the sets, and the sets inform the code."
     ]
   },
   "contact": {
@@ -113,6 +113,11 @@
         "label": "booking",
         "value": "brodymontag123@gmail.com",
         "href": "mailto:brodymontag123@gmail.com"
+      },
+      {
+        "label": "management",
+        "value": "@ritvik.jain",
+        "href": "https://www.instagram.com/ritvik.jain"
       },
       {
         "label": "pb&j mgmt",
@@ -160,23 +165,7 @@
         "href": "https://soundcloud.com/brodymontag",
         "icon": "soundcloud",
         "glowRgb": "iridescent",
-        "stat": {
-          "label": "tracks",
-          "value": "34"
-        },
         "details": [
-          {
-            "label": "tracks",
-            "value": "34"
-          },
-          {
-            "label": "followers",
-            "value": "134"
-          },
-          {
-            "label": "likes",
-            "value": "3,292"
-          },
           {
             "label": "latest",
             "value": "PWR",
@@ -198,12 +187,12 @@
           },
           {
             "label": "single",
-            "value": "PWR (oct 2026)",
+            "value": "PWR (oct 9, 2026)",
             "href": "https://open.spotify.com/album/4vYn2Z0EOv9aaQAjFGoYhF"
           },
           {
             "label": "previous",
-            "value": "when a fire starts to burn (oct 2025)",
+            "value": "when a fire starts to burn (nov 2025)",
             "href": "https://spotify.link/vVmdengZJXb"
           }
         ]
@@ -215,15 +204,7 @@
         "href": "https://www.instagram.com/brodymontag",
         "icon": "instagram",
         "glowRgb": "iridescent",
-        "stat": {
-          "label": "followers",
-          "value": "2.4k"
-        },
         "details": [
-          {
-            "label": "followers",
-            "value": "2,442"
-          },
           {
             "label": "base",
             "value": "east coast"
@@ -336,25 +317,25 @@
         {
           "id": "event_pas_noizu",
           "slug": "public-art-space-noizu-dec-2026",
-          "title": "Public Art Space (NYC)",
-          "date": "December 2026",
+          "title": "ARTSPACE (NYC)",
+          "date": "December 4, 2026",
           "description": "Closing for Noizu",
           "media": [],
-          "venue": "Public Art Space",
+          "venue": "ARTSPACE at the PUBLIC Hotel",
           "city": "New York, NY",
           "format": "closing",
           "headliners": [
             "Noizu"
           ],
           "promoter": "Mirari",
-          "context": "Back on the Public Art Space circuit to close the night after Noizu, presented by Mirari: taking the room from the headliner's peak through to the lights."
+          "context": "Back at ARTSPACE to close the night after Noizu, presented by Mirari: taking the room from the headliner's peak through to the lights."
         },
         {
           "id": "event_rivo_si",
           "slug": "superior-ingredients-rivo-oct-2026",
           "title": "Superior Ingredients (Brooklyn)",
           "date": "October 30, 2026",
-          "description": "Supporting Rivo · Halloween day & night takeover",
+          "description": "On the bill with Rivo · Halloween day & night takeover",
           "media": [],
           "venue": "Superior Ingredients",
           "city": "Brooklyn, NY",
@@ -363,7 +344,7 @@
             "Rivo"
           ],
           "promoter": "Project 91",
-          "context": "Rivo's Day & Night Halloween takeover across both floors of Superior Ingredients in Williamsburg — a sunset set on The Roof, then The Room into the night — presented by Project 91.",
+          "context": "Rivo's Day & Night Halloween takeover across both floors of Superior Ingredients in Williamsburg — a sunset set on The Roof, then The Room into the night — presented by Project 91. On the bill for The Room, the night half; set time between 10pm and 4am, to be confirmed.",
           "links": [
             {
               "label": "tickets",
@@ -380,7 +361,7 @@
           "media": [],
           "venue": "Strand",
           "city": "Washington, DC",
-          "format": "residency",
+          "format": "beatprint night",
           "promoter": "Beatprint",
           "promoterUrl": "https://www.instagram.com/beatprint__",
           "context": "Beatprint's seventh annual Soloween, themed Haunted Hollywood — a red carpet, paparazzi and a costume contest — at Strand on I Street, 10pm to 3am, alongside Toon and Fatima.",
@@ -395,7 +376,7 @@
           "id": "event_echostage_ianasher",
           "slug": "echostage-ian-asher-sep-2026",
           "title": "Echostage (DC)",
-          "date": "September 2026",
+          "date": "September 19, 2026",
           "description": "Opening + Closing for Ian Asher",
           "media": [
             {
@@ -415,9 +396,7 @@
           "city": "Washington, DC",
           "format": "open + close",
           "headliners": [
-            "Ian Asher",
-            "NOTD",
-            "Will Sass"
+            "Ian Asher"
           ],
           "promoter": "Club Glow",
           "promoterUrl": "https://www.instagram.com/clubglow",
@@ -437,15 +416,15 @@
           "id": "event_afterdark",
           "slug": "after-dark-above-ten-aug-2026",
           "title": "After Dark · Harriet's Lounge (Brooklyn)",
-          "date": "August 2026",
+          "date": "August 1, 2026",
           "description": "Headline debut",
           "media": [],
-          "venue": "Harriet's Lounge",
+          "venue": "Harriet's Lounge, 1 Hotel Brooklyn Bridge",
           "city": "Brooklyn, NY",
           "format": "headliner",
           "promoter": "Above Ten",
           "promoterUrl": "https://www.instagram.com/aboveten",
-          "context": "After Dark is the Brooklyn party series run by Above Ten, this one at Harriet's Lounge. A first headline booking — carrying a full New York night start to finish rather than warming the room for someone else, and the point where the work moves from support slots to leading the bill.",
+          "context": "Above(Ten) is the summer house series at Harriet's Lounge, on the 10th floor of the 1 Hotel Brooklyn Bridge, and After Dark is its late-night session. A first headline booking, after a support act: the point where the work moves from support slots to leading the bill.",
           "links": [
             {
               "label": "above ten",
@@ -458,36 +437,33 @@
           "slug": "laissez-faire-jul-2026",
           "title": "Laissez Faire (NYC)",
           "date": "July 2026",
-          "description": "Closing for Vesper",
+          "description": "Closing Vesper",
           "media": [],
           "venue": "Laissez Faire",
           "city": "New York, NY",
           "format": "closing",
-          "headliners": [
-            "Vesper"
-          ],
-          "context": "Closing the night after Vesper at Laissez Faire in New York."
+          "context": "Closing Vesper, the house-music night at Laissez Faire, the cellar club under The Beekman in New York."
         },
         {
           "id": "event_azure",
           "slug": "azure-no-static-jun-2026",
-          "title": "Azure (DC)",
-          "date": "June 2026",
+          "title": "Azure Day Party (DC)",
+          "date": "June 28, 2026",
           "description": "Supporting No Static",
           "media": [],
-          "venue": "Azure",
+          "venue": "Ciel Rooftop, Marriott Capitol Hill",
           "city": "Washington, DC",
           "format": "support",
           "headliners": [
             "No Static"
           ],
-          "context": "Support for No Static at Azure in DC."
+          "context": "Support for No Static at Azure, a Sunday rooftop day party, at Ciel Rooftop in DC."
         },
         {
           "id": "event_flash_veggi_2026",
           "slug": "flash-rooftop-veggi-may-2026",
           "title": "Flash Rooftop (DC)",
-          "date": "May 2026",
+          "date": "May 30, 2026",
           "description": "Direct support for Veggi · matinée",
           "media": [],
           "venue": "Flash",
@@ -498,7 +474,7 @@
           ],
           "promoter": "Beatprint",
           "promoterUrl": "https://www.instagram.com/beatprint__",
-          "context": "Back on the Flash rooftop with Veggi a year after the first time — this time a daytime matinée through Beatprint.",
+          "context": "Back on the Flash rooftop with Veggi eight months after the first time — this time a daytime matinée, booked through Beatprint.",
           "links": [
             {
               "label": "flash dc",
@@ -510,7 +486,7 @@
           "id": "event_beatprint_debut",
           "slug": "transmission-beatprint-feb-2026",
           "title": "Transmission (DC)",
-          "date": "February 2026",
+          "date": "February 7, 2026",
           "description": "Beatprint residency debut",
           "media": [],
           "venue": "Transmission",
@@ -524,21 +500,18 @@
           "id": "event_echostage",
           "slug": "echostage-sep-2025",
           "title": "Echostage (DC)",
-          "date": "September 2025",
+          "date": "September 19, 2025",
           "description": "TWINSICK's Good Company Tour — on the bill as PB&J",
           "media": [],
           "venue": "Echostage",
           "city": "Washington, DC",
           "format": "opening set",
           "headliners": [
-            "TWINSICK",
-            "Sunday Scaries",
-            "MOONLGHT",
-            "Jake Shore"
+            "TWINSICK"
           ],
           "promoter": "Club Glow",
           "promoterUrl": "https://www.instagram.com/clubglow",
-          "context": "Echostage is a ~3,000-capacity room in Northeast DC — repeatedly ranked the #1 club in the United States in DJ Mag's Top 100 Clubs poll, and owned by Insomniac alongside Club Glow and Soundcheck. This was TWINSICK's Good Company Tour headline date, with PB&J on the official bill alongside MOONLGHT, Sunday Scaries, and Jake Shore. The largest room on the calendar to date.",
+          "context": "Echostage is a ~3,000-capacity room in Northeast DC — the highest-ranked US club in DJ Mag's Top 100 Clubs (world #1 in 2021), and run by Club Glow, an Insomniac company. This was TWINSICK's Good Company Tour headline date, with PB&J on the official bill alongside MOONLGHT, Sunday Scaries, and Jake Shore. The largest room on the calendar at the time.",
           "links": [
             {
               "label": "echostage",
@@ -551,44 +524,11 @@
           ]
         },
         {
-          "id": "event18",
-          "slug": "zebbies-garden-apr-2025",
-          "title": "Zebbie's Garden (DC)",
-          "date": "April 2025",
-          "description": "Opening + Closing for Martin Ikin",
-          "media": [
-            {
-              "type": "image",
-              "src": "/BrodyEvents/ikin_trio.webp"
-            }
-          ],
-          "venue": "Zebbie's Garden",
-          "city": "Washington, DC",
-          "format": "open + close",
-          "headliners": [
-            "Martin Ikin"
-          ],
-          "promoter": "Club Glow",
-          "promoterUrl": "https://www.instagram.com/clubglow",
-          "context": "Martin Ikin is one of UK house's most established names — a Toolroom Records mainstay, trained jazz pianist, and Beatport's best-selling artist of 2020. Open-to-close alongside him at Zebbie's Garden covered the full arc of the night: early crowd-building through to a late peak-time close.",
-          "setlistNote": "The \"Zebs MK2\" mix documents the energy from this booking and is available on pbandjsounds.com.",
-          "links": [
-            {
-              "label": "pbandjsounds.com",
-              "href": "https://pbandjsounds.com"
-            },
-            {
-              "label": "martin ikin",
-              "href": "https://www.instagram.com/martinikin"
-            }
-          ]
-        },
-        {
           "id": "event92",
           "slug": "flash-rooftop-sep-2025",
           "title": "Flash Rooftop (DC)",
-          "date": "September 2025",
-          "description": "Direct support for Veggi",
+          "date": "September 13, 2025",
+          "description": "Supporting Veggi",
           "media": [
             {
               "type": "image",
@@ -597,11 +537,11 @@
           ],
           "venue": "Flash",
           "city": "Washington, DC",
-          "format": "direct support",
+          "format": "support",
           "headliners": [
             "Veggi"
           ],
-          "context": "Flash is one of DC's most respected underground clubs — a Funktion-One club room, a ground-floor bar, and the Green Room rooftop with its retractable top. VEGGI is an LA-based producer and DJ who fuses house, hip-hop, and indie into a genreless sound, with roots in viral production videos before the move into club and festival rooms. Direct support — the slot just beneath the headliner. A competing Club Glow show the same night drew the room lighter than a usual Flash booking, but the crowd that came stayed locked in, and the set held.",
+          "context": "Flash is one of DC's most respected underground clubs — a Funktion-One club room, a ground-floor bar, and the Green Room rooftop with its retractable top. VEGGI is an LA-area producer and DJ with a genre-bending mix of house, hip-hop and indie, and roots in viral production videos. A daytime matinée on the rooftop.",
           "links": [
             {
               "label": "flash dc",
@@ -609,7 +549,7 @@
             },
             {
               "label": "veggi",
-              "href": "https://www.instagram.com/veggisounds"
+              "href": "https://www.instagram.com/veggibeats"
             }
           ]
         },
@@ -633,14 +573,14 @@
           ],
           "promoter": "Club Glow",
           "promoterUrl": "https://www.instagram.com/clubglow",
-          "context": "Biscits (Luke Wright Jones) is a UK DJ and producer working at the center of modern tech house — he broke out with \"Do It Like This\" on Sonny Fodera's SOLOTOKO imprint. Soundcheck draws large crowds for international headliners; this was open-to-close on a sold-out night.",
+          "context": "Biscits (Luke Wright Jones) is a UK DJ and producer working at the center of modern tech house — he broke out with \"Do It Like This\" on Sonny Fodera's SOLOTOKO imprint. Soundcheck was Club Glow's basement club on K Street (closed January 2026): a small room with big international bookings. This was open-to-close on a sold-out night.",
           "links": [
             {
               "label": "biscits",
-              "href": "https://www.instagram.com/biscitsmusic"
+              "href": "https://www.instagram.com/itsbiscits"
             },
             {
-              "label": "soundcheck dc",
+              "label": "soundcheck dc (closed)",
               "href": "https://soundcheckdc.com"
             }
           ]
@@ -648,34 +588,77 @@
         {
           "id": "event95",
           "slug": "public-art-space-jun-2025",
-          "title": "Public Art Space (NYC)",
+          "title": "ARTSPACE (NYC)",
           "date": "June 2025",
-          "description": "Headline set · art-space showcase",
+          "description": "Support set · Mirari Presents",
           "media": [],
-          "venue": "Public Art Space",
+          "venue": "ARTSPACE at the PUBLIC Hotel",
           "city": "New York, NY",
-          "format": "headliner",
-          "context": "The artspace series is a recurring circuit of NYC art-space showcases — smaller capacities, longer sets, a crowd that comes for the music. The opposite end of the spectrum from the large Club Glow bookings: lower production, more room to experiment. A consistent place to test sounds that wouldn't land in a festival context."
+          "format": "support",
+          "context": "ARTSPACE is the basement club of the PUBLIC Hotel on the Lower East Side: a smaller room than the Club Glow venues, with promoter nights such as Mirari's Fridays. A support set for Mirari, and the first of several nights there.",
+          "promoter": "Mirari"
+        },
+        {
+          "id": "event18",
+          "slug": "zebbies-garden-apr-2025",
+          "title": "Zebbie's Garden (DC)",
+          "date": "April 4, 2025",
+          "description": "Opening + Closing for Martin Ikin",
+          "media": [
+            {
+              "type": "image",
+              "src": "/BrodyEvents/ikin_trio.webp"
+            }
+          ],
+          "venue": "Zebbie's Garden",
+          "city": "Washington, DC",
+          "format": "open + close",
+          "headliners": [
+            "Martin Ikin"
+          ],
+          "promoter": "Club Glow",
+          "promoterUrl": "https://www.instagram.com/clubglow",
+          "context": "Martin Ikin is one of UK house's most established names — a Toolroom Records mainstay, trained jazz pianist, and one of Beatport's ten best-selling artists of 2020. Open-to-close alongside him at Zebbie's Garden covered the full arc of the night: early crowd-building through to a late peak-time close.",
+          "links": [
+            {
+              "label": "martin ikin",
+              "href": "https://www.instagram.com/martin_ikin"
+            }
+          ]
+        },
+        {
+          "id": "event_zebbies_syre",
+          "slug": "zebbies-garden-syre-mar-2025",
+          "title": "Zebbie's Garden (DC)",
+          "date": "March 7, 2025",
+          "description": "Direct support for Syre",
+          "media": [],
+          "venue": "Zebbie's Garden",
+          "city": "Washington, DC",
+          "format": "direct support",
+          "headliners": [
+            "Syre"
+          ],
+          "context": "Direct support for Syre at Zebbie's Garden, the third-floor rooftop club on Connecticut Avenue."
         },
         {
           "id": "event97",
           "slug": "power-plant-live-oct-2024",
           "title": "Power Plant Live! (Baltimore)",
-          "date": "October 2024",
-          "description": "Halloween mainstage set",
+          "date": "October 31, 2024",
+          "description": "Halloween Rally · 9:45–10:45pm",
           "media": [],
           "venue": "Power Plant Live!",
           "city": "Baltimore, MD",
           "format": "mainstage",
-          "promoter": "Club Glow",
-          "promoterUrl": "https://www.instagram.com/clubglow",
-          "context": "Power Plant Live! is a large entertainment complex in Baltimore's Inner Harbor — a cluster of bars and venues that scales up its production on major nights. The Halloween mainstage was an outdoor stage to a large crowd, coordinated through the Club Glow network."
+          "promoter": "Power Plant Live!",
+          "context": "Power Plant Live! is an entertainment district in downtown Baltimore, a block from the Inner Harbor. This was its own Halloween Rally, with a 9:45–10:45pm set on the mainstage."
         },
         {
           "id": "event98",
           "slug": "soundcheck-ownboss-sep-2024",
           "title": "Soundcheck (DC)",
-          "date": "September 2024",
+          "date": "September 5, 2024",
           "description": "Opening for Öwnboss",
           "media": [
             {
@@ -695,20 +678,36 @@
           ],
           "promoter": "Club Glow",
           "promoterUrl": "https://www.instagram.com/clubglow",
-          "context": "Öwnboss (Eduardo Fornasa Zaniolo) is a Brazilian DJ and producer and one of Brazil's most-streamed dance acts — his \"Move Your Body\" with Sevek was among the most-played tracks in the world in 2022, and stays a peak-time staple worldwide. An early Soundcheck booking, and the start of a steady run of slots through the Club Glow pipeline.",
+          "context": "Öwnboss (Eduardo Fornasa Zaniolo) is a Brazilian DJ and producer and one of Brazil's biggest dance exports — his \"Move Your Body\" with Sevek was the 4th most-played track in DJ sets worldwide in 2022 (1001Tracklists). An early Soundcheck booking, and the start of a steady run of slots through the Club Glow pipeline.",
           "links": [
             {
               "label": "öwnboss",
-              "href": "https://www.instagram.com/ownboss"
+              "href": "https://www.instagram.com/ownbossmusic"
             }
           ]
+        },
+        {
+          "id": "event_republiq_madds",
+          "slug": "republiq-madds-aug-2024",
+          "title": "Republiq (DC)",
+          "date": "August 31, 2024",
+          "description": "Closing for MADDS · welcome week",
+          "media": [],
+          "venue": "Republiq",
+          "city": "Washington, DC",
+          "format": "closing",
+          "headliners": [
+            "MADDS"
+          ],
+          "promoter": "DC Welcome Week",
+          "context": "Closing for MADDS at Republiq, the club next to Echostage, on a DC welcome-week night, with Costa also on the bill."
         },
         {
           "id": "event99",
           "slug": "somewhere-nowhere-jul-2024",
           "title": "Somewhere Nowhere (NYC)",
-          "date": "July 2024",
-          "description": "4th of July rooftop set",
+          "date": "July 4, 2024",
+          "description": "4th of July rooftop · b2b with moosegonemad",
           "media": [
             {
               "type": "image",
@@ -717,8 +716,23 @@
           ],
           "venue": "Somewhere Nowhere",
           "city": "New York, NY",
-          "format": "headliner",
-          "context": "Somewhere Nowhere is a boutique experience space and rooftop venue in New York City. A 4th of July show — outdoors, a long set running from afternoon into the night. One of the first significant New York bookings."
+          "format": "b2b",
+          "context": "Somewhere Nowhere is a rooftop lounge and event space on the top two floors of a Chelsea hotel. A 4th of July show, b2b with moosegonemad. One of the first significant New York bookings."
+        },
+        {
+          "id": "event_looneys_sidequest",
+          "slug": "looneys-pub-sidequest-oct-2023",
+          "title": "Looney's Pub (College Park)",
+          "date": "October 28, 2023",
+          "description": "Closing for SIDEQUEST",
+          "media": [],
+          "venue": "Looney's Pub",
+          "city": "College Park, MD",
+          "format": "closing",
+          "headliners": [
+            "SIDEQUEST"
+          ],
+          "context": "Closing the night after SIDEQUEST, the bass-house duo of Cale Saurage and Hootie Hurley, at Looney's Pub next to the UMD campus, the Saturday before Halloween."
         },
         {
           "id": "event101",
@@ -733,11 +747,11 @@
           "headliners": [
             "Jake Shore"
           ],
-          "context": "Looney's Pub is a College Park dive bar and live music venue close to the UMD campus. Opening and closing for Jake Shore was one of the first significant local bookings — a hometown-adjacent show, and an early sign of what the DJ side could become.",
+          "context": "Looney's Pub is an Irish sports bar with a stage and live music, next to the UMD campus. Opening and closing for Jake Shore was one of the first significant local bookings — a campus show, and an early sign of what the DJ side could become.",
           "links": [
             {
               "label": "jake shore",
-              "href": "https://www.instagram.com/jakeshoremusic"
+              "href": "https://www.instagram.com/itsjakeshore"
             }
           ]
         }
@@ -773,7 +787,7 @@
         {
           "id": "pwr",
           "title": "PWR",
-          "date": "oct 2026",
+          "date": "October 9, 2026",
           "type": "single",
           "tags": [],
           "links": [
@@ -794,7 +808,7 @@
         {
           "id": "fire",
           "title": "when a fire starts to burn",
-          "date": "oct 2025",
+          "date": "November 22, 2025",
           "type": "single",
           "tags": [
             "tech house",
@@ -814,7 +828,46 @@
               "href": "https://ffm.to/whenafirestartstoburn"
             }
           ],
-          "description": "debut single. inspired by the disclosure original — restructured for the modern tech house floor."
+          "description": "an original take on the Eric Thomas sample that Disclosure used in 'When a Fire Starts to Burn' (2013), built for the tech house floor."
+        },
+        {
+          "id": "fading_away",
+          "title": "fading away",
+          "date": "October 24, 2025",
+          "type": "single",
+          "tags": [],
+          "links": [
+            {
+              "platform": "spotify",
+              "href": "https://open.spotify.com/album/3VRX6FWF3I5IragpSNzv7R"
+            }
+          ]
+        },
+        {
+          "id": "wtf",
+          "title": "WTF",
+          "date": "February 7, 2025",
+          "type": "single",
+          "tags": [],
+          "links": [
+            {
+              "platform": "spotify",
+              "href": "https://open.spotify.com/album/4fiFAmalaRSwV634VQNi5N"
+            }
+          ]
+        },
+        {
+          "id": "memphis",
+          "title": "Memphis",
+          "date": "March 14, 2024",
+          "type": "single",
+          "tags": [],
+          "links": [
+            {
+              "platform": "spotify",
+              "href": "https://open.spotify.com/album/1ZFzU3n3ZC2FjPiH5QlZQX"
+            }
+          ]
         }
       ]
     },
@@ -849,8 +902,8 @@
         },
         {
           "label": "club glow",
-          "value": "dj · glow rooms: soundcheck, echostage",
-          "note": "since 2024",
+          "value": "played glow rooms: soundcheck, echostage",
+          "note": "2024 → now",
           "icon": "/icons/glow.webp"
         }
       ],
