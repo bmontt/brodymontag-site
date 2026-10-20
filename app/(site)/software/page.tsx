@@ -28,11 +28,12 @@ const years = (period: string) => {
   return b === "present" || !b ? `${a}–now` : a === b ? a : `${a}–${b.slice(2)}`;
 };
 
-/** a card in a two-up row (wide screens; one column on phones): it slides in
- *  and out from its own column's side as you scroll and holds there
- *  (WidgetSlide), and the laser network reads it to take its project's shape
- *  and sink behind it (lib/director/software-figure.ts). Both cards in a row
- *  stretch to one height. */
+/** a card in a two-up row (wide screens; one column on phones): it comes
+ *  into focus as it reaches the middle of the screen (WidgetSlide; the right
+ *  card of a row is dealt a beat after the left), and the laser network reads
+ *  it to take its project's shape and sink behind it
+ *  (lib/director/software-figure.ts). Both cards in a row stretch to one
+ *  height. */
 function Pair({ n, id, stage, children }: { n: number; id?: string; stage?: string; children: React.ReactNode }) {
   return (
     <div id={id} data-slide={n % 2 === 1 ? "right" : "left"} data-pair="" data-stage-id={stage} className="relative min-w-0 scroll-mt-28 [&>*]:h-full">
@@ -96,7 +97,7 @@ export default function SoftwarePage() {
 
             <div id="stack" className="scroll-mt-28">
               <SectionLabel>stack</SectionLabel>
-              {/* the whole stack slides in as one block, three across */}
+              {/* the whole stack comes into focus as one block, three across */}
               <div data-slide="left" className="relative">
                 <StackGrid />
               </div>
