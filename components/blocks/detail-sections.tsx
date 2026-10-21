@@ -2,10 +2,12 @@
 // Renders a DetailDoc (content/detail) below a page's card copy: one heading
 // per section, then its blocks. Server components; the only client code is
 // BlockMotion, which wraps them and starts each block's motion as it comes
-// into view (the motion itself is CSS: app/(site)/projects/[slug]/detail.css).
+// into view (the motion itself is CSS: ./detail.css, loaded with this file, so
+// a project page and an experience page both get it).
 // Every block reads complete without it.
 
 import type { CSSProperties, ReactNode } from "react";
+import "./detail.css";
 import { renderInline } from "@/components/rich-text";
 import { SECTION_HEADING, SECTION_SIZE } from "@/components/journey/section-bits";
 import type { Block, DetailDoc } from "@/content/detail/types";

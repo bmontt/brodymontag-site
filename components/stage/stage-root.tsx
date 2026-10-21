@@ -92,10 +92,13 @@ function probeWebGL2(): boolean {
 
 const SECTIONS: Record<string, StageRouteKind> = { "/": "home", "/software": "software", "/music": "music", "/about": "about" };
 
-/** pathname → which page the stage is on ("/projects/<slug>" → project + index, …) */
+/** pathname → which page the stage is on ("/projects/<slug>" → project + index, …).
+ *  A role's page (/experience/<id>) is a detail page on the tech side with no
+ *  pillar of its own: project, index -1. */
 function routeOf(pathname: string): { kind: StageRouteKind; index: number } | null {
   const section = SECTIONS[pathname.replace(/\/$/, "") || "/"];
   if (section) return { kind: section, index: -1 };
+  if (/^\/experience\/[^/?#]+/.test(pathname)) return { kind: "project", index: -1 };
   const m = /^\/(projects|shows)\/([^/?#]+)/.exec(pathname);
   if (!m) return null;
   const slug = decodeURIComponent(m[2]);

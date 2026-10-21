@@ -316,11 +316,12 @@ export function quietAt(q: Widgets | undefined, x: number, y: number): number {
   return 1 - 0.7 * inside;
 }
 
-/** a project page asks for its own project's graph */
+/** a project page asks for its own project's graph, a role's page for the
+ *  graph its card had on /software (the card's id there: role-<id>) */
 export function pageKey(): string {
   if (typeof window === "undefined") return "";
-  const m = window.location.pathname.match(/^\/projects\/([^/]+)/);
-  return m ? `project-${m[1]}` : "";
+  const m = window.location.pathname.match(/^\/(projects|experience)\/([^/]+)/);
+  return m ? `${m[1] === "projects" ? "project" : "role"}-${m[2]}` : "";
 }
 
 // ── the figure ───────────────────────────────────────────────────────────────

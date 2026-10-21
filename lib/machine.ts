@@ -1,7 +1,9 @@
 // ── machine ───────────────────────────────────────────────────────────────────
 // The machine-readable face of the site (/machine, /llms.txt): every project,
 // show, release and paragraph as plain text, generated from content.json so it
-// can never drift from the human site. No canvas; readable without JavaScript — for agents, crawlers,
+// can never drift from the human site. Each project and role also has its whole
+// page as text (lib/machine-pages.ts, app/machine/projects, app/machine/
+// experience); the index links them. No canvas; readable without JavaScript — for agents, crawlers,
 // terminals, and anyone who prefers text.
 
 import { content } from "./content";
@@ -10,7 +12,11 @@ import { experience, stack } from "./stack-data";
 import { releases } from "./releases-data";
 import { events } from "./brody-events";
 
-const ORIGIN = `https://${content.meta.domain}`;
+export const ORIGIN = `https://${content.meta.domain}`;
+
+/** each project and role as plain text (app/machine/**, lib/machine-pages.ts) */
+export const projectTextPath = (slug: string) => `/machine/projects/${slug}`;
+export const experienceTextPath = (id: string) => `/machine/experience/${id}`;
 
 // ── banner: a small original block font (5 rows) ─────────────────────────────
 const FONT: Record<string, string[]> = {
@@ -32,8 +38,8 @@ export function banner(word: string): string {
 }
 
 /** [text](url) → text <url> */
-const plainLinks = (s: string) => s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 <$2>");
-const dots = (label: string, width = 14) => `${label} ${".".repeat(Math.max(2, width - label.length))} `;
+export const plainLinks = (s: string) => s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 <$2>");
+export const dots = (label: string, width = 14) => `${label} ${".".repeat(Math.max(2, width - label.length))} `;
 
 /** The full plain-text mirror shown at /machine. */
 export function machineText(): string {
@@ -59,6 +65,7 @@ export function machineText(): string {
     push(`- ${p.name}  [${p.tags.join(" · ")}]  ${statusLine(p)}${p.statusNote ? ` · ${p.statusNote}` : ""} · checked ${p.updated}`);
     push(`  ${p.description}`);
     push(`  → ${ORIGIN}/projects/${p.slug}${p.githubUrl ? `   ↗ ${p.githubUrl}` : ""}`);
+    push(`  full page as text: ${ORIGIN}${projectTextPath(p.slug)}`);
     if (p.stats) push(`  results${p.statsAsOf ? ` (as of ${p.statsAsOf})` : ""}: ${p.stats.map((x) => `${x.label} ${x.value}${x.note ? ` (${x.note})` : ""}`).join(" · ")}`);
   }
   push("", "## code / experience");
@@ -66,6 +73,7 @@ export function machineText(): string {
     push(`- ${e.role} @ ${e.org} (${e.orgDetail}) · ${e.period}${e.href ? `  ↗ ${e.href}` : ""}`);
     push(`  ${e.description}`);
     for (const h of e.highlights ?? []) push(`  · ${plainLinks(h)}`);
+    push(`  → ${ORIGIN}/experience/${e.id}`, `  full page as text: ${ORIGIN}${experienceTextPath(e.id)}`);
   }
   push("", "## code / stack");
   for (const s of stack) push(dots(s.label) + s.items.join(", "));
@@ -99,7 +107,11 @@ export function llmsText(): string {
   L.push(`# ${c.meta.name}`, "", `> ${c.hero.elevatorPitch}`, "");
   L.push(`${c.meta.name} is a ${c.hero.subtitle}.`, "");
   L.push("## Projects");
-  for (const p of projects) L.push(`- [${p.name}](${ORIGIN}/projects/${p.slug}) (${statusLine(p)}): ${p.description}`);
+  for (const p of projects)
+    L.push(`- [${p.name}](${ORIGIN}/projects/${p.slug}) (${statusLine(p)}): ${p.description} [Full page as text](${ORIGIN}${projectTextPath(p.slug)})`);
+  L.push("", "## Experience");
+  for (const e of experience)
+    L.push(`- [${e.role} @ ${e.org}](${ORIGIN}/experience/${e.id}) (${e.period}): ${plainLinks(e.description)} [Full page as text](${ORIGIN}${experienceTextPath(e.id)})`);
   L.push("", "## Shows");
   for (const e of events) L.push(`- [${e.title}](${ORIGIN}/shows/${e.slug}): ${e.date} — ${e.description}`);
   L.push("", "## Music");

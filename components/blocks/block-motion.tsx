@@ -1,7 +1,7 @@
 "use client";
 // ── block motion ──────────────────────────────────────────────────────────────
 // The one script behind the detail blocks' motion (the motion itself is CSS:
-// app/(site)/projects/[slug]/detail.css). It arms the page, then watches every
+// components/blocks/detail.css). It arms the page, then watches every
 // [data-motion] element:
 //   · data-in   — set once, when the element first comes into view: its
 //                 entrance plays (a scan, a draw, a stagger)
