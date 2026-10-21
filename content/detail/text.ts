@@ -15,10 +15,12 @@ export function blockText(b: Block): string {
       return head + plainLinks(b.text);
     case "code": {
       const ex = getExcerpt(b.excerpt);
-      return `${head}${ex.at} · ${ex.location}${ex.href ? ` <${ex.href}>` : " · private"}\n\`\`\`${b.lang}\n${ex.code}\n\`\`\``;
+      return `${head}${ex.at} · ${ex.location}${ex.href ? ` <${ex.href}>` : " · not public"}\n\`\`\`${b.lang}\n${ex.code}\n\`\`\``;
     }
     case "diagram":
       return `${head}${b.alt}\n\`\`\`mermaid\n${b.mermaid.trim()}\n\`\`\``;
+    case "figure":
+      return `${head}${b.alt}`;
     case "table": {
       const all = [b.columns, ...b.rows];
       const w = b.columns.map((_, i) => Math.max(...all.map((r) => (r[i] ?? "").length)));

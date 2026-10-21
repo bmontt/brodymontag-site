@@ -5,5 +5,41 @@
     "github": "bmontt/brodymontag-site",
     "ref": "origin/main",
     "visibility": "public"
+  },
+  "stem-box": {
+    "path": "/Users/brodymontag/Documents/Coding/stem-box",
+    "ref": "HEAD",
+    "visibility": "private"
+  },
+  "venture": {
+    "path": "/Users/brodymontag/Documents/Coding/venture",
+    "ref": "HEAD",
+    "visibility": "private"
+  },
+  "superset-v2": {
+    "path": "/Users/brodymontag/Documents/Coding/superset_song_analyzer",
+    "ref": "feat/demo-outreach",
+    "visibility": "private"
+  },
+  "realmbot": {
+    "path": "/Users/brodymontag/Documents/Coding/realmbot",
+    "ref": "HEAD",
+    "visibility": "private"
+  },
+  "kicker-unity": {
+    "path": "/Users/brodymontag/Documents/Coding/here-comes-the-kicker-unity",
+    "ref": "HEAD",
+    "visibility": "private"
+  },
+  "agent-forge": {
+    "path": "/Users/brodymontag/Documents/Coding/agent-forge",
+    "ref": "HEAD",
+    "visibility": "private"
+  },
+  "peak-finding": {
+    "path": "/Users/brodymontag/Documents/Coding/Peak_Finding_Toolbox",
+    "github": "bmontt/Peak_Finding_Toolbox",
+    "ref": "origin/main",
+    "visibility": "public"
   }
 }

@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/ste-lint.mjs --strict && rm -rf .next/cache && next build",
+    "build": "node --no-warnings scripts/ste-lint.mjs --strict && rm -rf .next/cache && next build",
     "start": "next start",
     "e2e": "playwright test",
-    "ste": "node scripts/ste-lint.mjs"
+    "ste": "node --no-warnings scripts/ste-lint.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

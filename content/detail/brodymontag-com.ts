@@ -12,6 +12,13 @@ const doc: DetailDoc = {
       heading: "how it works",
       blocks: [
         {
+          id: "figure",
+          type: "figure",
+          name: "brodymontag-com",
+          caption: "figure 1 · from a scene to glyphs · schematic",
+          alt: "A small network of lines and nodes is sampled into a grid of 8 by 22 pixel cells. Each cell gets a level, and then each cell becomes a glyph.",
+        },
+        {
           id: "how",
           type: "prose",
           text: "The site mounts one stage in the shared layout, so the stage stays on screen when a visitor changes pages. Every visitor first sees a 2D version that the CPU paints. A capable device then loads the 3D version and fades to it.",
@@ -24,8 +31,8 @@ const doc: DetailDoc = {
         {
           id: "flow",
           type: "diagram",
-          caption: "figure 1 · from scroll to glyphs",
-          alt: "Scroll input goes to GSAP ScrollTrigger, which writes the journey store. The director reads the store and sets the targets. A tier gate sends the frame to the 2D painter in a Web Worker or to the three.js scene, which a GLSL cell pass and a glyph pass turn into text.",
+          caption: "figure 2 · from scroll to glyphs",
+          alt: "Scroll input goes to GSAP ScrollTrigger, which writes the journey store. The director reads the store and sets the targets. A tier gate sends the frame to the 2D painter in a Web Worker or to the three.js scene. A GLSL cell pass and a glyph pass turn the scene into text.",
           mermaid: `flowchart TD
   A[wheel and touch] --> B[GSAP ScrollTrigger]
   B --> C[journey store]

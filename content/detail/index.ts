@@ -11,10 +11,19 @@ import lockJson from "@/content/excerpts.lock.json";
 import reposJson from "@/content/repos.json";
 import { projects } from "@/lib/projects";
 import { experience } from "@/lib/stack-data";
+import { steCheckDoc } from "@/scripts/ste-rules.mjs";
+import { hasFigure } from "@/components/blocks/figures";
 import type { DetailDoc, Excerpt } from "./types";
+import agentForge from "./agent-forge";
 import brodymontagCom from "./brodymontag-com";
+import kicker from "./here-comes-the-kicker";
+import peakFinding from "./peak-finding-toolbox";
+import prism from "./prism";
+import realmbot from "./realmbot";
+import superset from "./superset";
+import venture from "./venture";
 
-const DOCS: DetailDoc[] = [brodymontagCom];
+const DOCS: DetailDoc[] = [brodymontagCom, prism, venture, superset, realmbot, kicker, agentForge, peakFinding];
 
 type Repo = { path: string; github?: string; visibility: "public" | "private" | "none" };
 const repos = reposJson as unknown as Record<string, Repo>;
@@ -35,6 +44,12 @@ for (const doc of DOCS) {
   for (const s of doc.sections)
     for (const b of s.blocks)
       if (b.type === "code" && !lock[b.excerpt]) throw new Error(`detail doc ${doc.key}: code block ${b.id} names missing excerpt ${b.excerpt}`);
+      else if (b.type === "figure" && !hasFigure(b.name)) throw new Error(`detail doc ${doc.key}: figure ${b.id} names unknown figure ${b.name}`);
+  // the software tab is in STE (docs/portfolio-style-plan.md §4): a doc that
+  // does not pass fails the build, on any Node (scripts/ste-lint.mjs prints
+  // the same warnings while you write)
+  const ste = steCheckDoc(doc);
+  if (ste.length) throw new Error(`detail doc ${doc.key}: STE\n${ste.join("\n")}`);
 }
 
 // ── access ───────────────────────────────────────────────────────────────────

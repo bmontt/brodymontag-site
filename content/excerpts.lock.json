@@ -41,5 +41,257 @@
     "pushed": true,
     "sha256": "652670e7f1efed7dc3ecc747fe84c8e29e455e484f41ad6f1a0f921e07ced714",
     "code": "    // ── damp toward the page's targets ─────────────────────────────────\n    const dt = Math.min(x.delta, 0.1);\n    if (!cur || dt <= 0) cur = { ...tgt }; // first frame / reduced motion: no glide\n    else {\n      const glide = since < 1.1 ? 4 : 14; // arrive slowly, then track anchors closely\n      for (const k of KEYS) {\n        const wk = WEIGHT_OF[k];\n        // a figure that was invisible takes its place instead of sliding in\n        if (wk && cur[wk] < 0.02) cur[k] = tgt[k];\n        else cur[k] += (tgt[k] - cur[k]) * (1 - Math.exp(-(SLOW.has(k) ? 5 : glide) * dt));\n      }\n    }"
+  },
+  "prism/worker-loop": {
+    "source": {
+      "repo": "stem-box",
+      "path": "src/sync/progressive_extractor.cpp",
+      "lines": [
+        108,
+        131
+      ],
+      "commit": "a4db71fd429d5b2039699ff181e7525c118464f3"
+    },
+    "pushed": false,
+    "sha256": "eee923b882475a54352830be1a142d30ea6fc112970a412237706e5ecc753aea",
+    "code": "void ProgressiveExtractor::worker_loop(){\n    std::cout<<\"[Extractor] \"<<current_path_<<\"\\n\";\n    has_prev_tail_ = false;\n    const uint32_t hop = step_ms_.load();   // bar-aligned (or default) for this track\n    uint64_t cursor=0;\n    while(!cancel_flag_.load() && cursor < duration_ms_){\n        auto seg=std::make_unique<StemSegment>();\n        if(!extract_segment(cursor, hop, *seg)){\n            set_state(ExtractionState::Failed,0.0f); return;\n        }\n        uint64_t end=std::min(cursor+(uint64_t)hop,(uint64_t)duration_ms_);\n        seg->start_ms=cursor; seg->end_ms=end; seg->valid=true;\n        store_segment(std::move(seg));\n        cursor=end;\n        extracted_ms_.store(cursor);\n        float prog=(float)cursor/duration_ms_;\n        if(state_.load()==ExtractionState::Extracting &&\n           cursor>=(uint64_t)(ACTIVATION_SECONDS*1000))\n            set_state(ExtractionState::Ready,prog);\n        else\n            set_state(state_.load(),prog);\n        std::cout<<\"[Extractor] \"<<cursor/1000<<\"s / \"<<duration_ms_/1000<<\"s\\n\";\n    }\n    if(!cancel_flag_.load()) set_state(ExtractionState::Complete,1.0f);"
+  },
+  "prism/fill-output": {
+    "source": {
+      "repo": "stem-box",
+      "path": "src/sync/stem_transport.cpp",
+      "lines": [
+        62,
+        79
+      ],
+      "commit": "a4db71fd429d5b2039699ff181e7525c118464f3"
+    },
+    "pushed": false,
+    "sha256": "3118afcb628af83f85383e50558b88ef69a8465a51bac1613fbdf26e56d92489",
+    "code": "void StemTransport::fill_output(uint32_t nframes,float* out_l,float* out_r,\n                                 const std::array<int,N_STEMS>& vols){\n    std::memset(out_l,0,nframes*sizeof(float));\n    std::memset(out_r,0,nframes*sizeof(float));\n    if(mode_.load()!=Mode::Stemming)return;\n\n    // Target gain per stem for this callback. On the first callback after\n    // (re)entering Stemming, snap smoothed_gain_ straight to target — nothing\n    // was playing before, so there's no discontinuity to declick against.\n    // On every later callback, smoothed_gain_ ramps toward target one-pole\n    // per sample, so a volume/mute change never produces a hard step.\n    float target_gain[N_STEMS];\n    for(int s=0;s<N_STEMS;++s) target_gain[s]=(float)vols[s]/100.0f;\n\n    if(!gain_primed_){\n        for(int s=0;s<N_STEMS;++s) smoothed_gain_[s]=target_gain[s];\n        gain_primed_=true;\n    }"
+  },
+  "prism/bar-hop": {
+    "source": {
+      "repo": "stem-box",
+      "path": "src/sync/progressive_extractor.cpp",
+      "lines": [
+        42,
+        61
+      ],
+      "commit": "a4db71fd429d5b2039699ff181e7525c118464f3"
+    },
+    "pushed": false,
+    "sha256": "9bb48e056b8c6c8941bc690accb48608ccfeb15205217320937c6fb055adf4d8",
+    "code": "// ── Bar-aligned hop ───────────────────────────────────────────────────────────\n\nuint32_t ProgressiveExtractor::bar_aligned_hop_ms(float bpm){\n    if(bpm <= 60.0f || bpm >= 250.0f) return StemSegment::STEP_MS;\n\n    // One 4/4 bar in milliseconds\n    const float bar_ms = 60000.0f / bpm * 4.0f;\n\n    // Number of bars whose total length is nearest to the default 7500 ms hop.\n    // At least 1 bar; capped so the hop never exceeds CHUNK_SECS*1000 - 500 ms\n    // (preserving a minimum 500 ms overlap for a clean crossfade).\n    const int max_bars = (int)std::floor(\n        (StemSegment::CHUNK_SECS * 1000 - 500) / bar_ms\n    );\n    const int n_bars   = std::max(1, std::min(max_bars,\n        (int)std::round((float)StemSegment::STEP_MS / bar_ms)\n    ));\n    const uint32_t hop = (uint32_t)std::round((float)n_bars * bar_ms);\n    return hop;\n}"
+  },
+  "venture/allocator-policy": {
+    "source": {
+      "repo": "venture",
+      "path": "venture/allocator.py",
+      "lines": [
+        1,
+        25
+      ],
+      "commit": "33dd9e398364b2a8061c1fc5394142de5656f4eb"
+    },
+    "pushed": false,
+    "sha256": "c31c6fdd70940206237475167f17cb3c0607064c0a2e8eb88793d42189cde848",
+    "code": "\"\"\"The allocator: moves money toward where the edge is, within caps Brody sets.\n\nCoinbase is the one place money comes in; this spreads it. Policy, once per\ncycle after the audit (so NAV is fresh):\n  0. convert           — cash that lands as USD becomes USDC (the rails send USDC only)\n  1. gas floors        — the DeFi wallet never runs dry: buy POL/ETH with USDC when\n                         Coinbase has none (capped by gas_buy_max_usd), then send it\n  2. Kalshi top-up     — on demand (the strategy found edge it could not size), or up\n                         to its target (kalshi_topup = target); only to a verified\n                         Kalshi deposit address. The target is held down to what the\n                         shadow book's proof gate has unlocked (target_follows_proof):\n                         this only limits new top-ups, it never takes money back out\n  3. harvest flag      — Kalshi above its target band: a finding, never a send\n                         (Kalshi has no crypto withdrawals)\n  4. park (optional)   — Coinbase cash beyond the reserve → the wallet → Aave\n\nModes: ``propose`` (every move waits for a one-keypress approval in the TUI),\n``auto_capped`` (moves within per-transfer / per-day caps go now, larger ones\nwait), ``auto`` (no caps; kill file only). Housekeeping that never leaves\nCoinbase's control (the conversion, gas buys and the gas send itself) runs on\nits own in every mode while ``housekeeping_auto`` is on. A weekly drawdown beyond\nrisk_global.max_weekly_drawdown_pct forces ``propose``. ``logs/ALLOCATOR_HALT``\nstops everything. Only ever between accounts Brody owns: the system's own\nwallet and saved payees.\n\"\"\""
+  },
+  "venture/validate-change": {
+    "source": {
+      "repo": "venture",
+      "path": "venture/config.py",
+      "lines": [
+        121,
+        136
+      ],
+      "commit": "33dd9e398364b2a8061c1fc5394142de5656f4eb"
+    },
+    "pushed": false,
+    "sha256": "cd5c7e8dc006c01871c4a1e8e6ed3e8d8d52d8f209a89802b5754edae4668910",
+    "code": "def validate_change(section: str, key: str, value) -> tuple[bool, str]:\n    if (section, key) in LOCKED:\n        return False, f\"{section}.{key} is LOCKED\"\n    if (section, key) in HUMAN_ONLY:\n        return False, f\"{section}.{key} needs human approval\"\n    bounds = TUNABLE.get((section, key))\n    if bounds is None:\n        return False, f\"{section}.{key} is not a tunable parameter\"\n    try:\n        v = float(value)\n    except (TypeError, ValueError):\n        return False, f\"{section}.{key}: value {value!r} is not numeric\"\n    lo, hi = bounds\n    if not lo <= v <= hi:\n        return False, f\"{section}.{key}={v} outside bounds [{lo}, {hi}]\"\n    return True, \"ok\""
+  },
+  "venture/review-filter": {
+    "source": {
+      "repo": "venture",
+      "path": "venture/agent.py",
+      "lines": [
+        262,
+        275
+      ],
+      "commit": "33dd9e398364b2a8061c1fc5394142de5656f4eb"
+    },
+    "pushed": false,
+    "sha256": "523d0b26ed5fd48e2beaef0efd783532c5941b361713b37572dd9abbd30beac7",
+    "code": "    try:\n        reply = _extract_json(text)\n    except (ValueError, json.JSONDecodeError) as e:\n        ag.update(status=\"error\", reason=f\"unparseable reply: {e}\")\n        return {**ag, \"this_cycle\": \"failed\"}\n\n    # the reviewer may only touch the crypto paper strategy; Kalshi sizing stays human-set\n    changes = [c for c in (reply.get(\"param_changes\") or []) if c.get(\"section\") == \"crypto\"]\n    outcomes = config.apply_changes(changes, actor=\"venture-agent\") if changes else []\n    ag.update(status=\"ok\", reason=\"\", last_review_ts=now.timestamp(),\n              closed_trades_at_review=len(_closed_trades(state)),\n              last_notes=str(reply.get(\"notes\", \"\"))[:500], last_outcomes=outcomes)\n    _log.info(f\"agent review done ({why}): {len([o for o in outcomes if o.get('applied')])} change(s) applied\")\n    return {**ag, \"this_cycle\": \"ran\"}"
+  },
+  "superset/weights": {
+    "source": {
+      "repo": "superset-v2",
+      "path": "src/superset/analysis/setlist.py",
+      "lines": [
+        176,
+        186
+      ],
+      "commit": "f3c76b062d581bf5521950050e3c0501f8cdb1dc"
+    },
+    "pushed": false,
+    "sha256": "c3bd25d896c64247d0d48d91e9cea3ab98368ae5cccf76cf931814d5241c3af8",
+    "code": "class SetlistOptimizer:\n    \"\"\"Intelligently order tracks for optimal DJ flow.\"\"\"\n\n    DEFAULT_WEIGHTS: dict[str, float] = {\n        \"tempo\": 0.30,\n        \"energy\": 0.25,\n        \"key\": 0.15,\n        \"mood\": 0.15,\n        \"spectral\": 0.10,\n        \"position\": 0.05,\n    }"
+  },
+  "superset/key-cost": {
+    "source": {
+      "repo": "superset-v2",
+      "path": "src/superset/analysis/setlist.py",
+      "lines": [
+        355,
+        375
+      ],
+      "commit": "f3c76b062d581bf5521950050e3c0501f8cdb1dc"
+    },
+    "pushed": false,
+    "sha256": "4b91d15f1b3de401026bc95e2e03e3be986a079305f8295b208df791c6940a9e",
+    "code": "    @staticmethod\n    def _key_cost(key_a: str | None, key_b: str | None) -> float:\n        \"\"\"Return a [0, 1] transition cost using the 24-node Camelot wheel.\n\n        Distance is the shortest graph path between the two Camelot positions\n        (clock distance + 1 if mode differs), normalised by 6 (the maximum\n        clock distance).  Unrecognised keys fall back to 0.5 (neutral).\n        \"\"\"\n        if not key_a or not key_b:\n            return 0.5\n        pos_a = _CAMELOT_MAP.get(key_a)\n        pos_b = _CAMELOT_MAP.get(key_b)\n        if pos_a is None or pos_b is None:\n            return 0.5\n        h_a, m_a = pos_a\n        h_b, m_b = pos_b\n        clock = abs(h_a - h_b)\n        clock = min(clock, 12 - clock)\n        mode = 0 if m_a == m_b else 1\n        dist = clock + mode\n        return min(1.0, dist / 6.0)"
+  },
+  "superset/greedy": {
+    "source": {
+      "repo": "superset-v2",
+      "path": "src/superset/analysis/setlist.py",
+      "lines": [
+        407,
+        415
+      ],
+      "commit": "f3c76b062d581bf5521950050e3c0501f8cdb1dc"
+    },
+    "pushed": false,
+    "sha256": "d8454033b4ae0fb300f107048f09c00fcbf63712d04d5d8c23a96ba9fb400a54",
+    "code": "    def _greedy_order(self, start_idx: int, costs: np.ndarray) -> list[int]:\n        ordered = [start_idx]\n        remaining = set(range(len(self.tracks))) - {start_idx}\n        while remaining:\n            current = ordered[-1]\n            next_idx = min(remaining, key=lambda j: costs[current, j])\n            ordered.append(next_idx)\n            remaining.remove(next_idx)\n        return ordered"
+  },
+  "realmbot/arbiter-select": {
+    "source": {
+      "repo": "realmbot",
+      "path": "packages/rb-brain/src/rb_brain/arbiter.py",
+      "lines": [
+        215,
+        234
+      ],
+      "commit": "5ad9543ed7bbb9100a4ee189a052d4c097a2f058"
+    },
+    "pushed": false,
+    "sha256": "07268ebb814d81fe8816a912bab04c7045a2f77ca90124dda29d3d9e418b7511",
+    "code": "        if safety_tripped:\n            return ArbiterOutcome(SAFETY_MODE, \"safety\", ArbiterReason.SAFETY_TRIPPED)\n\n        spec = self._mode_spec\n        answer = _usable_answer(spec, decision, now_ms=now_ms, decided_at_ms=decided_at_ms)\n        if isinstance(answer, ArbiterReason):\n            outcome = _fallback(spec, answer, current=current_mode, heuristic=heuristic)\n            assert isinstance(outcome.value, str)  # a valid choice value is an option key\n            return ArbiterOutcome(outcome.value, outcome.source, outcome.reason)\n\n        mode = answer.value\n        assert isinstance(mode, str)  # `_usable_answer` validated it as an option key\n        if current_mode is None or mode == current_mode or current_mode not in spec.option_keys():\n            return ArbiterOutcome(mode, answer.source, ArbiterReason.ACCEPTED)\n        margin = _probability_margin(answer.probabilities, new=mode, current=current_mode)\n        if margin is None:\n            return ArbiterOutcome(mode, answer.source, ArbiterReason.SWITCHED_NO_PROBABILITIES)\n        if margin < spec.harness.hysteresis:\n            return ArbiterOutcome(current_mode, \"current\", ArbiterReason.HYSTERESIS_HOLD)\n        return ArbiterOutcome(mode, answer.source, ArbiterReason.SWITCHED)"
+  },
+  "realmbot/mode-spec": {
+    "source": {
+      "repo": "realmbot",
+      "path": "decisions/mode.yaml",
+      "lines": [
+        8,
+        29
+      ],
+      "commit": "5ad9543ed7bbb9100a4ee189a052d4c097a2f058"
+    },
+    "pushed": false,
+    "sha256": "cdc8778fb4cb2b94e2850e2203d9b6e51439baa971194b6b67cfd2d2edafc761",
+    "code": "id: mode\nversion: 1\ntype: choice\ninstructions: \"What should the character do for the next few seconds?\"\ncriteria:\n  engage: \"Fight the current target; HP healthy, allies nearby.\"\n  kite: \"Attack while keeping distance; target is dangerous up close.\"\n  retreat: \"Move away from threats toward safety, without leaving the map.\"\n  loot: \"Collect a nearby bag; no immediate threats.\"\n  travel: \"Head toward the current quest objective.\"\n  regroup: \"Move back toward scattered allies; no immediate threat.\"\n  nexus: \"Leave the map immediately through the Nexus portal; imminent death.\"\nharness:\n  # Placeholders: Epic 7 tunes threshold/hysteresis/ttl_ms against reliability curves, not guesses.\n  threshold: 0.55\n  hysteresis: 0.10\n  ttl_ms: 1500\n  fallback: heuristic\n  # Safe default if neither Jev nor the heuristic produces a usable answer (rb_brain.fallback):\n  # leave the map, matching `danger`'s default of its most severe level.\n  fallback_option: nexus\n  gated: false"
+  },
+  "realmbot/danger-harness": {
+    "source": {
+      "repo": "realmbot",
+      "path": "decisions/danger.yaml",
+      "lines": [
+        8,
+        25
+      ],
+      "commit": "5ad9543ed7bbb9100a4ee189a052d4c097a2f058"
+    },
+    "pushed": false,
+    "sha256": "5ebf5ea04b5cfcf66f6994d5e0c41cfa6c9bbc0ef6d1c6b501994ae9e5fd23bf",
+    "code": "id: danger\nversion: 2\ntype: score\ninstructions: \"How dangerous is the current situation?\"\ncriteria:\n  - Safe\n  - Elevated\n  - Dangerous\n  - Lethal within seconds\nharness:\n  # threshold and hysteresis: tuned in story 7.5 from out-of-fold reliability on the served\n  # tabular model (`python -m rb_evals.tune`, docs/research/threshold-tuning.md). ttl_ms is still a\n  # placeholder: nothing measured here says how fast a danger answer goes stale.\n  threshold: 0.30\n  hysteresis: 0.24\n  ttl_ms: 1500\n  fallback: heuristic\n  gated: false"
+  },
+  "kicker/advance": {
+    "source": {
+      "repo": "kicker-unity",
+      "path": "Assets/Scripts/Sim/GameSim.cs",
+      "lines": [
+        265,
+        289
+      ],
+      "commit": "4e5017ffa375cee972496aafd3d0472d4a283b88"
+    },
+    "pushed": false,
+    "sha256": "e83983b27a86b5c11b5097735dd1e7ecf95b242c5dffa03e7beffdef7f029df3",
+    "code": "        /// js tick(). slow motion scales how much time is ADDED to the accumulator,\n        /// never the step size — changing the step would break every solve in the sim\n        public void Advance(float frameDt)\n        {\n            if (frameDt > 0.05f) frameDt = 0.05f;\n            if (frameDt < 0f) frameDt = 0f;\n\n            // hit-stop: a crisp micro-freeze at impact. it counts down in real time\n            // and nearly stalls the sim clock while it lasts, so the ball and players\n            // hang for a beat — the view keeps rendering, so shake and particles run\n            // on and the frozen frame reads as a punch the TimeScale slow-mo eases out\n            if (S.HitStop > 0f)\n            {\n                S.HitStop = Mathf.Max(0f, S.HitStop - frameDt);\n                frameDt *= 0.05f;\n            }\n            if (S.FovKick > 0f) S.FovKick = Mathf.Max(0f, S.FovKick - frameDt * 30f);\n\n            S.TimeScale = SimMath.Damp(S.TimeScale, 1f, 0.03f, frameDt);\n            _accum = Mathf.Min(_accum + frameDt * S.TimeScale, Tuning.SimDt * 8f);\n            while (_accum >= Tuning.SimDt)\n            {\n                Step(Tuning.SimDt);\n                _accum -= Tuning.SimDt;\n            }"
+  },
+  "kicker/pitch-solve": {
+    "source": {
+      "repo": "kicker-unity",
+      "path": "Assets/Scripts/Sim/Pitching.cs",
+      "lines": [
+        53,
+        66
+      ],
+      "commit": "4e5017ffa375cee972496aafd3d0472d4a283b88"
+    },
+    "pushed": false,
+    "sha256": "e5e393ee50c0bfa992b340f6ed2ccc898dd2e7b3a732eaad4df0c326c7b33dc5",
+    "code": "            // snap the last bounce to a tick boundary so the airborne leg starts\n            // exactly when the solve says it does. Mathf.Floor(x+0.5) not\n            // RoundToInt: js Math.round breaks .5 upward, RoundToInt breaks to even\n            float rollTicks = (T - Mathf.Min(pitch.Type.HopT, T * 0.85f)) / Tuning.SimDt;\n            int nRoll = Mathf.Max(1, (int)Mathf.Floor(rollTicks + 0.5f));\n            float tRoll = nRoll * Tuning.SimDt;\n            float tLast = Mathf.Max(Tuning.SimDt, T - tRoll);\n\n            // solve against the discrete integrator, not the continuous ideal:\n            // stepping v then p accumulates an extra 0.5*acc*t*dt\n            float k = T * T + T * Tuning.SimDt;\n            float kl = tLast * tLast + tLast * Tuning.SimDt;\n            float vx = (targetX - 0.5f * a * k) / T;\n            float vyB = (targetY - Tuning.BallR + 0.5f * g * kl) / tLast;"
+  },
+  "agent-forge/resolve-includes": {
+    "source": {
+      "repo": "agent-forge",
+      "path": "build.py",
+      "lines": [
+        88,
+        103
+      ],
+      "commit": "9db1c771ebf4a29aac7af50a02e37159c0ef8fa3"
+    },
+    "pushed": false,
+    "sha256": "da4686b0390548268f81b3bde816eadb8049d7ab1af42e49f8d74dc703894e8c",
+    "code": "def resolve_includes(body: str, target: str, agent_name: str) -> str:\n    \"\"\"Inline {{include:NAME}} partials. dashboard-logging resolves shell-variant.\"\"\"\n    def sub(m: re.Match) -> str:\n        inc = m.group(1)\n        if inc == \"dashboard-logging\":\n            inc = f\"dashboard-logging.{SHELL_FOR_TARGET.get(target, 'bash')}\"\n        p = PARTIALS_DIR / f\"{inc}.md\"\n        if not p.exists():\n            sys.exit(f\"ERROR: {agent_name}: missing partial '{p.name}'\")\n        return p.read_text(encoding=\"utf-8\").strip()\n\n    result = re.sub(r\"\\{\\{include:([\\w.\\-]+)\\}\\}\", sub, body)\n    leftover = re.search(r\"\\{\\{[^}]*\\}\\}\", result)\n    if leftover:\n        sys.exit(f\"ERROR: {agent_name}: unresolved placeholder {leftover.group(0)}\")\n    return result"
+  },
+  "agent-forge/check-delegates": {
+    "source": {
+      "repo": "agent-forge",
+      "path": "scripts/agent_eval.py",
+      "lines": [
+        136,
+        144
+      ],
+      "commit": "9db1c771ebf4a29aac7af50a02e37159c0ef8fa3"
+    },
+    "pushed": false,
+    "sha256": "c8575fb04f4ffa7f034fb62d6f70e0f1c1118f9e4d35ff5c0a29fe6e25a7b823",
+    "code": "def check_delegate_references(r: Report, agents: list):\n    \"\"\"Check 4: every delegates: reference resolves to a real agent.\"\"\"\n    agent_names = {meta.get(\"name\", \"\") for _, meta in agents}\n    for path, meta in agents:\n        for d in meta.get(\"delegates\", []):\n            if d not in agent_names:\n                r.fail(f\"[4] {path.name}: delegate '{d}' not found in agents/\")\n            else:\n                r.ok(f\"[4] {path.name}: delegate '{d}' exists\")"
+  },
+  "peak-finding/triplet-score": {
+    "source": {
+      "repo": "peak-finding",
+      "path": "toolbox/peak_finder.py",
+      "lines": [
+        131,
+        149
+      ],
+      "commit": "f82d7626f50b6421446aaa5892a441f342415daa"
+    },
+    "pushed": true,
+    "sha256": "c1e7ca87cbdd69632ca6ddb731d99737d055b86682fe7f7228559a56b4fd13d6",
+    "code": "        # score every I–III–V triplet\r\n        best_score = np.inf\r\n        for i, j, k in itertools.combinations(range(len(cands)), 3):\r\n            tI, tIII, tV = T[cands[i]], T[cands[j]], T[cands[k]]\r\n            d13, d35, d15 = tIII-tI, tV-tIII, tV-tI\r\n\r\n            # enforce normative windows\r\n            if not (IP_I_III[0] <= d13 <= IP_I_III[1]\r\n                    and IP_III_V[0] <= d35 <= IP_III_V[1]\r\n                    and IP_I_V[0]   <= d15 <= IP_I_V[1]):\r\n                continue\r\n\r\n            # weighted deviation: weight I–V interval more\r\n            score = abs(d13-2.0) + abs(d35-2.0) + 2*abs(d15-4.0)\r\n            if score < best_score:\r\n                best_score, best_tri = score, (cands[i], cands[j], cands[k])\r\n\r\n        if best_tri is not None:\r\n            break\r"
+  },
+  "peak-finding/passes": {
+    "source": {
+      "repo": "peak-finding",
+      "path": "toolbox/peak_finder.py",
+      "lines": [
+        101,
+        110
+      ],
+      "commit": "f82d7626f50b6421446aaa5892a441f342415daa"
+    },
+    "pushed": true,
+    "sha256": "2d5e9a5b19375a60377cca7d074993c2f7d9d80a808c88affe3f9921047728cd",
+    "code": "    # ——— 2) Candidate detection + smart triplet scoring ———\r\n    for attempt in range(3):\r\n        # adaptive, SNR‐weighted smoothing\r\n        snr = compute_snr_normalized(data_uv, T)\r\n        sigma = base_sigma * (1 + 0.2*attempt)\r\n        adj_sigma = np.clip(sigma/(snr+0.1), 0.3*sigma, 4*sigma)\r\n        smooth = gaussian_filter1d(data_uv, sigma=adj_sigma)\r\n\r\n        # local‑SNR‐based prominence\r\n        prom = signal_std * (1 - 0.2*attempt)\r"
   }
 }

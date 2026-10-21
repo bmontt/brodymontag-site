@@ -11,8 +11,8 @@ export default async function CodeBlock({ excerpt, lang, caption, highlight: mar
   const html = await highlight(ex.code, lang, { firstLine: first, highlight: marks, label: `${ex.location}, code` });
 
   return (
-    <figure className="dblock code-block my-6">
-      <div className="block-frame overflow-hidden" style={{ ["--line-start" as string]: first - 1 }} dangerouslySetInnerHTML={{ __html: html }} />
+    <figure data-motion="" className="dblock code-block my-6">
+      <div className="block-frame code-frame overflow-hidden" style={{ ["--line-start" as string]: first - 1 }} dangerouslySetInnerHTML={{ __html: html }} />
       <figcaption className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 font-mono text-xs text-foreground/60">
         {caption && <span>{caption}</span>}
         {ex.href ? (
@@ -21,7 +21,7 @@ export default async function CodeBlock({ excerpt, lang, caption, highlight: mar
           </a>
         ) : (
           <span>
-            {ex.at} · {ex.location} · private repo
+            {ex.at} · {ex.location} · not public
           </span>
         )}
       </figcaption>

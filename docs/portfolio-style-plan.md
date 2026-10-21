@@ -1,9 +1,13 @@
 # Portfolio style and content plan — October 2026
 
-> **Status (2026-10-19):** plan decisions P1–P6 are answered (§10). Phase 4
-> (the block pipeline) has started on branch `claude/site-detail-blocks`.
-> Steps marked **waits on** need answers to the fact-audit prompts (IDs such as
-> `S1`, `M3`).
+> **Status (2026-10-20):** phases 1–4 are merged. Phase 6 is done for all eight
+> projects: each detail page (`content/detail/*.ts`) has an animated schematic
+> (`components/blocks/figures`), a diagram, pinned code, decisions, results
+> where real figures exist, limits and status. The blocks now move as they
+> come into view (`components/blocks/block-motion.tsx`, `detail.css`); §7's
+> "no motion of their own" is superseded, and reduced motion still shows every
+> block at rest. Open: experience pages (phase 5), machine-view parity (phase
+> 7), phases 8 and 9.
 
 This plan does three things:
 

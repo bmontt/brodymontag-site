@@ -1,5 +1,6 @@
 // static: every project is prerendered at build (generateStaticParams)
 import type { Metadata } from "next";
+import "./detail.css";
 import { notFound } from "next/navigation";
 import { alternates } from "@/lib/canonical";
 import { enterStyle } from "@/lib/enter";

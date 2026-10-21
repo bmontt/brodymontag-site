@@ -927,14 +927,14 @@
           "Raspberry Pi"
         ],
         "description": "A design for a box that splits a DJ's track into drums, bass, vocals and other, so the DJ can set each stem's level. No hardware exists yet.",
-        "longDescription": "Prism is a design for hardware in the DJ booth. When a CDJ loads a track, Prism splits the track into four stems in the background. The design gives each stem its own encoder, or a DJM-V10 knob over MIDI.\n\nThe firmware is about 2,200 lines of C++20 with 54 unit tests. The tests use synthetic Pro DJ Link packets. No test ran against a real CDJ or a real mixer.\n\nHTDemucs runs as an INT8 model on the CPU. I dropped the plan to run it on a Hailo-10H accelerator. The export to the Hailo format failed, and attention is 63.3% of the model's compute. On a Mac with an M4 Pro, the model splits audio at 5.79 times real time.\n\nThe audio never waits for the model. The model fills a buffer ahead of the playhead, and the audio callback reads only stems that are complete.",
+        "longDescription": "Prism is a design for hardware in the DJ booth. When a CDJ loads a track, Prism splits the track into four stems in the background. The design gives each stem its own encoder, or a DJM-V10 knob over MIDI.\n\nThe firmware is about 2,200 lines of C++20 with 54 unit tests. The tests use synthetic Pro DJ Link packets. No test ran against a real CDJ or a real mixer.\n\nHTDemucs runs as an INT8 model on the CPU. I dropped the plan to run it on a Hailo-10H accelerator. The export to the Hailo format failed, and attention and matrix multiplies are 63.3% of the model's compute. On a Mac with an M4 Pro, the model splits audio at 5.79 times real time.\n\nThe audio never waits for the model. The model fills a buffer ahead of the playhead, and the audio callback reads only stems that are complete.",
         "highlights": [
           "Status: software written, hardware not built",
           "Measured: 5.79× real time on an M4 Pro Mac (INT8, 10 s chunks)",
-          "Measured: attention is 63.3% of HTDemucs compute (334.9 GFLOPs)",
-          "Target: stem controls live about 40 s after a track loads",
+          "Measured: attention and matrix multiplies are 63.3% of HTDemucs compute (334.9 GFLOPs)",
+          "Stem controls go live once 40 s of stems are ready",
           "Target: 1.9 ms audio round trip (calculated, not measured)",
-          "12 architecture decision records"
+          "Architecture decision records: 7 committed, 5 in draft"
         ],
         "icon": "/icons/prism.webp",
         "statusSince": "2026-07-15",
@@ -970,7 +970,7 @@
         "id": "superset",
         "slug": "superset",
         "name": "superset",
-        "description": "A local tool that analyzes a DJ library and puts tracks in an order by key, tempo and energy. It reads Rekordbox XML and exports the set as JSON.",
+        "description": "A local tool that analyzes a DJ library and puts tracks in an order by key, tempo and energy. It reads a Rekordbox library, from the database or an XML export.",
         "tags": [
           "Python",
           "librosa",
@@ -980,13 +980,13 @@
         "githubUrl": "https://github.com/bmontt/superset",
         "status": "paused",
         "date": "March 2026",
-        "longDescription": "superset puts a DJ set in order. I still choose the tracks. It reads a Rekordbox library, analyzes each track, and proposes an order that follows key and energy.\n\nThe analysis has three stages. librosa measures tempo, key, a 16-point intensity curve and spectral features. Essentia models add genre, mood, danceability and an embedding. A 4-bit Qwen2.5-3B model on MLX writes notes for each transition from those numbers. It does not hear the audio.\n\nA greedy walk over a cost matrix makes the order. The cost weighs tempo, energy, key on the Camelot wheel, mood, spectral match and position in the set.\n\nEverything runs on the Mac after a first download of the models. A test run on 41 tracks took 4 to 8 minutes on an M4 Pro. The public repo holds the March 2026 version (v1), which grouped tracks with KMeans and DBSCAN.",
+        "longDescription": "superset puts a DJ set in order. I still choose the tracks. It reads a Rekordbox library, analyzes each track, and proposes an order that follows key and energy.\n\nThe analysis has three stages. librosa measures tempo, key, a 16-point intensity curve and spectral features. Essentia models add genre, mood, danceability and an embedding. A 4-bit Qwen2.5-3B model on MLX writes mix notes and transition tags from those numbers. It does not hear the audio.\n\nA greedy walk over a cost matrix makes the order. The cost weighs tempo, energy, key on the Camelot wheel, mood, spectral match and position in the set.\n\nEverything runs on the Mac after a first download of the models. The README reports 4 to 8 minutes for 41 tracks on an M4 Pro. The public repo holds the March 2026 version (v1), which grouped tracks with KMeans and DBSCAN.",
         "highlights": [
           "Three stages: librosa, Essentia and a local LLM on MLX",
           "A greedy order over a cost matrix, with the Camelot wheel for key",
-          "Measured: 41 tracks in 4 to 8 min on an M4 Pro",
+          "Reported: 41 tracks in 4 to 8 min on an M4 Pro (README)",
           "Works offline after the first model download",
-          "React and Electron app over FastAPI, and a CLI",
+          "A FastAPI server and a CLI. The Electron app is not in git yet.",
           "The public repo is v1 (March 2026). v2 is not public yet."
         ],
         "icon": "/icons/pioneerdj.svg",
@@ -1096,8 +1096,8 @@
           "The build fails on any unresolved placeholder",
           "Shared blocks load on demand as skills",
           "An eval script with 12 checks on the built agents",
-          "Measured: lazy skill pointers cut 31,538 tokens to 20,564 (−35%, 2026-06-30)",
-          "Today the same 16 agents use 25,683 tokens (2026-10-19)"
+          "Measured: skill pointers and shorter descriptions cut 31,538 tokens to 20,564 (−35%)",
+          "The same 16 agents at b930aba: 25,683 tokens (counted 2026-10-19)"
         ],
         "icon": "/icons/claude.svg",
         "updated": "2026-10-19"
@@ -1116,7 +1116,7 @@
         "githubUrl": "https://github.com/bmontt/Peak_Finding_Toolbox",
         "status": "archived",
         "date": "April 2025",
-        "longDescription": "I wrote the toolbox during auditory signal research at UMD's Perceptual Interfaces and Reality Laboratory. An auditory brainstem response (ABR) is a small signal from the scalp after a sound. Each of its five waves needs an exact peak mark.\n\nFor ABR, the toolbox smooths the signal by its signal-to-noise ratio and looks for peaks in up to three passes. It scores I–III–V triplets against normal time windows, then finds waves II and IV between them. For SOFA and audio files it uses a fixed threshold.\n\nI compared its Wave V picks with manual picks for 8 subjects (54 pairs). The median error was 1.15 ms, and 41% of the picks were within 0.5 ms. It is a prototype, not a clinical tool. Waves I to IV have no benchmark.\n\nIt reads EEG through MNE-BIDS, SOFA files through h5py, and audio through soundfile. I stopped work on it in May 2025.",
+        "longDescription": "I wrote the toolbox during auditory signal research at UMD's Perceptual Interfaces and Reality Laboratory. An auditory brainstem response (ABR) is a small signal from the scalp after a sound. Each of its five waves needs an exact peak mark.\n\nFor ABR, the toolbox smooths the signal by its signal-to-noise ratio and looks for peaks in up to three passes. It scores I–III–V triplets against normal time windows, then finds waves II and IV between them. For SOFA and audio files it uses a prominence threshold that the SNR scales.\n\nI compared its Wave V picks with manual picks for 8 subjects (54 pairs). The median error was 1.15 ms, and 41% of the picks were within 0.5 ms. It is a prototype, not a clinical tool. Waves I to IV have no benchmark.\n\nIt reads EEG through MNE-BIDS, SOFA files through h5py, and audio through soundfile. I stopped work on it in May 2025.",
         "highlights": [
           "ABR waves I to V, smoothed by the signal-to-noise ratio",
           "Measured: Wave V median error 1.15 ms against manual picks (8 subjects)",

@@ -7,7 +7,7 @@ import { diagramSvg } from "@/lib/diagram";
 export default function DiagramBlock({ id, mermaid, alt, caption }: { id: string; mermaid: string; alt: string; caption?: string }) {
   const { svg } = diagramSvg(mermaid, `dg-${id}`);
   return (
-    <figure className="dblock diagram-block my-6">
+    <figure data-motion="" className="dblock diagram-block my-6">
       <div role="img" aria-label={alt} className="block-frame overflow-x-auto px-4 py-5" dangerouslySetInnerHTML={{ __html: svg }} />
       <figcaption className="mt-2 font-mono text-xs text-foreground/60">
         {caption}

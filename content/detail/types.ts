@@ -36,6 +36,9 @@ export type Block = Base &
     | { type: "prose"; text: string } // [text](url) links allowed
     | { type: "code"; excerpt: string; lang: string; highlight?: number[] } // excerpt: a key in excerpts.lock.json
     | { type: "diagram"; mermaid: string; alt: string }
+    // an animated schematic drawn for one project (components/blocks/figures):
+    // `name` picks the figure, `alt` is its one-image sentence for a screen reader
+    | { type: "figure"; name: string; alt: string }
     | { type: "table"; columns: string[]; rows: string[][]; method?: string; asOf?: string }
     | {
         type: "decision";
