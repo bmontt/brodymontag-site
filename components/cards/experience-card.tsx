@@ -3,7 +3,8 @@
 // its first two highlights as floating sub-widgets (the rest behind "+N more",
 // a native <details>), tags along the foot. The whole card links to the role's
 // page (/experience/<id>) through a stretched-link overlay, as ProjectCard
-// does; the org link and "+N more" sit above the overlay.
+// does, and like it does not prefetch; the org link and "+N more" sit above
+// the overlay.
 import Link from "next/link";
 import type { ExperienceEntry } from "@/lib/stack-data";
 import { BrandIcon, SubWidgets, TagRow, Widget, WidgetHead } from "@/components/widgets";
@@ -14,7 +15,7 @@ const SHOWN = 2;
 export default function ExperienceCard({ entry }: { entry: ExperienceEntry }) {
   return (
     <Widget link>
-      <Link href={`/experience/${entry.id}`} aria-label={`${entry.role} at ${entry.org}`} className="absolute inset-0 z-0 rounded-[18px]" />
+      <Link href={`/experience/${entry.id}`} prefetch={false} aria-label={`${entry.role} at ${entry.org}`} className="absolute inset-0 z-0 rounded-[18px]" />
       <div className="pointer-events-none relative">
         <WidgetHead
           icon={<BrandIcon src={entry.icon} size={entry.icon?.includes("fiserv") ? 14 : 20} />}

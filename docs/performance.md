@@ -63,6 +63,10 @@ start point.
   - Images are AVIF first.
   - `/artistLogos`, `/BrodyEvents` and `/fonts` are cached for a day, then
     served stale-while-revalidate for a week.
+  - Project and role cards don't prefetch (`prefetch={false}`). A project
+    page is 70–112 KB of RSC (its figure is 22–66 KB of that), and scrolling
+    `/software` used to fetch all 12 detail pages: 154 KB on the wire, 804 KB
+    decoded. A page now loads on click (2026-10-21).
 
 ## Measuring
 
