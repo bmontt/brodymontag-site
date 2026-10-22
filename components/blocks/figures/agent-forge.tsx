@@ -6,6 +6,8 @@
 // checks, in their own order and numbers. The text is the files' own,
 // shortened where marked with "…".
 
+import { minCss } from "./svg";
+
 const W = 720;
 const H = 340;
 const LOOP = 10;
@@ -79,7 +81,7 @@ function css() {
 .fig-agent-forge[data-play] .af-pass { animation: af-pass ${LOOP}s linear infinite; }`);
   return r.join("\n");
 }
-const CSS = css();
+const CSS = minCss(css());
 
 function Panel({ b, title }: { b: { x: number; y: number; w: number; h: number }; title: string }) {
   return (

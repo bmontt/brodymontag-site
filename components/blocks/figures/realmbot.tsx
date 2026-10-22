@@ -9,6 +9,8 @@
 // whatever the model says. The answers and their confidences are invented;
 // the rules that judge them are the code's.
 
+import { minCss, r2 } from "./svg";
+
 const W = 720;
 const H = 300;
 const LOOP = 6; // s, one copy of the pattern
@@ -42,28 +44,25 @@ const SEGS: Seg[] = [
   { from: SAFETY_AT, to: LOOP + 0.32, mode: "nexus", by: "safety" },
 ];
 
-const CSS = `
+const CSS = minCss(`
 .fig-realmbot[data-play] .rb-belt { animation: rb-belt ${LOOP}s linear infinite; }
 @keyframes rb-belt { from { transform: translateX(0); } to { transform: translateX(${-(NOW - X0)}px); } }
 .fig-realmbot[data-play] .rb-now { animation: rb-now 0.2s steps(1) infinite; }
 @keyframes rb-now { 0% { opacity: 1; } 50% { opacity: 0.55; } }
-`;
+`);
 
-function Pattern({ dx }: { dx: number }) {
+/** one copy of the pattern; the belt draws a second with <use> */
+function Pattern() {
   return (
-    <g transform={`translate(${dx} 0)`}>
+    <g id="rb-pattern">
       {/* server: NEWTICK every tick, PING every 3 s; the replies under them */}
       {TICKS.map((t) => (
-        <g key={t}>
-          <line x1={x(t)} y1={LANES.server - 9} x2={x(t)} y2={LANES.server + 9} stroke="oklch(1 0 0 / 0.55)" />
-          <line x1={x(t)} y1={LANES.server + 12} x2={x(t + 0.03)} y2={LANES.reply - 7} stroke="oklch(1 0 0 / 0.12)" />
-          <rect x={x(t + 0.03) - 2.5} y={LANES.reply - 2.5} width="5" height="5" fill="oklch(1 0 0 / 0.8)" />
-        </g>
+        <use key={t} href="#rb-tick" x={r2(x(t))} />
       ))}
       {PINGS.map((t) => (
         <g key={t} fontSize="9.5">
-          <text x={x(t) + 4} y={LANES.server - 12} fill="oklch(1 0 0 / 0.7)">PING</text>
-          <text x={x(t + 0.03) + 5} y={LANES.reply + 16} fill="oklch(1 0 0 / 0.7)">PONG</text>
+          <text x={r2(x(t) + 4)} y={LANES.server - 12} fill="oklch(1 0 0 / 0.7)">PING</text>
+          <text x={r2(x(t + 0.03) + 5)} y={LANES.reply + 16} fill="oklch(1 0 0 / 0.7)">PONG</text>
         </g>
       ))}
       {/* the model, about once a second */}
@@ -71,18 +70,18 @@ function Pattern({ dx }: { dx: number }) {
         const end = a.back ?? TIMEOUT_AT;
         return (
           <g key={a.at} fontSize="10">
-            <circle cx={x(a.at)} cy={LANES.model} r="3" fill="none" stroke="oklch(1 0 0 / 0.7)" />
-            <line x1={x(a.at) + 3} y1={LANES.model} x2={x(end)} y2={LANES.model} stroke="oklch(1 0 0 / 0.35)" strokeDasharray={a.outcome === "timeout" ? "2 3" : undefined} />
+            <circle cx={r2(x(a.at))} cy={LANES.model} r="3" fill="none" stroke="oklch(1 0 0 / 0.7)" />
+            <line x1={r2(x(a.at) + 3)} y1={LANES.model} x2={r2(x(end))} y2={LANES.model} stroke="oklch(1 0 0 / 0.35)" strokeDasharray={a.outcome === "timeout" ? "2 3" : undefined} />
             {a.outcome === "timeout" ? (
-              <text x={x(end)} y={LANES.model + 4} textAnchor="middle" fill="oklch(1 0 0 / 0.85)">×</text>
+              <text x={r2(x(end))} y={LANES.model + 4} textAnchor="middle" fill="oklch(1 0 0 / 0.85)">×</text>
             ) : (
-              <circle cx={x(end)} cy={LANES.model} r="3.2" fill={a.outcome === "low" ? "var(--pearl-sky)" : "oklch(1 0 0)"} />
+              <circle cx={r2(x(end))} cy={LANES.model} r="3.2" fill={a.outcome === "low" ? "var(--pearl-sky)" : "oklch(1 0 0)"} />
             )}
-            <text x={x(end) + 5} y={LANES.model - 9} fill={a.outcome === "model" ? "oklch(1 0 0 / 0.85)" : "var(--pearl-sky)"}>
+            <text x={r2(x(end) + 5)} y={LANES.model - 9} fill={a.outcome === "model" ? "oklch(1 0 0 / 0.85)" : "var(--pearl-sky)"}>
               {a.outcome === "timeout" ? "timeout" : `${a.mode} ${a.p!.toFixed(2)}`}
             </text>
             {a.outcome === "low" && (
-              <text x={x(end) + 5} y={LANES.model + 15} fill="oklch(1 0 0 / 0.62)">
+              <text x={r2(x(end) + 5)} y={LANES.model + 15} fill="oklch(1 0 0 / 0.62)">
                 {"< 0.55"}
               </text>
             )}
@@ -93,22 +92,22 @@ function Pattern({ dx }: { dx: number }) {
       {SEGS.map((s) => (
         <g key={s.from}>
           <rect
-            x={x(s.from) + 1}
+            x={r2(x(s.from) + 1)}
             y={LANES.mode - 13}
-            width={x(s.to) - x(s.from) - 2}
+            width={r2(x(s.to) - x(s.from) - 2)}
             height="26"
             rx="3"
             fill={s.by === "safety" ? "oklch(0.84 0.1 315 / 0.16)" : "oklch(1 0 0 / 0.05)"}
             stroke={s.by === "safety" ? "var(--pearl-orchid)" : s.by === "heuristic" ? "oklch(1 0 0 / 0.35)" : "oklch(1 0 0 / 0.6)"}
             strokeDasharray={s.by === "heuristic" ? "3 3" : undefined}
           />
-          <text x={x(s.from) + 7} y={LANES.mode + 1} fontSize="11" fill="oklch(1 0 0 / 0.92)">{s.mode}</text>
-          <text x={x(s.from) + 7} y={LANES.mode + 11} fontSize="9.5" fill={s.by === "safety" ? "var(--pearl-orchid)" : "oklch(1 0 0 / 0.5)"}>{s.by}</text>
+          <text x={r2(x(s.from) + 7)} y={LANES.mode + 1} fontSize="11" fill="oklch(1 0 0 / 0.92)">{s.mode}</text>
+          <text x={r2(x(s.from) + 7)} y={LANES.mode + 11} fontSize="9.5" fill={s.by === "safety" ? "var(--pearl-orchid)" : "oklch(1 0 0 / 0.5)"}>{s.by}</text>
         </g>
       ))}
       <g fontSize="10">
-        <line x1={x(SAFETY_AT)} y1={LANES.reply + 22} x2={x(SAFETY_AT)} y2={LANES.mode - 15} stroke="var(--pearl-orchid)" strokeDasharray="2 2" />
-        <text x={x(SAFETY_AT) + 5} y={LANES.model + 30} fill="var(--pearl-orchid)">HP low: safety wins</text>
+        <line x1={r2(x(SAFETY_AT))} y1={LANES.reply + 22} x2={r2(x(SAFETY_AT))} y2={LANES.mode - 15} stroke="var(--pearl-orchid)" strokeDasharray="2 2" />
+        <text x={r2(x(SAFETY_AT) + 5)} y={LANES.model + 30} fill="var(--pearl-orchid)">HP low: safety wins</text>
       </g>
     </g>
   );
@@ -120,6 +119,12 @@ export default function RealmbotFigure() {
       <style>{CSS}</style>
       <svg className="fig-svg" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
         <defs>
+          {/* one tick at t = 0: the server's mark, the line down, the reply */}
+          <g id="rb-tick">
+            <line x1="0" y1={LANES.server - 9} x2="0" y2={LANES.server + 9} stroke="oklch(1 0 0 / 0.55)" />
+            <line x1="0" y1={LANES.server + 12} x2={r2(0.03 * PX)} y2={LANES.reply - 7} stroke="oklch(1 0 0 / 0.12)" />
+            <rect x={r2(0.03 * PX - 2.5)} y={LANES.reply - 2.5} width="5" height="5" fill="oklch(1 0 0 / 0.8)" />
+          </g>
           <clipPath id="rb-window">
             <rect x={X0 - 6} y="0" width={NOW - X0 + 6} height={H} />
           </clipPath>
@@ -139,8 +144,8 @@ export default function RealmbotFigure() {
         ))}
         <g clipPath="url(#rb-window)">
           <g className="rb-belt">
-            <Pattern dx={0} />
-            <Pattern dx={NOW - X0} />
+            <Pattern />
+            <use href="#rb-pattern" x={NOW - X0} />
           </g>
           <rect x={X0 - 6} y="0" width="34" height={H} fill="url(#rb-fade)" />
         </g>

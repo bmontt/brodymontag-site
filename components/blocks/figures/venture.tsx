@@ -10,6 +10,8 @@
 // through; a change anywhere else is dropped by code. The 11 locks are the
 // LOCKED limits (venture/config.py). No amounts: the moves carry none.
 
+import { minCss, r2, relPath, type Seg } from "./svg";
+
 const W = 720;
 const H = 340;
 const LOOP = 12;
@@ -19,7 +21,7 @@ const R = 100;
 const SLOTS = [0.25, 6.25, 12.25, 18.25]; // hours
 const slotT = (h: number) => (h / 24) * LOOP;
 const ang = (h: number) => (h / 24) * 360 - 90; // 00:00 at the top
-const pt = (h: number, r: number) => [CX + r * Math.cos((ang(h) * Math.PI) / 180), CY + r * Math.sin((ang(h) * Math.PI) / 180)];
+const pt = (h: number, r: number): [number, number] => [CX + r * Math.cos((ang(h) * Math.PI) / 180), CY + r * Math.sin((ang(h) * Math.PI) / 180)];
 const pct = (t: number) => `${((t / LOOP) * 100).toFixed(2)}%`;
 
 // the money path
@@ -51,7 +53,7 @@ function token(name: string, stops: [number, P][]) {
 }
 
 const [s1, s2, s3, s4] = SLOTS.map(slotT);
-const CSS = `
+const CSS = minCss(`
 .fig-venture[data-play] .vt-hand { animation: vt-hand ${LOOP}s linear infinite; }
 .fig-venture[data-play] .vt-slot { animation: vt-slot ${LOOP}s ease-out infinite; animation-delay: calc(var(--t) * 1s - ${LOOP}s); }
 .fig-venture[data-play] .vt-tok-gas { animation: vt-tok-gas ${LOOP}s linear infinite; }
@@ -85,7 +87,7 @@ ${token("vt-tok-a", [[s3, C_OUT], [s3 + 0.4, A_OUT], [s3 + 0.8, GATE_IN], [s3 + 
 @keyframes vt-review { 0%, ${pct(s4)} { stroke: oklch(1 0 0 / 0.4); } ${pct(s4 + 0.1)}, ${pct(s4 + 1.6)} { stroke: var(--pearl-orchid); } ${pct(s4 + 2)}, 100% { stroke: oklch(1 0 0 / 0.4); } }
 @keyframes vt-ok { 0%, ${pct(s4 + 0.3)} { opacity: 0.25; stroke-dashoffset: 1; } ${pct(s4 + 0.8)} { opacity: 1; stroke-dashoffset: 0; } ${pct(s4 + 2.2)} { opacity: 1; } ${pct(LOOP - 0.2)}, 100% { opacity: 0.6; stroke-dashoffset: 0; } }
 @keyframes vt-no { 0%, ${pct(s4 + 0.9)} { opacity: 0.25; } ${pct(s4 + 1.1)} { opacity: 1; } ${pct(s4 + 1.25)} { opacity: 0.4; } ${pct(s4 + 1.4)}, ${pct(s4 + 2.4)} { opacity: 1; } ${pct(LOOP - 0.2)}, 100% { opacity: 0.6; } }
-`;
+`);
 
 function Box({ b, label, className }: { b: { x: number; y: number; w: number; h: number }; label: string; className?: string }) {
   const [x, y] = mid(b);
@@ -106,22 +108,18 @@ export default function VentureFigure() {
       <svg className="fig-svg" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
         {/* ── the day ─────────────────────────────────────────────── */}
         <circle cx={CX} cy={CY} r={R} fill="none" stroke="oklch(1 0 0 / 0.16)" />
-        {[...Array(96).keys()].map((i) => {
-          const h = i / 4;
-          const [x1, y1] = pt(h, R - 5);
-          const [x2, y2] = pt(h, R);
-          return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="oklch(1 0 0 / 0.28)" />;
-        })}
+        {/* the 96 ticks: one path (no two overlap) */}
+        <path d={relPath([...Array(96).keys()].flatMap((i): Seg[] => [["M", ...pt(i / 4, R - 5)], ["L", ...pt(i / 4, R)]]), 2)} stroke="oklch(1 0 0 / 0.28)" />
         {SLOTS.map((h) => {
-          const [x1, y1] = pt(h, R - 14);
-          const [x2, y2] = pt(h, R + 3);
-          const [lx, ly] = pt(h, R + 19);
-          const [px, py] = pt(h, R);
+          const [x1, y1] = pt(h, R - 14).map(r2);
+          const [x2, y2] = pt(h, R + 3).map(r2);
+          const [lx, ly] = pt(h, R + 19).map(r2);
+          const [px, py] = pt(h, R).map(r2);
           return (
             <g key={h}>
               <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="oklch(1 0 0 / 0.9)" strokeWidth="1.6" />
               <circle className="vt-slot" style={{ ["--t" as string]: slotT(h), transformBox: "fill-box", transformOrigin: "center" }} cx={px} cy={py} r="7" fill="none" stroke="var(--pearl-sky)" opacity="0" />
-              <text x={lx} y={ly + 4} textAnchor="middle" fontSize="11" fill="oklch(1 0 0 / 0.7)">{`${String(Math.floor(h)).padStart(2, "0")}:15`}</text>
+              <text x={lx} y={r2(ly + 4)} textAnchor="middle" fontSize="11" fill="oklch(1 0 0 / 0.7)">{`${String(Math.floor(h)).padStart(2, "0")}:15`}</text>
             </g>
           );
         })}
@@ -131,7 +129,7 @@ export default function VentureFigure() {
                 (one rotating group, so the dial costs one transform per frame) */}
             {[...Array(8).keys()].map((k) => {
               const a = (-(k + 1) * 3.75 * Math.PI) / 180 - Math.PI / 2;
-              return <line key={k} x1={(R - 5) * Math.cos(a)} y1={(R - 5) * Math.sin(a)} x2={R * Math.cos(a)} y2={R * Math.sin(a)} stroke={`oklch(1 0 0 / ${(0.9 - k * 0.1).toFixed(2)})`} strokeWidth="1.2" />;
+              return <line key={k} x1={r2((R - 5) * Math.cos(a))} y1={r2((R - 5) * Math.sin(a))} x2={r2(R * Math.cos(a))} y2={r2(R * Math.sin(a))} stroke={`oklch(1 0 0 / ${(0.9 - k * 0.1).toFixed(2)})`} strokeWidth="1.2" />;
             })}
             <line x1="0" y1="8" x2="0" y2={-(R - 18)} stroke="oklch(1 0 0 / 0.9)" strokeWidth="1.3" />
           </g>

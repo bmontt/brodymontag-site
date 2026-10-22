@@ -9,6 +9,8 @@
 // at the foot is real: the 54 signed Wave V errors (automatic − manual, ms)
 // from bench/auto_peak_picks.csv and bench/manual_peak_picks.csv at f82d762.
 
+import { minCss, r2, relPath, Tenths, type Seg } from "./svg";
+
 const ERRORS = [
   -3.4, -2.4, -2.1, -1.92, -1.81, -1.08, -1.0, -0.6, -0.42, -0.4, -0.38, -0.33, -0.27, -0.25, -0.23, -0.06, -0.04, -0.02, -0.02,
   -0.02, -0.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.04, 0.04, 0.06, 0.88, 0.94, 1.21, 1.25, 1.5, 1.56, 1.58, 1.6, 1.6, 1.83, 1.83,
@@ -93,7 +95,8 @@ const [I, III, V] = [CANDS[BEST.a], CANDS[BEST.b], CANDS[BEST.c]];
 const II = between(I.t, III.t);
 const IV = between(III.t, V.t);
 
-const path = (ys: number[]) => ys.map((v, i) => `${i ? "L" : "M"}${tx(i * DT).toFixed(1)} ${ty(v).toFixed(1)}`).join("");
+// to 0.1 of a unit, written in tenths (drawn in <Tenths>)
+const path = (ys: number[]) => relPath(ys.map((v, i): Seg => [i ? "L" : "M", tx(i * DT), ty(v)]), 1, true);
 
 // the error strip
 const SX0 = 150;
@@ -135,13 +138,13 @@ function css() {
   rule("pf-strip", `0%, ${pct(T_STRIP)} { opacity: 0; transform: translateY(6px); } ${pct(T_STRIP + 0.4)}, ${pct(LOOP - 0.4)} { opacity: 1; transform: none; } 100% { opacity: 0; }`, "cubic-bezier(0.2, 0.8, 0.2, 1)");
   return r2.join("\n");
 }
-const CSS = css();
+const CSS = minCss(css());
 
 function Bracket({ a, b, y, label, ok }: { a: number; b: number; y: number; label: string; ok: boolean }) {
   return (
     <g>
-      <path d={`M${tx(a)} ${y + 5}V${y}H${tx(b)}V${y + 5}`} fill="none" stroke={ok ? "var(--pearl-sky)" : "oklch(1 0 0 / 0.55)"} />
-      <text x={(tx(a) + tx(b)) / 2} y={y - 4} textAnchor="middle" fontSize="9.5" fill={ok ? "var(--pearl-sky)" : "oklch(1 0 0 / 0.6)"}>{label}</text>
+      <path d={`M${r2(tx(a))} ${y + 5}V${y}H${r2(tx(b))}V${y + 5}`} fill="none" stroke={ok ? "var(--pearl-sky)" : "oklch(1 0 0 / 0.55)"} />
+      <text x={r2((tx(a) + tx(b)) / 2)} y={y - 4} textAnchor="middle" fontSize="9.5" fill={ok ? "var(--pearl-sky)" : "oklch(1 0 0 / 0.6)"}>{label}</text>
     </g>
   );
 }
@@ -160,12 +163,12 @@ function Triplet({ t, cls }: { t: Tri; cls: string }) {
 
 export default function PeakFindingFigure() {
   const winBand = (from: number, [lo, hi]: [number, number], y: number) => (
-    <rect className="pf-win" style={{ transformBox: "fill-box", transformOrigin: "bottom" }} x={tx(from + lo)} y={y} width={tx(from + hi) - tx(from + lo)} height={Y0 + 40 - y} fill="oklch(0.86 0.09 205 / 0.09)" stroke="oklch(0.86 0.09 205 / 0.35)" strokeDasharray="2 3" />
+    <rect className="pf-win" style={{ transformBox: "fill-box", transformOrigin: "bottom" }} x={r2(tx(from + lo))} y={y} width={r2(tx(from + hi) - tx(from + lo))} height={Y0 + 40 - y} fill="oklch(0.86 0.09 205 / 0.09)" stroke="oklch(0.86 0.09 205 / 0.35)" strokeDasharray="2 3" />
   );
   const mark = (c: { t: number; v: number }, name: string, big: boolean) => (
     <g key={name}>
-      <circle cx={tx(c.t)} cy={ty(c.v)} r={big ? 4.5 : 3.5} fill={big ? "oklch(1 0 0)" : "var(--pearl-orchid)"} />
-      <text x={tx(c.t)} y={ty(c.v) - 10} textAnchor="middle" fontSize={big ? 12 : 11} fill={big ? "oklch(1 0 0)" : "var(--pearl-orchid)"}>{name}</text>
+      <circle cx={r2(tx(c.t))} cy={r2(ty(c.v))} r={big ? 4.5 : 3.5} fill={big ? "oklch(1 0 0)" : "var(--pearl-orchid)"} />
+      <text x={r2(tx(c.t))} y={r2(ty(c.v) - 10)} textAnchor="middle" fontSize={big ? 12 : 11} fill={big ? "oklch(1 0 0)" : "var(--pearl-orchid)"}>{name}</text>
     </g>
   );
   const median = [...ERRORS].map(Math.abs).sort((a, b) => a - b);
@@ -178,21 +181,23 @@ export default function PeakFindingFigure() {
         <line x1={X0} y1={Y0 + 40} x2={X1} y2={Y0 + 40} stroke="oklch(1 0 0 / 0.25)" />
         {[0, 2, 4, 6, 8, 10, 12].map((t) => (
           <g key={t}>
-            <line x1={tx(t)} y1={Y0 + 40} x2={tx(t)} y2={Y0 + 44} stroke="oklch(1 0 0 / 0.35)" />
-            <text x={tx(t)} y={Y0 + 56} textAnchor="middle" fontSize="10" fill="oklch(1 0 0 / 0.62)">{t === 12 ? "12 ms" : t}</text>
+            <line x1={r2(tx(t))} y1={Y0 + 40} x2={r2(tx(t))} y2={Y0 + 44} stroke="oklch(1 0 0 / 0.35)" />
+            <text x={r2(tx(t))} y={Y0 + 56} textAnchor="middle" fontSize="10" fill="oklch(1 0 0 / 0.62)">{t === 12 ? "12 ms" : t}</text>
           </g>
         ))}
-        <line x1={tx(9.6)} y1={14} x2={tx(9.6)} y2={Y0 + 40} stroke="oklch(1 0 0 / 0.25)" strokeDasharray="2 3" />
-        <text x={tx(9.6) + 4} y={22} fontSize="9.5" fill="oklch(1 0 0 / 0.62)">9.6 ms: last V</text>
+        <line x1={r2(tx(9.6))} y1={14} x2={r2(tx(9.6))} y2={Y0 + 40} stroke="oklch(1 0 0 / 0.25)" strokeDasharray="2 3" />
+        <text x={r2(tx(9.6) + 4)} y={22} fontSize="9.5" fill="oklch(1 0 0 / 0.62)">9.6 ms: last V</text>
 
         {/* the windows, hung from the chosen I and III */}
         {winBand(I.t, IP13, 60)}
         {winBand(III.t, IP35, 60)}
 
-        <path className="pf-raw" pathLength={1} strokeDasharray="1 1" d={path(RAW)} fill="none" stroke="oklch(1 0 0 / 0.5)" strokeWidth="1" style={{ opacity: 0.3 }} />
-        <path className="pf-smooth" pathLength={1} strokeDasharray="1 1" d={path(SMOOTH)} fill="none" stroke="oklch(1 0 0 / 0.95)" strokeWidth="1.6" />
+        <Tenths w={W} h={H}>
+          <path className="pf-raw" pathLength={1} strokeDasharray="1 1" d={path(RAW)} fill="none" stroke="oklch(1 0 0 / 0.5)" strokeWidth="10" style={{ opacity: 0.3 }} />
+          <path className="pf-smooth" pathLength={1} strokeDasharray="1 1" d={path(SMOOTH)} fill="none" stroke="oklch(1 0 0 / 0.95)" strokeWidth="16" />
+        </Tenths>
         <g className="pf-cand">
-          {CANDS.map((c) => <line key={c.i} x1={tx(c.t)} y1={ty(c.v) - 3} x2={tx(c.t)} y2={Y0 + 40} stroke="oklch(1 0 0 / 0.18)" />)}
+          {CANDS.map((c) => <line key={c.i} x1={r2(tx(c.t))} y1={r2(ty(c.v) - 3)} x2={r2(tx(c.t))} y2={Y0 + 40} stroke="oklch(1 0 0 / 0.18)" />)}
         </g>
         {TRIED.map((t, k) => <Triplet key={k} t={t} cls={`pf-try-${k}`} />)}
         <Triplet t={BEST} cls="pf-best" />
@@ -204,13 +209,13 @@ export default function PeakFindingFigure() {
           <text x={16} y={SY - 26} fontSize="10" fill="oklch(1 0 0 / 0.7)">Wave V benchmark</text>
           <text x={16} y={SY - 12} fontSize="9.5" fill="oklch(1 0 0 / 0.62)">54 picks · 8 subjects</text>
           <text x={16} y={SY + 2} fontSize="9.5" fill="oklch(1 0 0 / 0.62)">auto − manual, ms</text>
-          <rect x={sx(-0.5)} y={SY - 56} width={sx(0.5) - sx(-0.5)} height={56} fill="oklch(0.86 0.09 205 / 0.1)" />
+          <rect x={r2(sx(-0.5))} y={SY - 56} width={r2(sx(0.5) - sx(-0.5))} height={56} fill="oklch(0.86 0.09 205 / 0.1)" />
           <line x1={SX0} y1={SY} x2={SX1} y2={SY} stroke="oklch(1 0 0 / 0.3)" />
           {[-4, -2, 0, 2, 4, 6, 8].map((e) => (
-            <text key={e} x={sx(e)} y={SY + 13} textAnchor="middle" fontSize="9.5" fill="oklch(1 0 0 / 0.62)">{e > 0 ? `+${e}` : e}</text>
+            <text key={e} x={r2(sx(e))} y={SY + 13} textAnchor="middle" fontSize="9.5" fill="oklch(1 0 0 / 0.62)">{e > 0 ? `+${e}` : e}</text>
           ))}
-          {STACK.map((d, i) => <circle key={i} cx={d.x} cy={d.y} r="2" fill={Math.abs(d.e) <= 0.5 ? "var(--pearl-sky)" : "oklch(1 0 0 / 0.8)"} />)}
-          <text x={sx(0.5) + 6} y={SY - 44} fontSize="9.5" fill="var(--pearl-sky)">±0.5 ms: 41%</text>
+          {STACK.map((d, i) => <circle key={i} cx={r2(d.x)} cy={r2(d.y)} r="2" fill={Math.abs(d.e) <= 0.5 ? "var(--pearl-sky)" : "oklch(1 0 0 / 0.8)"} />)}
+          <text x={r2(sx(0.5) + 6)} y={SY - 44} fontSize="9.5" fill="var(--pearl-sky)">±0.5 ms: 41%</text>
           <text x={SX1} y={SY - 44} textAnchor="end" fontSize="9.5" fill="oklch(1 0 0 / 0.6)">{`median |error| ${med.toFixed(2)} ms`}</text>
         </g>
       </svg>
