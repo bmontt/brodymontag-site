@@ -3,7 +3,9 @@
 // three highlights as compact fact chips (a swipe row on phones), tags along
 // the foot. The whole card links to the detail page through a stretched-link
 // overlay (no nested anchors: that was a hydration bug); the GitHub link sits
-// above the overlay.
+// above the overlay. The overlay does not prefetch: a detail page is 70–110 KB
+// of RSC (its figure, code and diagram), and /software lists all of them
+// (docs/portfolio-style-plan.md §7). The page loads on click instead.
 import Link from "next/link";
 import { isMoving, statusLine, type Project } from "@/lib/projects";
 import { BrandIcon, FactRow, StatWidgets, TagRow, Widget, WidgetHead } from "@/components/widgets";
@@ -11,7 +13,7 @@ import { BrandIcon, FactRow, StatWidgets, TagRow, Widget, WidgetHead } from "@/c
 export default function ProjectCard({ project }: { project: Project }) {
   return (
     <Widget link>
-      <Link href={`/projects/${project.slug}`} aria-label={project.name} className="absolute inset-0 z-0 rounded-[18px]" />
+      <Link href={`/projects/${project.slug}`} prefetch={false} aria-label={project.name} className="absolute inset-0 z-0 rounded-[18px]" />
       <div className="pointer-events-none relative">
         <WidgetHead
           icon={<BrandIcon src={project.icon} size={project.id === "prism" ? 26 : 20} round={project.id === "prism"} />}
