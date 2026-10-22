@@ -15,20 +15,22 @@ export const metadata: Metadata = {
 };
 
 // absolute URLs and site paths become links for human readers of the mirror
-const LINK = /(https?:\/\/[^\s<>)]+|\/(?:projects|shows)\/[\w-]+|\/llms\.txt)/g;
+const LINK = /(https?:\/\/[^\s<>)]+|\/(?:projects|shows|experience)\/[\w-]+|\/llms\.txt)/g;
 const ORIGIN = /^https:\/\/brodymontag\.com/;
+// text files (route handlers): a full load, not a client-side navigation
+const TEXT = /^\/machine\/|\.txt$/;
 
 function linkify(text: string) {
   return text.split(LINK).map((part, i) => {
     if (i % 2 === 0) return part;
     const local = part.startsWith("/") || ORIGIN.test(part);
     const href = part.replace(ORIGIN, "") || "/";
-    return local ? (
+    return local && !TEXT.test(href) ? (
       <Link key={i} href={href} className="underline decoration-white/20 underline-offset-2 hover:text-foreground">
         {part}
       </Link>
     ) : (
-      <a key={i} href={part} rel="noopener noreferrer" className="underline decoration-white/20 underline-offset-2 hover:text-foreground">
+      <a key={i} href={local ? href : part} rel={local ? undefined : "noopener noreferrer"} className="underline decoration-white/20 underline-offset-2 hover:text-foreground">
         {part}
       </a>
     );

@@ -6,8 +6,12 @@
 > where real figures exist, limits and status. The blocks now move as they
 > come into view (`components/blocks/block-motion.tsx`, `detail.css`); §7's
 > "no motion of their own" is superseded, and reduced motion still shows every
-> block at rest. Open: experience pages (phase 5), machine-view parity (phase
-> 7), phases 8 and 9.
+> block at rest. Phases 5 and 7 (2026-10-20): `components/detail-page.tsx`
+> serves `/projects/<slug>` and `/experience/<id>`. Fiserv, PIRL and Galago
+> have detail docs with public facts only (no code, no diagram of internal
+> systems). `/machine/projects/<slug>` and `/machine/experience/<id>` print
+> each page as text (`lib/machine-pages.ts`), and `/machine` and `/llms.txt`
+> link them. Open: phases 8 and 9.
 
 This plan does three things:
 

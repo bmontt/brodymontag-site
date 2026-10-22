@@ -4,7 +4,7 @@
 // Diagrams print their mermaid source, which is itself readable.
 
 import type { Block, DetailDoc } from "./types";
-import { getExcerpt } from "./index";
+import { getExcerpt } from "./excerpts";
 
 const plainLinks = (s: string) => s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 <$2>");
 

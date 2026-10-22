@@ -37,7 +37,7 @@ if (!only) {
 }
 
 const detailDir = `${root}content/detail/`;
-for (const f of readdirSync(detailDir).filter((f) => f.endsWith(".ts") && !["index.ts", "types.ts", "text.ts"].includes(f))) {
+for (const f of readdirSync(detailDir).filter((f) => f.endsWith(".ts") && !["index.ts", "types.ts", "text.ts", "docs.ts", "excerpts.ts"].includes(f))) {
   if (only && !only.endsWith(f)) continue;
   try {
     out.push(...steCheckDoc((await import(`${detailDir}${f}`)).default));

@@ -87,6 +87,9 @@ export function presetPose(kind: "project" | "show", index: number): Partial<Pos
     const p = PANELS[index];
     return { ...base, tx: p.x, ty: p.y, elev: 14, az: MONTY.az - p.side * 30, dist: 400 };
   }
+  // a tech-side page without a pillar (a role's page, /experience/<id>): the
+  // cool side, overview
+  if (kind === "project") return { ...base, tx: BUILD.origin[0], ty: BUILD.origin[1], elev: 32, az: BUILD.az, dist: 760 };
   // a show without a photo: the warm side, overview
   return { ...base, tx: MONTY.origin[0], ty: MONTY.origin[1], elev: 32, az: MONTY.az, dist: 760 };
 }

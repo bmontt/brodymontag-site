@@ -63,6 +63,13 @@ export const config = {
       ],
     },
     {
+      source: "/experience/:id",
+      missing: [
+        { type: "header", key: "rsc" },
+        { type: "header", key: "next-router-prefetch" },
+      ],
+    },
+    {
       source: "/shows/:slug",
       missing: [
         { type: "header", key: "rsc" },

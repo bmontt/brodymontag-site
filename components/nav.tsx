@@ -19,7 +19,7 @@ export default function SiteNav() {
   const path = usePathname();
   const active = (href: string) =>
     path === href ||
-    (href === "/software" && path.startsWith("/projects/")) ||
+    (href === "/software" && (path.startsWith("/projects/") || path.startsWith("/experience/"))) ||
     (href === "/music" && path.startsWith("/shows/"));
 
   return (
