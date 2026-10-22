@@ -62,8 +62,8 @@ const doc: DetailDoc = {
           items: [
             { label: "the senior research paper: a CRNN that detects hearing loss", href: "https://docs.google.com/document/d/1YATXYDqKSsFRUAdsngWYRoW_lLQKZk4tKbO5e55yaMw/edit?usp=sharing" },
             { label: "Peak_Finding_Toolbox source", href: "https://github.com/bmontt/Peak_Finding_Toolbox" },
-            { label: "the PIRL entry in lib/content.json at 7ff325c", href: `${AT}#L1310-L1331` },
-            { label: "the Peak_Finding_Toolbox entry in lib/content.json at 7ff325c", href: `${AT}#L1105-L1132` },
+            { label: "the PIRL entry in lib/content.json at 7ff325c", href: `${AT}#L1105-L1132` },
+            { label: "the Peak_Finding_Toolbox entry in lib/content.json at 7ff325c", href: `${AT}#L1310-L1331` },
             { label: "the lab site", href: "https://www.umiacs.umd.edu/labs/pirl/" },
           ],
         },
