@@ -9,6 +9,9 @@
    (sky 205 ↔ orchid 315) on an accent. Transform and opacity where it can be;
    the few paint-bound loops run only on screen. */
 
+/* the site's theme and utilities, for @apply below (nothing is emitted) */
+@reference "../../app/globals.css";
+
 /* the pearl scale, fixed points (no animated hue here: a hue cycle costs a
    style recalc on every frame) */
 .detail-sections {
@@ -18,6 +21,28 @@
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-scan: cubic-bezier(0.3, 0.7, 0.2, 1);
 }
+
+/* ── block text: the utilities that every row of a table, a record or a list
+   repeats, named once here (@apply writes the same declarations), so a page
+   sends one short class per row, or none, in its HTML and its RSC payload ── */
+.dlabel { @apply font-mono text-xs text-foreground/60; }
+.dtable thead th { @apply py-2 pr-6 font-normal text-foreground/60; }
+.dtable tbody tr { @apply border-b border-white/8 align-top; }
+.dtable tbody th { @apply py-2 pr-6 text-left font-normal text-foreground/85; }
+.dtable td { @apply py-2 pr-6 text-foreground/80; }
+.ddecision-n { @apply font-mono text-foreground/60; }
+.dsep { @apply mx-2 text-foreground/30; }
+.ddecision-title { @apply mt-1.5 font-medium text-foreground/95; }
+.ddecision dl { @apply mt-3 grid gap-y-2 sm:grid-cols-[6.5rem_1fr] sm:gap-x-8; }
+.ddecision-row { @apply contents; }
+.ddecision dt { @apply font-mono text-xs text-foreground/60 pt-0.5; }
+.dcallout-item { @apply flex gap-3; }
+.dcallout-dash { @apply font-mono text-foreground/45; }
+.dlink { @apply font-mono text-sm text-foreground/80 hover:text-accent/85 transition-colors; }
+.code-cap { @apply mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 font-mono text-xs text-foreground/60; }
+.diagram-src { @apply mt-1.5; }
+.diagram-src summary { @apply cursor-pointer select-none hover:text-foreground/85 transition-colors; }
+.diagram-src pre { @apply mt-2 overflow-x-auto whitespace-pre font-mono text-xs leading-relaxed text-foreground/70; }
 
 /* ── section headings: the label resolves from glyphs under a scan bar ─────── */
 .dsec-head { position: relative; display: inline-block; }
@@ -59,7 +84,7 @@
   100% { opacity: 0; transform: translateY(0); }
 }
 /* the lines the decision rests on catch a glint once the scan has passed */
-[data-armed] .code-block[data-in] .line.highlighted { animation: d-hl 1.8s ease-out 1.25s both; }
+[data-armed] .code-block[data-in] code > .highlighted { animation: d-hl 1.8s ease-out 1.25s both; }
 @keyframes d-hl {
   0% { background: oklch(1 0 0 / 0.06); box-shadow: inset 2px 0 0 oklch(1 0 0 / 0.5); }
   25% { background: oklch(0.84 0.1 315 / 0.2); box-shadow: inset 2px 0 0 var(--pearl-orchid), 0 0 18px -6px var(--pearl-orchid); }
@@ -69,10 +94,38 @@
 /* ── diagrams: the graph builds in the order a signal moves through it, then
    glints run along its edges while it is on screen (lib/diagram.ts wires
    --d, the depth, and the pulse twins) ──────────────────────────────────── */
+/* beautiful-mermaid's palette, once for every diagram (lib/diagram.ts drops
+   it from each SVG): its derived colors, each from the page's tokens, so the
+   site's own --muted / --border / --accent (other meanings) never reach a
+   diagram through its var() fallbacks */
+.diagram-block svg {
+  --bg: var(--background);
+  --fg: var(--foreground);
+  --_text: var(--fg);
+  --_text-sec: color-mix(in srgb, var(--fg) 72%, var(--bg)); /* edge labels and group titles: stays above 4.5:1 */
+  --_text-muted: color-mix(in srgb, var(--fg) 72%, var(--bg));
+  --_text-faint: color-mix(in srgb, var(--fg) 25%, var(--bg));
+  --_line: color-mix(in srgb, var(--fg) 50%, var(--bg));
+  --_arrow: color-mix(in srgb, var(--fg) 85%, var(--bg));
+  --_node-fill: color-mix(in srgb, var(--fg) 4%, var(--bg));
+  --_node-stroke: color-mix(in srgb, var(--fg) 28%, var(--bg));
+  --_group-fill: var(--bg);
+  --_group-hdr: color-mix(in srgb, var(--fg) 5%, var(--bg));
+  --_inner-stroke: color-mix(in srgb, var(--fg) 12%, var(--bg));
+  --_key-badge: color-mix(in srgb, var(--fg) 10%, var(--bg));
+}
+.diagram-block svg text { font-family: var(--font-mono); }
+/* the paint every node, label and edge had as attributes (lib/diagram.ts
+   PAINT): zero specificity, where the attributes sat, under every rule below */
+:where(.diagram-block .edge) { fill: none; stroke: var(--_line); stroke-width: 1px; }
+:where(.diagram-block .edge-label > rect) { fill: var(--bg); stroke: var(--_inner-stroke); stroke-width: 1px; }
+:where(.diagram-block .edge-label > text) { text-anchor: middle; font-size: 11px; font-weight: 400; fill: var(--_text-sec); }
+:where(.diagram-block .node > :is(rect, polygon, circle)) { fill: var(--_node-fill); stroke: var(--_node-stroke); stroke-width: 0.75px; }
+:where(.diagram-block .node > text) { text-anchor: middle; font-size: 13px; font-weight: 500; fill: var(--_text); }
 .diagram-block .node { transform-box: fill-box; transform-origin: center; }
 .diagram-block .edge[data-style="solid"] { stroke-dasharray: 1 1; }
 .diagram-block .edge-pulse {
-  stroke: var(--pearl-sky); stroke-width: 1.75; stroke-linecap: round;
+  fill: none; stroke: var(--pearl-sky); stroke-width: 1.75; stroke-linecap: round;
   stroke-dasharray: 0.06 3; stroke-dashoffset: 0.06; opacity: 0;
 }
 .diagram-block .edge-pulse:nth-of-type(3n + 1) { stroke: var(--pearl-orchid); }

@@ -12,12 +12,11 @@ export type SupportedArtist = { name: string; logo?: string; w?: number; h?: num
 // weight. 46px tall at 3:1; clamped so extremes stay legible.
 export const logoHeight = (ratio: number) => Math.round(Math.min(72, Math.max(28, 46 * Math.sqrt(3 / ratio))));
 
+/** a full-width rule of box-drawing dashes, in the tone the page passes
+ *  (text-foreground/28, /30); the dashes are in globals.css .ascii-rule, once,
+ *  not in every page's HTML and RSC payload */
 export function AsciiRule({ className = "" }: { className?: string }) {
-  return (
-    <div className={`font-mono text-xs text-foreground/30 overflow-hidden whitespace-nowrap ${className}`}>
-      {"─".repeat(300)}
-    </div>
-  );
+  return <div aria-hidden="true" className={`ascii-rule font-mono text-xs ${className}`} />;
 }
 
 // A subsection's heading: a smaller cut of the chapter headings (bold white
