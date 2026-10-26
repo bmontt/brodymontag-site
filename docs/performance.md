@@ -68,6 +68,86 @@ start point.
     `/software` used to fetch all 12 detail pages: 154 KB on the wire, 804 KB
     decoded. A page now loads on click (2026-10-21).
 
+## Page payload outside the figures (2026-10-26)
+
+A direct visit gets each part of a project page twice: as HTML, and again in
+the RSC payload inlined in the same page, where every `<` and `"` costs extra
+bytes. The parts outside the figures now cost less in both. Measured on
+`npm run build` output (`.next/server/app/projects`), KB (1024 bytes),
+before → after; the last two columns are with the figure payload of PR #7
+merged too:
+
+| page | HTML | RSC | HTML with #7 | RSC with #7 |
+|---|---|---|---|---|
+| agent-forge | 138.6 → 108.0 | 69.8 → 55.4 | 136.2 → 105.5 | 68.6 → 54.2 |
+| brodymontag-com | 222.1 → 186.5 | 112.5 → 96.1 | 147.0 → 111.3 | 72.8 → 56.5 |
+| here-comes-the-kicker | 180.5 → 148.1 | 90.1 → 75.2 | 159.1 → 126.6 | 79.3 → 64.5 |
+| peak-finding-toolbox | 163.2 → 130.3 | 82.2 → 66.8 | 155.3 → 122.3 | 78.2 → 62.7 |
+| prism | 202.4 → 161.3 | 99.2 → 80.8 | 187.1 → 145.9 | 91.5 → 73.2 |
+| realmbot | 193.2 → 158.4 | 97.4 → 80.9 | 142.2 → 107.3 | 71.5 → 55.1 |
+| superset | 170.5 → 140.5 | 85.5 → 71.4 | 157.4 → 127.4 | 78.9 → 64.9 |
+| venture | 181.1 → 146.1 | 88.7 → 72.4 | 154.6 → 119.6 | 75.8 → 59.5 |
+
+Each part, smallest–largest page (HTML counts the markup and the inlined RSC):
+
+| part | RSC | HTML |
+|---|---|---|
+| page frame (Next's root tree, client references, metadata) | 10.9–11.0 → same | 17.3–17.4 → same |
+| title, rows, copy, highlights | 4.8–5.3 → 4.4–4.8 | 9.2–10.1 → 8.2–9.1 |
+| ASCII rules | 4.0 → 0.4 | 7.9 → 0.8 |
+| code (shiki HTML) | 8.3–15.5 → 5.1–10.0 | 21.8–41.2 → 13.8–26.4 |
+| diagram (SVG) | 8.0–10.2 → 3.9–5.1 | 17.4–22.2 → 8.8–11.4 |
+| section text | 10.0–18.5 → 8.7–15.8 | 18.5–34.1 → 15.9–28.7 |
+
+How, with the page unchanged:
+
+- **Code** (`lib/highlight.ts`): the HTML is written from shiki's tokens. One
+  two-letter class per color (`globals.css .code-block .kw …`), no span for
+  text in the foreground color, one span per run of one color (whitespace
+  takes any color), each line a bare `<span>` under `<code>`, and attribute
+  values without quotes.
+- **Diagrams** (`lib/diagram.ts`): beautiful-mermaid's palette, derived
+  colors, font and the paint of every node, label and edge are in
+  `detail.css`, once. The SVG loses the `data-*` attributes that only
+  `wire()` reads, the whitespace between elements and trailing zeros. If a
+  new beautiful-mermaid writes another `<style>`, or a diagram gives a node
+  or an edge its own paint, the build fails and says what to copy.
+- **ASCII rules**: the 300 dashes are `.ascii-rule::before` in `globals.css`.
+- **Block text**: table cells, decision records, list items and captions
+  use one short class per row, or none (`detail.css`, `@apply` of the same
+  utilities); the metadata rows under the title use `.dmeta-row`.
+
+The RSC payload of a page can't be sent once: React needs the whole tree in
+it for hydration and for client navigation, and leaving a static part out
+would need new client JavaScript.
+
+Checked against the old build: the page text, the computed style of every
+element outside code and diagrams, and the computed paint of every diagram
+element are the same; each code character keeps its color and each marked
+line its mark. Full pages at rest (reduced motion, stage hidden) at 1440 and
+390 px differ by at most 9 of 255 on a few pixels. Frozen frames of each
+block's entrance (5 times) are the same, except code blocks: where token
+spans now merge, a few glyphs land on the next subpixel position (up to 100
+of 255 on single glyph edges, not visible at 3× zoom).
+
+Still over the limit in `docs/portfolio-style-plan.md` §7 (92 KB HTML,
+52.5 KB RSC): with both changes, a page is 105–146 KB HTML and 54–73 KB RSC.
+Without its figure, the RSC is 39–47 KB and the HTML 76–94 KB. The page frame
+alone is 17 KB of HTML. The rest is the figure (20–52 KB HTML), the code
+(14–26 KB) and the section text (16–29 KB), which are the content. Options
+not taken: code tokens as custom elements (`<t-k>`, about 5 KB less HTML on
+prism), a small `app/not-found.tsx` in place of Next's default 404 tree that
+every page's RSC carries twice (about 2.5 KB, but the 404 page would look
+different), and fewer or shorter excerpts (a content change).
+
+Scripts (gitignored, `e2e/_vt/`): `parts.mjs` (the bytes of each part of a
+page in its HTML, its RSC and the RSC inlined in the HTML: it follows the RSC
+rows from row 0 and gives each element the part of its nearest labelled
+ancestor), `table.mjs` / `sizes.mjs` / `partsum.mjs` (tables from its JSON),
+`codecmp.py` (text, color and marks of every code block, two builds),
+`pagediff.mjs` (full pages and frozen block frames between two servers,
+computed styles, text), `mkdiff.mjs` (a diff image).
+
 ## Measuring
 
 Scratch scripts live in `e2e/_vt/` (gitignored). `measure.mjs` gives paint,
