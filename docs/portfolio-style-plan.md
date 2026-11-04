@@ -320,7 +320,11 @@ only after the rewrite is done.
   `.next/server/app/projects`, before gzip). Set 2026-11-04. The largest page,
   prism, is 145.9 KB of HTML and 73.2 KB of RSC. `scripts/check-page-size.mjs`
   fails `npm run build` when a page is over the limit; the two numbers are also
-  in that script, so change them in both places. Sizes per part:
+  in that script, so change them in both places. On Vercel, prism is 146.7 KB
+  and 73.8 KB, so a page can pass locally and fail there; Vercel's adapter moves
+  the files to `.next/output/functions/projects`, and the script reads both.
+  Skew Protection would add a deployment ID to each asset link: about 2 KB more
+  RSC in a local build, which puts prism over the limit. Sizes per part:
   `docs/performance.md`.
   This replaces the first limit, 92 KB and 52.5 KB (3× `prism.html` and
   `prism.rsc` before the detail docs). That limit protected `/software`, which
