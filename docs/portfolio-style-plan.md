@@ -318,8 +318,10 @@ only after the rewrite is done.
 - **Budget:** a direct visit to `/projects/<slug>` sends at most 150 KB of HTML
   and 75 KB of RSC (KB = 1024 bytes, `npm run build` output in
   `.next/server/app/projects`, before gzip). Set 2026-11-04. The largest page,
-  prism, is 145.9 KB of HTML and 73.2 KB of RSC. No test enforces the limit
-  yet. Sizes per part: `docs/performance.md`.
+  prism, is 145.9 KB of HTML and 73.2 KB of RSC. `scripts/check-page-size.mjs`
+  fails `npm run build` when a page is over the limit; the two numbers are also
+  in that script, so change them in both places. Sizes per part:
+  `docs/performance.md`.
   This replaces the first limit, 92 KB and 52.5 KB (3× `prism.html` and
   `prism.rsc` before the detail docs). That limit protected `/software`, which
   prefetched every detail page. The cards now load a page on click
