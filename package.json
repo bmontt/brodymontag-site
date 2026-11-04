@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node --no-warnings scripts/ste-lint.mjs --strict && rm -rf .next/cache && next build",
+    "build": "node --no-warnings scripts/ste-lint.mjs --strict && rm -rf .next/cache && next build && node scripts/check-page-size.mjs",
     "start": "next start",
     "e2e": "playwright test",
     "ste": "node --no-warnings scripts/ste-lint.mjs"
