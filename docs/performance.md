@@ -124,18 +124,24 @@ would need new client JavaScript.
 Checked against the old build: the page text, the computed style of every
 element outside code and diagrams, and the computed paint of every diagram
 element are the same; each code character keeps its color and each marked
-line its mark. Full pages at rest (reduced motion, stage hidden) at 1440 and
-390 px differ by at most 9 of 255 on a few pixels. Frozen frames of each
-block's entrance (5 times) are the same, except code blocks: where token
-spans now merge, a few glyphs land on the next subpixel position (up to 100
-of 255 on single glyph edges, not visible at 3× zoom).
+line its mark. Each open `mermaid source` block is the same to the pixel, and
+the hover styles of its summary and of the proof links are the same. Full
+pages at rest (reduced motion, stage hidden) at 1440 and 390 px differ by at
+most 9 of 255, on a few pixels of the nav's shimmer link, which moves with
+time. Frozen frames of each block's entrance (5 times) are the same, except
+code blocks: where token spans now merge, a few glyphs land on the next
+subpixel position (up to 100 of 255 on single glyph edges, not visible in a 3×
+crop of the frame with the largest step).
 
-Still over the limit in `docs/portfolio-style-plan.md` §7 (92 KB HTML,
-52.5 KB RSC): with both changes, a page is 105–146 KB HTML and 54–73 KB RSC.
-Without its figure, the RSC is 39–47 KB and the HTML 76–94 KB. The page frame
-alone is 17 KB of HTML. The rest is the figure (20–52 KB HTML), the code
-(14–26 KB) and the section text (16–29 KB), which are the content. Options
-not taken: code tokens as custom elements (`<t-k>`, about 5 KB less HTML on
+The first limit in `docs/portfolio-style-plan.md` §7 (92 KB HTML, 52.5 KB RSC)
+can't be met without a visible change: with both changes, a page is 105–146 KB
+HTML and 54–73 KB RSC. Without its figure, the RSC is 39–47 KB and the HTML
+76–94 KB. The page frame alone is 17 KB of HTML. The rest is the figure
+(20–52 KB HTML), the code (14–26 KB) and the section text (16–29 KB), which
+are the content. So the limit is now 150 KB HTML and 75 KB RSC (2026-11-04).
+Prism, the largest page, has 4.1 KB of HTML and 1.8 KB of RSC to spare. Until
+PR #7 merges too, four pages stay over: brodymontag-com, here-comes-the-kicker
+(by 0.2 KB of RSC), prism and realmbot. Options not taken: code tokens as custom elements (`<t-k>`, about 5 KB less HTML on
 prism), a small `app/not-found.tsx` in place of Next's default 404 tree that
 every page's RSC carries twice (about 2.5 KB, but the 404 page would look
 different), and fewer or shorter excerpts (a content change).
@@ -146,7 +152,8 @@ rows from row 0 and gives each element the part of its nearest labelled
 ancestor), `table.mjs` / `sizes.mjs` / `partsum.mjs` (tables from its JSON),
 `codecmp.py` (text, color and marks of every code block, two builds),
 `pagediff.mjs` (full pages and frozen block frames between two servers,
-computed styles, text), `mkdiff.mjs` (a diff image).
+computed styles, text), `statediff.mjs` (open mermaid blocks, hover),
+`restloc.mjs` (where rest frames differ), `mkdiff.mjs` (a diff image).
 
 ## Measuring
 
