@@ -317,10 +317,9 @@ only after the rewrite is done.
   `content-visibility: auto` on each block.
 - **Budget:** a direct visit to `/projects/<slug>` sends at most 150 KB of HTML
   and 75 KB of RSC (KB = 1024 bytes, `npm run build` output in
-  `.next/server/app/projects`, before gzip). Set 2026-11-04. No page meets it
-  until PR #7 and PR #9 are both merged. Then the largest page, prism, is
-  145.9 KB of HTML and 73.2 KB of RSC. No test enforces the limit yet. Sizes
-  per part: `docs/performance.md`.
+  `.next/server/app/projects`, before gzip). Set 2026-11-04. The largest page,
+  prism, is 145.9 KB of HTML and 73.2 KB of RSC. No test enforces the limit
+  yet. Sizes per part: `docs/performance.md`.
   This replaces the first limit, 92 KB and 52.5 KB (3× `prism.html` and
   `prism.rsc` before the detail docs). That limit protected `/software`, which
   prefetched every detail page. The cards now load a page on click
