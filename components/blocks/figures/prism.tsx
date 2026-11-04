@@ -10,6 +10,8 @@
 // The timeline is computed here and written as this figure's own CSS, so
 // the keyframes and the drawing share one set of numbers.
 
+import { minCss, relPath, Tenths, type Seg } from "./svg";
+
 const W = 720;
 const H = 340;
 const X0 = 118; // the axis: 0 s
@@ -73,8 +75,9 @@ function amps(stem: (typeof STEMS)[number], seed: number) {
 const AMPS = STEMS.map((s, i) => amps(s, 17 + i * 101));
 const MIX = AMPS[0].map((_, j) => Math.min(1, (AMPS[0][j] + AMPS[1][j] + AMPS[2][j] + AMPS[3][j]) / 2.2));
 
+// one bar per step, to 0.1 of a unit, written in tenths (drawn in <Tenths>)
 const wave = (a: number[], cy: number, h: number) =>
-  a.map((v, j) => `M${(X0 + j * BAR).toFixed(1)} ${(cy - Math.max(0.6, v * h)).toFixed(1)}V${(cy + Math.max(0.6, v * h)).toFixed(1)}`).join("");
+  relPath(a.flatMap((v, j): Seg[] => [["M", X0 + j * BAR, cy - Math.max(0.6, v * h)], ["V", cy + Math.max(0.6, v * h)]]), 1, true);
 
 // ── the timeline as CSS ──────────────────────────────────────────────────────
 function css() {
@@ -124,7 +127,7 @@ function css() {
 ${ring}`;
 }
 
-const CSS = css();
+const CSS = minCss(css());
 const RING_X = X1 - 12 * 13 + 3;
 const AXIS_Y = STEMS_BOT + 14;
 
@@ -155,7 +158,9 @@ export default function PrismFigure() {
 
         {/* the mix */}
         <text x={20} y={MIX_Y + 4} fontSize="11.5" fill="oklch(1 0 0 / 0.62)">track</text>
-        <path d={wave(MIX, MIX_Y, LANE_H / 2)} stroke="oklch(1 0 0 / 0.38)" strokeWidth="1.6" />
+        <Tenths w={W} h={H}>
+          <path d={wave(MIX, MIX_Y, LANE_H / 2)} stroke="oklch(1 0 0 / 0.38)" strokeWidth="16" />
+        </Tenths>
 
         {/* the four stems, with an encoder each */}
         {STEMS.map((s, i) => (
@@ -167,7 +172,9 @@ export default function PrismFigure() {
                 <line x1="0" y1="0" x2="0" y2="-6.5" stroke="oklch(1 0 0 / 0.9)" strokeWidth="1.4" strokeLinecap="round" />
               </g>
             </g>
-            <path className={`pk-lane pk-lane-${i}`} d={wave(AMPS[i], laneY(i), LANE_H / 2)} stroke="oklch(1 0 0 / 0.72)" strokeWidth="1.6" />
+            <Tenths w={W} h={H}>
+              <path className={`pk-lane pk-lane-${i}`} d={wave(AMPS[i], laneY(i), LANE_H / 2)} stroke="oklch(1 0 0 / 0.72)" strokeWidth="16" />
+            </Tenths>
           </g>
         ))}
 

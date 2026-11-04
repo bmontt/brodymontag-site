@@ -9,6 +9,8 @@
 // every track here, so they add the same to each cost and change nothing.
 // The tracks are invented; the walk is what the code does with them.
 
+import { minCss, r2 } from "./svg";
+
 const W = 720;
 const H = 330;
 const LOOP = 10.5;
@@ -71,7 +73,7 @@ const pos = (k: string) => {
   const { n, m } = cam(k);
   const a = ((n * 30 - 90) * Math.PI) / 180;
   const r = m === "B" ? RB : RA;
-  return [CX + r * Math.cos(a), CY + r * Math.sin(a)];
+  return [r2(CX + r * Math.cos(a)), r2(CY + r * Math.sin(a))];
 };
 
 // the set, as energy bars
@@ -87,11 +89,13 @@ const stepT = (k: number) => T0 + k * STEP;
 
 function css() {
   const rules: string[] = [];
+  // the costs flash the same way at each step: one pulse, started by each
+  // group's own delay (--t, its step's time)
+  rules.push(`@keyframes ss-cand { 0% { opacity: 0; } ${pct(0.08)} { opacity: 1; } ${pct(0.4)}, 100% { opacity: 0; } }`);
+  rules.push(`.fig-superset[data-play] .ss-cand { animation: ss-cand ${LOOP}s linear infinite; animation-delay: var(--t); }`);
   ORDER.slice(0, -1).forEach((_, k) => {
     const t = stepT(k);
-    rules.push(`@keyframes ss-cand-${k} { 0%, ${pct(t)} { opacity: 0; } ${pct(t + 0.08)} { opacity: 1; } ${pct(t + 0.4)}, 100% { opacity: 0; } }`);
     rules.push(`@keyframes ss-edge-${k} { 0%, ${pct(t + 0.3)} { stroke-dashoffset: 1; } ${pct(t + 0.62)}, ${pct(LOOP - 0.5)} { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }`);
-    rules.push(`.fig-superset[data-play] .ss-cand-${k} { animation: ss-cand-${k} ${LOOP}s linear infinite; }`);
     rules.push(`.fig-superset[data-play] .ss-edge-${k} { animation: ss-edge-${k} ${LOOP}s ease-out infinite; }`);
   });
   ORDER.forEach((_, k) => {
@@ -105,7 +109,7 @@ function css() {
   rules.push(`.fig-superset[data-play] .ss-curve { animation: ss-curve ${LOOP}s linear infinite; }`);
   return rules.join("\n");
 }
-const CSS = css();
+const CSS = minCss(css());
 
 /** where each track sits in the set */
 const AT = new Map(ORDER.map((t, k) => [t, k]));
@@ -125,9 +129,9 @@ export default function SupersetFigure() {
           const [ox, oy] = [Math.cos(a), Math.sin(a)];
           return (
             <g key={n} fontSize="9.5" fill="oklch(1 0 0 / 0.62)" textAnchor="middle">
-              <line x1={CX + ox * 40} y1={CY + oy * 40} x2={CX + ox * (RB + 10)} y2={CY + oy * (RB + 10)} stroke="oklch(1 0 0 / 0.06)" />
-              <text x={CX + ox * (RB + 22)} y={CY + oy * (RB + 22) + 3.5}>{n}B</text>
-              <text x={CX + ox * (RA - 20)} y={CY + oy * (RA - 20) + 3.5}>{n}A</text>
+              <line x1={r2(CX + ox * 40)} y1={r2(CY + oy * 40)} x2={r2(CX + ox * (RB + 10))} y2={r2(CY + oy * (RB + 10))} stroke="oklch(1 0 0 / 0.06)" />
+              <text x={r2(CX + ox * (RB + 22))} y={r2(CY + oy * (RB + 22) + 3.5)}>{n}B</text>
+              <text x={r2(CX + ox * (RA - 20))} y={r2(CY + oy * (RA - 20) + 3.5)}>{n}A</text>
             </g>
           );
         })}
@@ -137,10 +141,10 @@ export default function SupersetFigure() {
         {ORDER.slice(0, -1).map((cur, k) => {
           const [x1, y1] = pos(TRACKS[cur].key);
           return (
-            <g key={`c${k}`} className={`ss-cand ss-cand-${k}`} opacity="0">
+            <g key={`c${k}`} className="ss-cand" style={{ ["--t" as string]: `${r2(stepT(k))}s` }} opacity="0" stroke="oklch(1 0 0 / 0.22)" strokeDasharray="2 3">
               {ORDER.slice(k + 1).map((j) => {
                 const [x2, y2] = pos(TRACKS[j].key);
-                return <line key={j} x1={x1} y1={y1} x2={x2} y2={y2} stroke="oklch(1 0 0 / 0.22)" strokeDasharray="2 3" />;
+                return <line key={j} x1={x1} y1={y1} x2={x2} y2={y2} />;
               })}
             </g>
           );

@@ -8,6 +8,8 @@
 // side view shows height; the strip above shows the curve's sideways break.
 // The callout is one of the game's own (UI/Shouts.cs).
 
+import { minCss, r2, relPath, Tenths, type Seg } from "./svg";
+
 const DT = 1 / 120;
 const PITCH_G = 8;
 const BALL_R = 0.42;
@@ -78,7 +80,9 @@ const STARTS = FLIGHTS.reduce<number[]>((acc, f, i) => [...acc, i === 0 ? 0.4 : 
 const LOOP = STARTS[3] + FLIGHTS[3].length * DT + 2.2;
 const pct = (t: number) => `${((t / LOOP) * 100).toFixed(3)}%`;
 
-const dots = (f: Step[], to: (s: Step) => [number, number]) => f.map((s) => { const [a, b] = to(s); return `M${a.toFixed(1)} ${b.toFixed(1)}h0`; }).join("");
+// one round-capped dot per step, to 0.1 of a unit, written in tenths (drawn in <Tenths>)
+const dots = (f: Step[], to: (s: Step) => [number, number]) =>
+  relPath(f.flatMap((s): Seg[] => { const [a, b] = to(s); return [["M", a, b], ["H", a]]; }), 1, true);
 
 function css() {
   const r: string[] = [];
@@ -91,13 +95,15 @@ function css() {
     r.push(`@keyframes kk-trail-${i} { 0%, ${pct(t0 - 0.01)} { opacity: 0; } ${pct(t0)}, ${pct(until)} { opacity: 1; } ${pct(until + 0.15)}, 100% { opacity: 0; } }`);
     // the cover over the steps not yet taken slides with the ball
     r.push(`@keyframes kk-cover-${i} { 0%, ${pct(t0)} { transform: translateX(0); } ${pct(t1)}, 100% { transform: translateX(${(ZX1 - ZX0 + 30).toFixed(1)}px); } }`);
-    // the ball, sampled every 6 steps (linear between)
+    // the ball, sampled every 6 steps (linear between); opacity 1 is set on
+    // the first and last frame, and the frames between hold it
     const frames = f.filter((_, j) => j % 6 === 0 || j === f.length - 1).map((s, j, arr) => {
-      const tt = t0 + (j === arr.length - 1 ? dur : j * 6 * DT);
-      return `${pct(tt)} { transform: translate(${px(s.z).toFixed(1)}px, ${py(s.y).toFixed(1)}px); opacity: 1; }`;
+      const end = j === arr.length - 1;
+      const tt = t0 + (end ? dur : j * 6 * DT);
+      return `${pct(tt)} { transform: translate(${px(s.z).toFixed(1)}px, ${py(s.y).toFixed(1)}px);${j === 0 || end ? " opacity: 1;" : ""} }`;
     });
     const s0 = f[0], sn = f[f.length - 1];
-    r.push(`@keyframes kk-ball-${i} { 0%, ${pct(t0 - 0.01)} { transform: translate(${px(s0.z)}px, ${py(s0.y)}px); opacity: 0; } ${frames.join(" ")} ${pct(t1 + 0.3)}, 100% { transform: translate(${px(sn.z).toFixed(1)}px, ${py(sn.y).toFixed(1)}px); opacity: 0; } }`);
+    r.push(`@keyframes kk-ball-${i} { 0%, ${pct(t0 - 0.01)} { transform: translate(${r2(px(s0.z))}px, ${r2(py(s0.y))}px); opacity: 0; } ${frames.join(" ")} ${pct(t1 + 0.3)}, 100% { transform: translate(${px(sn.z).toFixed(1)}px, ${py(sn.y).toFixed(1)}px); opacity: 0; } }`);
     r.push(`.fig-here-comes-the-kicker[data-play] .kk-trail-${i} { animation: kk-trail-${i} ${LOOP.toFixed(3)}s linear infinite; }`);
     r.push(`.fig-here-comes-the-kicker[data-play] .kk-cover-${i} { animation: kk-cover-${i} ${LOOP.toFixed(3)}s linear infinite; }`);
     r.push(`.fig-here-comes-the-kicker[data-play] .kk-ball-${i} { animation: kk-ball-${i} ${LOOP.toFixed(3)}s linear infinite; }`);
@@ -107,7 +113,7 @@ function css() {
   r.push(`.fig-here-comes-the-kicker[data-play] .kk-shout { animation: kk-shout ${LOOP.toFixed(3)}s cubic-bezier(0.2, 0.8, 0.2, 1) infinite; }`);
   return r.join("\n");
 }
-const CSS = css();
+const CSS = minCss(css());
 
 /** where each name sits: above its highest point, or on its roll, or by its break */
 function label(i: number, f: Step[]): [number, number] {
@@ -139,8 +145,10 @@ export default function KickerFigure() {
           const at = label(i, f);
           return (
             <g key={i} className={`kk-trail kk-trail-${i}`} clipPath="url(#kk-field)">
-              <path d={dots(f, (s) => [px(s.z), py(s.y)])} stroke="oklch(1 0 0 / 0.85)" strokeWidth="2.1" strokeLinecap="round" />
-              {TYPES[i].curve !== 0 && <path d={dots(f, (s) => [px(s.z), ly(s.x)])} stroke="var(--pearl-orchid)" strokeWidth="2.1" strokeLinecap="round" />}
+              <Tenths w={W} h={H}>
+                <path d={dots(f, (s) => [px(s.z), py(s.y)])} stroke="oklch(1 0 0 / 0.85)" strokeWidth="21" strokeLinecap="round" />
+                {TYPES[i].curve !== 0 && <path d={dots(f, (s) => [px(s.z), ly(s.x)])} stroke="var(--pearl-orchid)" strokeWidth="21" strokeLinecap="round" />}
+              </Tenths>
               <text x={at[0]} y={at[1]} textAnchor="middle" fontSize="11" fill="oklch(1 0 0 / 0.85)" style={{ letterSpacing: "0.08em" }}>{TYPES[i].name}</text>
               <rect className={`kk-cover-${i}`} x={ZX0 - 4} y="0" width={ZX1 - ZX0 + 60} height={GROUND - 1} fill="oklch(0.13 0 0)" style={{ transform: `translateX(${ZX1 - ZX0 + 30}px)` }} />
             </g>

@@ -8,6 +8,8 @@
 // The cells are computed here, at build, from the same network the scene
 // draws, so the three layers agree. Drawn at 1.5× (a 12×33 unit cell).
 
+import { relPath, type Seg } from "./svg";
+
 const W = 720;
 const H = 300;
 const CW = 12; // 8 px × 1.5
@@ -79,6 +81,25 @@ const CELLS: Cell[] = (() => {
 const HOT: Record<number, number> = { 2: 0, 5: 1 };
 
 const LEVEL_ALPHA = [0, 0.07, 0.17, 0.32, 0.6];
+const LEVELS = [1, 2, 3, 4];
+const isHot = (x: Cell) => x.level === 4 && HOT[x.node] !== undefined;
+const glyphX = (x: Cell) => GX + x.c * CW + CW / 2;
+const glyphY = (x: Cell) => GY + x.r * CH + CH / 2 + 7;
+const glyphFill = (level: number) => `oklch(1 0 0 / ${Math.min(1, LEVEL_ALPHA[level] + 0.32)})`;
+
+/** pass 2, one path per level: each cell a stroke 11 wide down its middle
+ *  (butt caps: the same 11 × 32 box a rect would draw); no two cells touch */
+const CELL_PATHS = LEVELS.map((level) =>
+  relPath(
+    CELLS.filter((x) => x.level === level).flatMap((x): Seg[] => [
+      ["M", GX + x.c * CW + CW / 2, GY + x.r * CH + 0.5],
+      ["V", GY + x.r * CH + CH - 0.5],
+    ]),
+  ),
+);
+/** pass 3, one <text> per level: an x and a y for each glyph, so each glyph
+ *  is placed (and centred) on its own; the two hot nodes stay apart */
+const GLYPH_RUNS = LEVELS.map((level) => CELLS.filter((x) => x.level === level && !isHot(x)));
 
 const view = `0 0 ${W} ${H}`;
 
@@ -114,8 +135,8 @@ export default function SiteFigure() {
         <div className="sf-wipe sf-cells">
           <div className="sf-wipe-in">
             <svg className="fig-svg" viewBox={view} aria-hidden="true">
-              {CELLS.map((x) => (
-                <rect key={`${x.c}-${x.r}`} x={GX + x.c * CW + 0.5} y={GY + x.r * CH + 0.5} width={CW - 1} height={CH - 1} fill={`oklch(1 0 0 / ${LEVEL_ALPHA[x.level]})`} />
+              {CELL_PATHS.map((d, i) => (
+                <path key={i} d={d} stroke={`oklch(1 0 0 / ${LEVEL_ALPHA[LEVELS[i]]})`} strokeWidth={CW - 1} />
               ))}
             </svg>
           </div>
@@ -124,19 +145,18 @@ export default function SiteFigure() {
         <div className="sf-wipe sf-glyphs">
           <div className="sf-wipe-in">
             <svg className="fig-svg" viewBox={view} aria-hidden="true">
-              {CELLS.map((x) => (
-                <text
-                  key={`${x.c}-${x.r}`}
-                  className={x.level === 4 && HOT[x.node] !== undefined ? `sf-hot sf-hot-${HOT[x.node]}` : undefined}
-                  x={GX + x.c * CW + CW / 2}
-                  y={GY + x.r * CH + CH / 2 + 7}
-                  fontSize="20"
-                  textAnchor="middle"
-                  fill={`oklch(1 0 0 / ${Math.min(1, LEVEL_ALPHA[x.level] + 0.32)})`}
-                >
-                  {x.glyph}
-                </text>
-              ))}
+              <g fontSize="20" textAnchor="middle">
+                {GLYPH_RUNS.map((run, i) => (
+                  <text key={i} x={run.map(glyphX).join(" ")} y={run.map(glyphY).join(" ")} fill={glyphFill(LEVELS[i])}>
+                    {run.map((x) => x.glyph).join("")}
+                  </text>
+                ))}
+                {CELLS.filter(isHot).map((x) => (
+                  <text key={`${x.c}-${x.r}`} className={`sf-hot sf-hot-${HOT[x.node]}`} x={glyphX(x)} y={glyphY(x)} fill={glyphFill(x.level)}>
+                    {x.glyph}
+                  </text>
+                ))}
+              </g>
             </svg>
           </div>
         </div>
