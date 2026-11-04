@@ -215,10 +215,17 @@
 @media (prefers-reduced-motion: reduce) {
   .detail-sections *, .detail-sections *::before, .detail-sections *::after { animation: none !important; }
 }
-/* print (and save as PDF): every block at rest, whatever has scrolled into view */
+/* print (and save as PDF): every block at rest, whatever has scrolled into
+   view. The reset leaves out what is hidden or moved even at rest: the figures
+   (their finished frame is drawn with transforms, clips and hidden parts), the
+   diagrams' edge glints and the screen-reader copies. A pseudo-element's only
+   start state is a rule not yet drawn (scaleY(0)), so it takes the transform
+   alone: the heading's scan bar stays hidden. */
 @media print {
   .detail-sections *, .detail-sections *::before, .detail-sections *::after { animation: none !important; }
-  [data-armed] :is(*, *::before) { opacity: 1 !important; clip-path: none !important; transform: none !important; }
+  [data-armed] :not(.fig, .fig *, .edge-pulse, .sr-only) { opacity: 1 !important; clip-path: none !important; transform: none !important; }
+  [data-armed] :not(.fig, .fig *)::before { transform: none !important; }
+  [data-armed] .dtable-head { background-size: 100% 1px !important; }
   .diagram-block .edge { stroke-dashoffset: 0 !important; }
 }
 /* the scrambled copy of a decoding value is for the eye: copy and select take the real text */
@@ -255,6 +262,8 @@
 [data-play] .sf-step-1 { animation-name: sf-step-1; }
 [data-play] .sf-step-2 { animation-name: sf-step-2; }
 [data-play] .sf-step-3 { animation-name: sf-step-3; }
+/* print stops the loop, so the cells hide again, as at rest */
+@media print { [data-play] .sf-cells { opacity: 0; } }
 
 /* scene: lines draw, nodes land, then it fades under the cells */
 @keyframes sf-scene { 0%, 18% { opacity: 1; } 40% { opacity: 0.18; } 64%, 90% { opacity: 0.12; } 97%, 100% { opacity: 0; } }
