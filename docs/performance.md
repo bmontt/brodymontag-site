@@ -139,9 +139,8 @@ HTML and 54–73 KB RSC. Without its figure, the RSC is 39–47 KB and the HTML
 76–94 KB. The page frame alone is 17 KB of HTML. The rest is the figure
 (20–52 KB HTML), the code (14–26 KB) and the section text (16–29 KB), which
 are the content. So the limit is now 150 KB HTML and 75 KB RSC (2026-11-04).
-Prism, the largest page, has 4.1 KB of HTML and 1.8 KB of RSC to spare. Until
-PR #7 merges too, four pages stay over: brodymontag-com, here-comes-the-kicker
-(by 0.2 KB of RSC), prism and realmbot. Options not taken: code tokens as custom elements (`<t-k>`, about 5 KB less HTML on
+Prism, the largest page, has 4.1 KB of HTML and 1.8 KB of RSC to spare. Options
+not taken: code tokens as custom elements (`<t-k>`, about 5 KB less HTML on
 prism), a small `app/not-found.tsx` in place of Next's default 404 tree that
 every page's RSC carries twice (about 2.5 KB, but the 404 page would look
 different), and fewer or shorter excerpts (a content change).
@@ -254,10 +253,6 @@ slightly different edge anti-aliasing in Chrome (most edge pixels change by
 under 32 of 255), and rounding moves a few glyphs to the next subpixel
 position. Neither shows at 3× zoom. Merge only where the saving is large:
 `<use>` of a `<rect>` draws exactly like the `<rect>`.
-
-Still open: without its figure, each page's RSC is 53–66 KB, over the 52.5 KB
-limit in `docs/portfolio-style-plan.md` §7. The rest is the page frame, the
-highlighted code, the diagrams and the section text.
 
 Scripts (gitignored, `e2e/_vt/`): `figdiff.mjs` (pixel diff of every figure
 between two servers), `figsheet.mjs` (live frames side by side, and the
