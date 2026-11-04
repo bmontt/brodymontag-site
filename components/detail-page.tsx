@@ -9,20 +9,10 @@ import type { ReactNode } from "react";
 import { enterStyle } from "@/lib/enter";
 import SiteNav from "@/components/nav";
 import BackLink from "@/components/back-link";
-import { SECTION_HEADING, SECTION_SIZE } from "@/components/journey/section-bits";
+import { AsciiRule, SECTION_HEADING, SECTION_SIZE } from "@/components/journey/section-bits";
 import { StatWidgets, SubWidgets } from "@/components/widgets";
 import DetailSections from "@/components/blocks/detail-sections";
 import type { DetailDoc } from "@/content/detail/types";
-
-function AsciiRule({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`font-mono text-xs text-foreground/28 overflow-hidden whitespace-nowrap ${className}`}
-    >
-      {"─".repeat(300)}
-    </div>
-  );
-}
 
 export interface DetailPageProps {
   /** the label above the title: "project", "experience" */
@@ -79,7 +69,7 @@ export default function DetailPage({ kind, title, pill, rows, paragraphs, stats,
             </span>
           </div>
 
-          <AsciiRule className="mb-8" />
+          <AsciiRule className="text-foreground/28 mb-8" />
 
           {/* metadata */}
           <div
@@ -87,14 +77,14 @@ export default function DetailPage({ kind, title, pill, rows, paragraphs, stats,
             style={enterStyle({ y: 10, dur: 0.45, delay: 0.25 })}
           >
             {rows.map((r) => (
-              <div key={r.label} className="grid grid-cols-[6.5rem_1fr] gap-x-8">
-                <span className="font-mono text-xs text-foreground/52">{r.label}</span>
-                <span className="font-mono text-xs text-foreground/80">{r.value}</span>
+              <div key={r.label} className="dmeta-row">
+                <span>{r.label}</span>
+                <span>{r.value}</span>
               </div>
             ))}
           </div>
 
-          <AsciiRule className="mb-8" />
+          <AsciiRule className="text-foreground/28 mb-8" />
 
           {/* description */}
           <div
@@ -111,7 +101,7 @@ export default function DetailPage({ kind, title, pill, rows, paragraphs, stats,
             ))}
           </div>
 
-          <AsciiRule className="mb-8" />
+          <AsciiRule className="text-foreground/28 mb-8" />
 
           {/* live figures, where a page has them (a dated snapshot) */}
           {stats && (
@@ -135,7 +125,7 @@ export default function DetailPage({ kind, title, pill, rows, paragraphs, stats,
 
           {detail && (
             <>
-              <AsciiRule className="mt-14 mb-10" />
+              <AsciiRule className="text-foreground/28 mt-14 mb-10" />
               <DetailSections doc={detail} />
             </>
           )}

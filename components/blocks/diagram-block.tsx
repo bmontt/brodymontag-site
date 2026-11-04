@@ -9,11 +9,11 @@ export default function DiagramBlock({ id, mermaid, alt, caption }: { id: string
   return (
     <figure data-motion="" className="dblock diagram-block my-6">
       <div role="img" aria-label={alt} className="block-frame overflow-x-auto px-4 py-5" dangerouslySetInnerHTML={{ __html: svg }} />
-      <figcaption className="mt-2 font-mono text-xs text-foreground/60">
+      <figcaption className="mt-2 dlabel">
         {caption}
-        <details className="mt-1.5">
-          <summary className="cursor-pointer select-none hover:text-foreground/85 transition-colors">mermaid source</summary>
-          <pre className="mt-2 overflow-x-auto whitespace-pre font-mono text-xs leading-relaxed text-foreground/70">{mermaid.trim()}</pre>
+        <details className="diagram-src">
+          <summary>mermaid source</summary>
+          <pre>{mermaid.trim()}</pre>
         </details>
       </figcaption>
     </figure>

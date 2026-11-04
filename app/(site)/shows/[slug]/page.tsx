@@ -6,19 +6,8 @@ import Image from "next/image";
 import { enterStyle } from "@/lib/enter";
 import SiteNav from "@/components/nav";
 import BackLink from "@/components/back-link";
-import { SECTION_HEADING, SECTION_SIZE } from "@/components/journey/section-bits";
+import { AsciiRule, SECTION_HEADING, SECTION_SIZE } from "@/components/journey/section-bits";
 import { events } from "@/lib/brody-events";
-
-
-function AsciiRule({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`font-mono text-xs text-foreground/28 overflow-hidden whitespace-nowrap ${className}`}
-    >
-      {"─".repeat(300)}
-    </div>
-  );
-}
 
 export function generateStaticParams() {
   return events.map((e) => ({ slug: e.slug }));
@@ -75,7 +64,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
             {event.city}
           </p>
 
-          <AsciiRule className="mb-8" />
+          <AsciiRule className="text-foreground/28 mb-8" />
 
           {/* metadata grid */}
           <div
@@ -113,7 +102,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
             ))}
           </div>
 
-          <AsciiRule className="mb-8" />
+          <AsciiRule className="text-foreground/28 mb-8" />
 
           {/* context */}
           <div
@@ -136,7 +125,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
               className="enter mt-12"
               style={enterStyle({ y: 10, dur: 0.5, delay: 0.45 })}
             >
-              <AsciiRule className="mb-8" />
+              <AsciiRule className="text-foreground/28 mb-8" />
               <div
                 className={`grid gap-3 ${images.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}
               >

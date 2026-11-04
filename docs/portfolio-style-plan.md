@@ -315,10 +315,16 @@ only after the rewrite is done.
   `role="img"` with an `alt` sentence and the mermaid source in `<details>`.
   Block text at white `/55` or more (`/45` fails AA). No motion of their own.
   `content-visibility: auto` on each block.
-- **Budget:** static routes prefetch in full when their link enters the
-  viewport, so `/software` pays for every detail page. Today `prism.html` is
-  30.6 KB and `prism.rsc` 17.5 KB. Limit: 3× that. Gate: the scroll test on
-  `/software` at 6× CPU before and after. Lever: `prefetch={false}` on cards.
+- **Budget:** a direct visit to `/projects/<slug>` sends at most 150 KB of HTML
+  and 75 KB of RSC (KB = 1024 bytes, `npm run build` output in
+  `.next/server/app/projects`, before gzip). Set 2026-11-04. The largest page,
+  prism, is 145.9 KB of HTML and 73.2 KB of RSC. No test enforces the limit
+  yet. Sizes per part: `docs/performance.md`.
+  This replaces the first limit, 92 KB and 52.5 KB (3× `prism.html` and
+  `prism.rsc` before the detail docs). That limit protected `/software`, which
+  prefetched every detail page. The cards now load a page on click
+  (`prefetch={false}`). Gate for a change to that: the scroll test on
+  `/software` at 6× CPU before and after.
 
 ---
 
@@ -379,8 +385,9 @@ no diagram of internal systems.
 
 ## 11. Risks
 
-1. `/software` prefetch weight grows with every detail page. Measure before
-   and after. Use `prefetch={false}` if the 3× limit breaks.
+1. A detail page's weight grows with every block. Measure a new page against
+   the limit in §7. The cards do not prefetch (`prefetch={false}`), so the
+   weight falls on a direct visit or a click, not on `/software`.
 2. `beautiful-mermaid` had no release since 2026-02-26. Subgraphs and the
    Turbopack server build are not tested. The spike settles this.
 3. Geist Mono loads the `latin` subset only. Box-drawing glyphs may fall back

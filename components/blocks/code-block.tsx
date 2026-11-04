@@ -13,7 +13,7 @@ export default async function CodeBlock({ excerpt, lang, caption, highlight: mar
   return (
     <figure data-motion="" className="dblock code-block my-6">
       <div className="block-frame code-frame overflow-hidden" style={{ ["--line-start" as string]: first - 1 }} dangerouslySetInnerHTML={{ __html: html }} />
-      <figcaption className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 font-mono text-xs text-foreground/60">
+      <figcaption className="code-cap">
         {caption && <span>{caption}</span>}
         {ex.href ? (
           <a href={ex.href} target="_blank" rel="noopener noreferrer" className="hover:text-foreground/85 transition-colors">

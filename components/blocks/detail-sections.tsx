@@ -16,7 +16,8 @@ import CodeBlock from "./code-block";
 import DiagramBlock from "./diagram-block";
 import FigureBlock from "./figures";
 
-const label = "font-mono text-xs text-foreground/60";
+// the mono label tone (detail.css .dlabel)
+const label = "dlabel";
 const at = (i: number) => ({ "--i": i }) as CSSProperties;
 
 /** text that resolves from glyphs when its block comes in (block-motion.tsx) */
@@ -43,18 +44,18 @@ function Table({ b }: { b: Extract<Block, { type: "table" }> }) {
           <thead>
             <tr className="dtable-head text-left">
               {b.columns.map((c) => (
-                <th key={c} scope="col" className="py-2 pr-6 font-normal text-foreground/60">{c}</th>
+                <th key={c} scope="col">{c}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {b.rows.map((r, i) => (
-              <tr key={i} style={at(i)} className="border-b border-white/8 align-top">
+              <tr key={i} style={at(i)}>
                 {r.map((c, j) =>
                   j === 0 ? (
-                    <th key={j} scope="row" className="py-2 pr-6 text-left font-normal text-foreground/85">{c}</th>
+                    <th key={j} scope="row">{c}</th>
                   ) : (
-                    <td key={j} className={`py-2 pr-6 text-foreground/80 ${decodable(c) ? "whitespace-nowrap" : ""}`}>
+                    <td key={j} {...(decodable(c) ? { className: "whitespace-nowrap" } : {})}>
                       {decodable(c) && j > 1 ? <Decode text={c} delay={150 + i * 120 + j * 90} /> : c}
                     </td>
                   ),
@@ -79,14 +80,14 @@ function Decision({ b, n }: { b: Extract<Block, { type: "decision" }>; n: number
   return (
     <article data-motion="" className="dblock ddecision my-8">
       <p className={`ddecision-meta ${label}`} style={at(0)}>
-        <span className="font-mono text-foreground/60">decision {String(n).padStart(2, "0")}</span>
-        <span aria-hidden="true" className="mx-2 text-foreground/30">·</span>
+        <span className="ddecision-n">decision {String(n).padStart(2, "0")}</span>
+        <span aria-hidden="true" className="dsep">·</span>
         <span className={`dstamp dstamp-${b.status}`}>{b.status}</span>
-        <span aria-hidden="true" className="mx-2 text-foreground/30">·</span>
+        <span aria-hidden="true" className="dsep">·</span>
         <time dateTime={b.date}>{b.date}</time>
       </p>
-      <h3 className="ddecision-title copy mt-1.5 font-medium text-foreground/95" style={at(1)}>{b.title}</h3>
-      <dl className="mt-3 grid gap-y-2 sm:grid-cols-[6.5rem_1fr] sm:gap-x-8">
+      <h3 className="ddecision-title copy" style={at(1)}>{b.title}</h3>
+      <dl>
         {(
           [
             ["context", b.context],
@@ -94,8 +95,8 @@ function Decision({ b, n }: { b: Extract<Block, { type: "decision" }>; n: number
             ["cost", b.cost.join(" ")],
           ] as const
         ).map(([k, v], i) => (
-          <div key={k} className="ddecision-row contents" style={at(i + 2)}>
-            <dt className={`${label} pt-0.5`}>{k}</dt>
+          <div key={k} className="ddecision-row" style={at(i + 2)}>
+            <dt>{k}</dt>
             <dd className="copy-sm">{v}</dd>
           </div>
         ))}
@@ -153,8 +154,8 @@ function render(b: Block, n: { decision: number }): ReactNode {
           {b.caption && <p className={`mb-2 ${label}`}>{b.caption}</p>}
           <ul className="flex flex-col gap-1.5">
             {b.items.map((t, i) => (
-              <li key={i} className="dcallout-item copy-sm flex gap-3" style={at(i)}>
-                <span aria-hidden="true" className="dcallout-dash font-mono text-foreground/45">─</span>
+              <li key={i} className="dcallout-item copy-sm" style={at(i)}>
+                <span aria-hidden="true" className="dcallout-dash">─</span>
                 <span>{renderInline(t)}</span>
               </li>
             ))}
@@ -176,7 +177,7 @@ function render(b: Block, n: { decision: number }): ReactNode {
         <ul data-motion="" className="dblock dlinks my-4 flex flex-col gap-2">
           {b.items.map((l, i) => (
             <li key={l.href} style={at(i)}>
-              <a href={l.href} target="_blank" rel="noopener noreferrer" className="dlink font-mono text-sm text-foreground/80 hover:text-accent/85 transition-colors">
+              <a href={l.href} target="_blank" rel="noopener noreferrer" className="dlink">
                 <span>{l.label}</span>&nbsp;<span aria-hidden="true" className="dlink-arrow">↗</span>
               </a>
             </li>

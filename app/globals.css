@@ -367,6 +367,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 @keyframes now-pulse { 50% { opacity: 0.3; } }
 @media (prefers-reduced-motion: reduce) { .now-pulse { animation: none; } }
 
+/* ── ascii rule (components/journey/section-bits.tsx AsciiRule) ──────────────
+   300 box-drawing dashes, cut at the column's edge: here once, not repeated
+   in the HTML and the RSC payload of every page that draws a rule */
+.ascii-rule { overflow: hidden; white-space: nowrap; }
+.ascii-rule::before { content: "────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────"; }
+
 /* ── widgets (components/widgets.tsx) ────────────────────────────────────────
    Wireframe panels for text-heavy content: a thin outline, no fill, so the
    stage stays visible through them; the key points break out as smaller
@@ -520,30 +526,34 @@ footer :where(p, a, span) {
   background: oklch(0.13 0 0 / 0.78);
 }
 
+/* a detail page's metadata rows (components/detail-page.tsx): label, value */
+.dmeta-row { @apply grid grid-cols-[6.5rem_1fr] gap-x-8; }
+.dmeta-row > :first-child { @apply font-mono text-xs text-foreground/52; }
+.dmeta-row > :last-child { @apply font-mono text-xs text-foreground/80; }
+
 /* shiki's CSS-variable theme: the pearl scale, one pastel per token kind
    (every token at 4.5:1 or more on the frame's fill) */
 :root {
   --shiki-foreground: oklch(0.88 0 0);
-  --shiki-background: transparent;
   --shiki-token-keyword: oklch(0.80 0.07 315);
   --shiki-token-string: oklch(0.85 0.07 160);
-  --shiki-token-string-expression: oklch(0.85 0.07 160);
   --shiki-token-constant: oklch(0.85 0.06 235);
   --shiki-token-function: oklch(0.89 0.06 85);
-  --shiki-token-parameter: oklch(0.88 0 0);
   --shiki-token-comment: oklch(0.68 0 0);
   --shiki-token-punctuation: oklch(0.74 0 0);
-  --shiki-token-link: oklch(0.85 0.06 235);
 }
-.code-block .tk-keyword { color: var(--shiki-token-keyword); }
-.code-block .tk-string, .code-block .tk-string-expression { color: var(--shiki-token-string); }
-.code-block .tk-constant, .code-block .tk-link { color: var(--shiki-token-constant); }
-.code-block .tk-function { color: var(--shiki-token-function); }
-.code-block .tk-parameter { color: var(--shiki-token-parameter); }
-.code-block .tk-comment { color: var(--shiki-token-comment); }
-.code-block .tk-punctuation { color: var(--shiki-token-punctuation); }
+/* one short class per token color (lib/highlight.ts CLASS: a string
+   expression takes the string color, a link the constant color); text in the
+   foreground color, parameters too, has no span */
+.code-block .kw { color: var(--shiki-token-keyword); }
+.code-block .st { color: var(--shiki-token-string); }
+.code-block .cn { color: var(--shiki-token-constant); }
+.code-block .fn { color: var(--shiki-token-function); }
+.code-block .cm { color: var(--shiki-token-comment); }
+.code-block .pu { color: var(--shiki-token-punctuation); }
 .code-block pre {
   margin: 0;
+  color: var(--shiki-foreground);
   padding: 0.9rem 0;
   overflow-x: auto;
   font-family: var(--font-mono);
@@ -553,11 +563,12 @@ footer :where(p, a, span) {
   tab-size: 2;
 }
 .code-block pre:focus-visible { outline: 1px solid oklch(1 0 0 / 0.6); outline-offset: -1px; }
-/* one row per line (whitespace between grid items is not rendered) and the
-   source's own line numbers, from --line-start */
+/* one row per line (each line is a span straight under <code>; whitespace
+   between grid items is not rendered) and the source's own line numbers,
+   from --line-start */
 .code-block code { display: grid; min-width: max-content; counter-reset: line var(--line-start, 0); }
-.code-block .line { display: block; padding-right: 1.25rem; }
-.code-block .line::before {
+.code-block code > span { display: block; padding-right: 1.25rem; }
+.code-block code > span::before {
   counter-increment: line;
   content: counter(line);
   display: inline-block;
@@ -567,7 +578,7 @@ footer :where(p, a, span) {
   color: oklch(0.62 0 0);
   user-select: none;
 }
-.code-block .line.highlighted { background: oklch(1 0 0 / 0.06); box-shadow: inset 2px 0 0 oklch(1 0 0 / 0.5); }
+.code-block code > .highlighted { background: oklch(1 0 0 / 0.06); box-shadow: inset 2px 0 0 oklch(1 0 0 / 0.5); }
 .code-block, .code-block * { text-shadow: none; }
 
 .diagram-block svg { display: block; margin-inline: auto; }

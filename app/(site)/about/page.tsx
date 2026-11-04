@@ -61,7 +61,7 @@ export default function AboutPage() {
                   ))}
                 </div>
 
-                <AsciiRule className="my-10" />
+                <AsciiRule className="text-foreground/30 my-10" />
 
                 <div className="flex flex-wrap items-center gap-8" data-reveal>
                   {content.about.socials.map(({ href, label }) => (
