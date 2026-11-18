@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
     // AVIF first (smaller at the same quality), WebP for browsers without it
     formats: ["image/avif", "image/webp"],
   },
+  // brodymontag.com/glitchcam is the product page of GLITCHCAM. It is a static page in its
+  // own Vercel project (bmontt/glitchcam, web/), and all its files live under /glitchcam there
+  // too, so these two rules pass the page and its files through with the paths unchanged.
+  async rewrites() {
+    return [
+      { source: "/glitchcam", destination: "https://glitchcam-orcin.vercel.app/glitchcam" },
+      { source: "/glitchcam/:path*", destination: "https://glitchcam-orcin.vercel.app/glitchcam/:path*" },
+    ];
+  },
   async headers() {
     return [
       {
