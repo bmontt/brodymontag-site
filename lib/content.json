@@ -1103,6 +1103,37 @@
         "updated": "2026-10-19"
       },
       {
+        "id": "glitchcam",
+        "slug": "glitchcam",
+        "name": "GLITCHCAM",
+        "status": "building",
+        "date": "November 2026",
+        "githubUrl": null,
+        "tags": [
+          "Swift",
+          "Metal",
+          "C++",
+          "VST3",
+          "macOS"
+        ],
+        "description": "A macOS app and VST3 plugin that puts webcam windows with glitch effects above a DAW, for screen-recorded music clips. Body movement and the beat mix the effects.",
+        "longDescription": "GLITCHCAM is a macOS app and a VST3 plugin. The core is Swift and Metal, and a C++ layer on the Steinberg VST 3 SDK makes the plugin. It shows my webcam in borderless windows that stay above the DAW. The windows never take the keyboard, so the DAW keeps its shortcuts.\n\nAn AUTO director reads body movement and the beat. From them it mixes five shader layers: datamosh, block tear, ASCII glyphs, a 1-bit dither and CRT and VHS decay. One master control with the name \"glitch\" sets the depth, and each layer has its own fader. Random moods and random hits change the mix, so the same movement does not give the same picture twice.\n\nKick and drop detection adapts to the input level. In a DAW, the beat comes from the track that holds the plugin. The standalone app reads an audio input.\n\nUp to 18 pop-up windows open where I move. Each one is a view onto one large camera picture. An option gives my face priority.\n\nThe control panel is the same in the app and in the plugin window of the DAW. All 21 settings are plugin parameters, so the DAW can automate them and store them in its presets and projects.\n\nThe code for license keys is in, but it stays off until the shop exists. Without a key, the app is a demo with a mark on the windows. A friends beta build is out for feedback. No other person confirmed a result yet, and the build is not signed or notarized.",
+        "highlights": [
+          "A macOS app and a VST3 plugin from one Swift and Metal core",
+          "Built with the Command Line Tools only, with no Xcode and no CMake",
+          "Windows stay above the DAW and never take the keyboard",
+          "Five shader layers, mixed from body movement and the beat",
+          "One master control, \"glitch\", and a fader for each layer",
+          "In a DAW, the beat comes from the plugin's own track",
+          "Up to 18 pop-up windows open where the movement is",
+          "All 21 settings are plugin parameters for DAW automation and presets",
+          "Friends beta out for feedback, not verified in other setups",
+          "Not signed or notarized, no Windows version, no Audio Unit"
+        ],
+        "statusNote": "friends beta out, not released",
+        "updated": "2026-11-18"
+      },
+      {
         "id": "peak_finding",
         "slug": "peak-finding-toolbox",
         "name": "Peak_Finding_Toolbox",

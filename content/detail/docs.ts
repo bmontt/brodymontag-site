@@ -8,6 +8,7 @@ import agentForge from "./agent-forge";
 import brodymontagCom from "./brodymontag-com";
 import fiserv from "./fiserv";
 import galago from "./galago";
+import glitchcam from "./glitchcam";
 import kicker from "./here-comes-the-kicker";
 import peakFinding from "./peak-finding-toolbox";
 import pirl from "./pirl";
@@ -17,6 +18,6 @@ import superset from "./superset";
 import venture from "./venture";
 
 export const DOCS: DetailDoc[] = [
-  brodymontagCom, prism, venture, superset, realmbot, kicker, agentForge, peakFinding,
+  brodymontagCom, prism, venture, superset, realmbot, kicker, agentForge, glitchcam, peakFinding,
   fiserv, pirl, galago,
 ];
