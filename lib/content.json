@@ -1103,6 +1103,33 @@
         "updated": "2026-10-19"
       },
       {
+        "id": "glitchcam",
+        "slug": "glitchcam",
+        "name": "GLITCHCAM",
+        "status": "building",
+        "date": "November 2026",
+        "githubUrl": null,
+        "tags": [
+          "Swift",
+          "Metal",
+          "AVFoundation",
+          "macOS"
+        ],
+        "description": "A macOS app that puts webcam windows with glitch effects above a DAW, for screen-recorded music clips. Body movement and the beat mix the effects.",
+        "longDescription": "GLITCHCAM is a native macOS app in Swift and Metal. It shows my webcam in borderless windows that stay above FL Studio. The windows never take the keyboard, so the DAW keeps its shortcuts.\n\nAn AUTO director reads movement from a 48 by 27 grid of the camera picture. From that movement it mixes five shader layers: datamosh, block tear, ASCII glyphs, a 1-bit dither and CRT decay. Random moods and random hits change the mix, so the same movement does not give the same picture twice.\n\nA kick detector follows the low band of an audio input and sets its own threshold. A strong kick after a breakdown counts as a drop. Then the picture goes to its most abstract state for 8 seconds.\n\nMovement out of view of the main window opens pop-up windows at that place. Each window shows the part of the camera picture that agrees with its position on the screen.\n\nI built it on 2026-11-17 with the Command Line Tools and no Xcode, so the shaders compile at launch. It is not checked with real DAW audio.",
+        "highlights": [
+          "Swift and Metal, built with the Command Line Tools and no Xcode",
+          "Windows stay above the DAW and never take the keyboard",
+          "Five shader layers, mixed from body movement",
+          "Automatic kick and drop detection, with no manual threshold",
+          "Pop-up windows open where the movement is",
+          "Presets, and a save function for my own presets",
+          "Not checked with real DAW audio"
+        ],
+        "statusNote": "first build, in daily change",
+        "updated": "2026-11-17"
+      },
+      {
         "id": "peak_finding",
         "slug": "peak-finding-toolbox",
         "name": "Peak_Finding_Toolbox",
